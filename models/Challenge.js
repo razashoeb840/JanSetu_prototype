@@ -1,11 +1,11 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 
 const challengeSchema = new mongoose.Schema({
   challengeId: {
     type: String,
     unique: true,
-    default: () => 'IS-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase()
+    default: () => 'JH-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000)
   },
   title: {
     type: String,
@@ -62,6 +62,7 @@ const challengeSchema = new mongoose.Schema({
   location: {
     address: String,
     village: String,
+    panchayat: String,
     block: String,
     district: {
       type: String,
@@ -146,6 +147,28 @@ const challengeSchema = new mongoose.Schema({
   deadline: Date,
   resolvedAt: Date,
   // Impact metrics
+    // Before / After Evidence & Resolution Proof
+  resolutionProof: {
+    beforeImage: { type: String, default: null },
+    afterImage: { type: String, default: null },
+    summary: { type: String, default: null },
+    citizenVerified: { type: Boolean, default: false },
+    citizenFeedback: { type: String, default: null },
+    verifiedAt: { type: Date, default: null }
+  },
+  // Need More Info Interactive Workflow
+  needMoreInfo: {
+    isActive: { type: Boolean, default: false },
+    query: { type: String, default: null },
+    requestedAt: { type: Date, default: null },
+    responses: [{
+      notes: String,
+      mediaUrls: [String],
+      landmark: String,
+      voiceTranscript: String,
+      submittedAt: { type: Date, default: Date.now }
+    }]
+  },
   impactMetrics: {
     beneficiaries: Number,
     patentsGenerated: Number,
@@ -191,3 +214,4 @@ challengeSchema.virtual('isOverdue').get(function() {
 });
 
 module.exports = mongoose.model('Challenge', challengeSchema);
+

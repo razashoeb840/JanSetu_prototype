@@ -1,7 +1,7 @@
 const Challenge = require('../models/Challenge');
 const University = require('../models/University');
 const User = require('../models/User');
-const { classifyChallenge, generateTags, suggestPriority } = require('../services/aiClassifier');
+const { classifyChallenge, generateTags, suggestPriority, parseVoiceTranscript, findSimilarChallenges } = require('../services/aiClassifier');
 const { notifyChallenge, notifyStatusChange, notifyUniversityAssignment, logActivity } = require('../services/notificationService');
 const path = require('path');
 
@@ -650,3 +650,147 @@ exports.getMapData = async (req, res, next) => {
   }
 };
 
+
+
+// @desc    Check for potential duplicate challenges nearby
+// @route   POST /api/challenges/check-duplicates
+// @access  Public/Private
+exports.checkDuplicates = async (req, res, next) => {
+  try {
+    const { title, description, category, location } = req.body;
+    const district = location && location.district ? location.district : '';
+
+    let candidateQuery = { status: { $in: ['submitted', 'under_review', 'validated', 'assigned', 'in_progress', 'testing', 'resolved'] } };
+    if (district) {
+      candidateQuery['location.district'] = new RegExp(district, 'i');
+    }
+
+    const candidateList = await Challenge.find(candidateQuery)
+      .select('title description category status location challengeId supportCount supports createdAt')
+      .limit(50)
+      .lean();
+
+    const duplicates = findSimilarChallenges({ title, description, category, location }, candidateList);
+
+    res.status(200).json({
+      success: true,
+      hasDuplicates: duplicates.length > 0,
+      data: duplicates
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Parse speech-to-text transcript into structured challenge data
+// @route   POST /api/challenges/parse-voice
+// @access  Public/Private
+exports.parseVoice = async (req, res, next) => {
+  try {
+    const { transcript = '' } = req.body;
+    const parsed = parseVoiceTranscript(transcript);
+    res.status(200).json({
+      success: true,
+      data: parsed
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Citizen validates resolution of problem (Confirm / Reopen)
+// @route   POST /api/challenges/:id/validate-resolution
+// @access  Private (Citizen submitter)
+exports.validateResolution = async (req, res, next) => {
+  try {
+    const { isSolved, feedback, reopenReason } = req.body;
+    const challenge = await Challenge.findById(req.params.id);
+
+    if (!challenge) return res.status(404).json({ success: false, message: 'Challenge not found' });
+
+    if (challenge.submittedBy.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Only the original citizen can validate the solution' });
+    }
+
+    if (isSolved) {
+      challenge.status = 'closed';
+      challenge.resolvedAt = challenge.resolvedAt || new Date();
+      challenge.resolutionProof = {
+        ...(challenge.resolutionProof || {}),
+        citizenVerified: true,
+        citizenFeedback: feedback || 'Citizen confirmed solution is working satisfactorily.',
+        verifiedAt: new Date()
+      };
+      challenge.statusHistory.push({
+        status: 'closed',
+        changedBy: req.user.id,
+        note: 'Citizen verified solution: ' + (feedback || 'Problem solved satisfactorily')
+      });
+    } else {
+      challenge.status = 'in_progress';
+      challenge.resolutionProof = {
+        ...(challenge.resolutionProof || {}),
+        citizenVerified: false,
+        citizenFeedback: reopenReason || 'Citizen indicated problem still persists.',
+        verifiedAt: new Date()
+      };
+      challenge.statusHistory.push({
+        status: 'in_progress',
+        changedBy: req.user.id,
+        note: 'Citizen reported problem NOT resolved: ' + (reopenReason || 'Issue persists')
+      });
+    }
+
+    await challenge.save();
+
+    res.status(200).json({
+      success: true,
+      status: challenge.status,
+      message: isSolved ? 'Thank you! Solution citizen-verified & report closed.' : 'Report reopened. University and taskforce have been alerted.',
+      data: challenge
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Citizen provides additional info requested by authority
+// @route   POST /api/challenges/:id/provide-info
+// @access  Private (Citizen submitter)
+exports.provideAdditionalInfo = async (req, res, next) => {
+  try {
+    const { notes, landmark, voiceTranscript } = req.body;
+    const challenge = await Challenge.findById(req.params.id);
+
+    if (!challenge) return res.status(404).json({ success: false, message: 'Challenge not found' });
+
+    const mediaUrls = req.files ? req.files.map(f => '/uploads/challenges/' + f.filename) : [];
+
+    challenge.needMoreInfo = challenge.needMoreInfo || {};
+    challenge.needMoreInfo.isActive = false;
+    challenge.needMoreInfo.responses = challenge.needMoreInfo.responses || [];
+    challenge.needMoreInfo.responses.push({
+      notes: notes || '',
+      landmark: landmark || '',
+      voiceTranscript: voiceTranscript || '',
+      mediaUrls,
+      submittedAt: new Date()
+    });
+
+    challenge.statusHistory.push({
+      status: challenge.status,
+      changedBy: req.user.id,
+      note: 'Citizen submitted additional information' + (landmark ? ' (Landmark: ' + landmark + ')' : '')
+    });
+
+    await challenge.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Additional information successfully submitted to JanSetu!',
+      data: challenge
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -18,7 +18,7 @@
   --green: #059669;
   --orange: #ea580c;
   --red: #dc2626;
-  --purple: #7c3aed;
+  --purple: #002D62;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -459,7 +459,7 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1a56db, #7c3aed);
+  background: linear-gradient(135deg, #1a56db, #002D62);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -821,7 +821,7 @@ body {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1a56db, #7c3aed);
+  background: linear-gradient(135deg, #1a56db, #002D62);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -34,7 +34,7 @@
   --warning: #f59e0b;
   --danger: #ef4444;
   --info: #06b6d4;
-  --purple: #8b5cf6;
+  --purple: #FF671F;
 
   /* Neutral Grays */
   --gray-50: #f9fafb;
@@ -1283,7 +1283,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .badge-submitted { background: var(--primary-50); color: var(--primary-dark); }
 .badge-under_review { background: #fef3c7; color: #92400e; }
-.badge-validated { background: #f3e8ff; color: #7c3aed; }
+.badge-validated { background: #EFF6FF; color: #002D62; }
 .badge-assigned { background: #dbeafe; color: #1d4ed8; }
 .badge-in_progress { background: #fff7ed; color: #c2410c; }
 .badge-testing { background: #f0fdf4; color: #166534; }
