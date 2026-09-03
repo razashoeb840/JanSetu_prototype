@@ -8,8 +8,8 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 
-const connectDB = require('./config/database');
-const errorHandler = require('./middleware/errorHandler');
+const connectDB = require('./others/config/database');
+const errorHandler = require('./others/middleware/errorHandler');
 
 // Connect Database
 connectDB();
@@ -17,7 +17,7 @@ connectDB();
 const app = express();
 
 // Ensure upload directory exists
-const uploadDir = process.env.UPLOAD_PATH || './public/uploads';
+const uploadDir = process.env.UPLOAD_PATH || './others/public/uploads';
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 // Security Middleware
@@ -70,7 +70,6 @@ app.use('/admin', express.static(path.join(__dirname, 'admin')));
 app.use('/industries', express.static(path.join(__dirname, 'industries')));
 app.use('/industry', express.static(path.join(__dirname, 'industries')));
 app.use('/others', express.static(path.join(__dirname, 'others/public')));
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'others/public')));
 
 // Clean Modular Routes & Navigation
@@ -91,15 +90,15 @@ app.get('/dashboard/admin.html', (req, res) => res.sendFile(path.join(__dirname,
 app.get('/dashboard/industry.html', (req, res) => res.sendFile(path.join(__dirname, 'industries/industry.html')));
 
 // Mount API Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/challenges', require('./routes/challenges'));
-app.use('/api/notifications', require('./routes/notifications'));
-app.use('/api/analytics', require('./routes/analytics'));
-app.use('/api/admin', require('./routes/admin'));
+app.use('/api/auth', require('./others/routes/auth'));
+app.use('/api/challenges', require('./others/routes/challenges'));
+app.use('/api/notifications', require('./others/routes/notifications'));
+app.use('/api/analytics', require('./others/routes/analytics'));
+app.use('/api/admin', require('./others/routes/admin'));
 
 // Comments standalone route (for delete)
-const { deleteComment, toggleCommentLike } = require('./controllers/commentController');
-const { protect: commentProtect } = require('./middleware/auth');
+const { deleteComment, toggleCommentLike } = require('./others/controllers/commentController');
+const { protect: commentProtect } = require('./others/middleware/auth');
 app.delete('/api/comments/:id', commentProtect, deleteComment);
 app.post('/api/comments/:id/like', commentProtect, toggleCommentLike);
 
@@ -107,8 +106,8 @@ app.post('/api/comments/:id/like', commentProtect, toggleCommentLike);
 app.get('/api/map-data', (req, res, next) => { req.url = '/challenges/map-data'; require('./routes/challenges')(req, res, next); });
 
 // Universities public route
-const University = require('./models/University');
-const IndustryPartner = require('./models/IndustryPartner');
+const University = require('./others/models/University');
+const IndustryPartner = require('./others/models/IndustryPartner');
 
 app.get('/api/universities', async (req, res) => {
   try {
