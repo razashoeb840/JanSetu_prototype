@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InnovateSphere — India's Societal Innovation & Crowdsourcing Platform</title>
+  <meta name="description" content="A national digital platform connecting citizens, universities, and industry to crowdsource and collaboratively solve India's toughest societal challenges.">
+  <meta name="keywords" content="India, innovation, university, industry, social impact, crowdsourcing, civic tech, PS2643, SIH">
+  <meta property="og:title" content="InnovateSphere — India's Civic Innovation Platform">
+  <meta property="og:description" content="Bridging Communities, Universities & Industry for Social Impact across India">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+  NAVIGATION
+═══════════════════════════════════════════════ -->
+<nav class="navbar" id="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="navbar-brand">
+        <div class="navbar-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <div>
+          <div class="navbar-name">InnovateSphere</div>
+          <div class="navbar-sub">India Innovation Platform</div>
+        </div>
+      </a>
+
+      <div class="navbar-links">
+        <a href="#hero" class="nav-link active">Home</a>
+        <a href="#categories" class="nav-link">Domains</a>
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+
+        <a href="/map" class="nav-link">India Map</a>
+        <a href="#universities" class="nav-link">Universities</a>
+        <a href="#about" class="nav-link">About</a>
+        <a href="#contact" class="nav-link">Contact</a>
+      </div>
+
+      <div class="navbar-actions">
+      <div class="lang-switcher-pill" style="display:inline-flex;align-items:center;background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:30px;padding:2px 4px;margin-right:8px;">
+        <button type="button" class="lang-btn" id="langBtn_en" onclick="setLandingLanguage('en')" style="border:none;background:transparent;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;">EN</button>
+        <button type="button" class="lang-btn" id="langBtn_hi" onclick="setLandingLanguage('hi')" style="border:none;background:transparent;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;">&#2361;&#2367;&#2344;&#2381;&#2342;&#2368;</button>
+        <button type="button" class="lang-btn" id="langBtn_hinglish" onclick="setLandingLanguage('hinglish')" style="border:none;background:transparent;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;">Hinglish</button>
+      </div>
+      
+        <a href="/login.html" class="btn-nav-login">Login</a>
+        <a href="/register.html" class="btn-nav-cta">Get Started →</a>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav" id="mobileNav">
+  <div class="mobile-nav-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px">
+      <div class="navbar-name" style="font-size:18px;font-weight:800">InnovateSphere</div>
+      <button id="mobileNavClose" style="font-size:24px;color:var(--gray-500)">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:32px">
+      <a href="#hero" class="nav-link" onclick="closeMobileNav()">Home</a>
+      <a href="/feed" class="nav-link" onclick="closeMobileNav()" style="color:var(--primary);font-weight:700">Live Feed 🔴</a>
+      <a href="/map" class="nav-link" onclick="closeMobileNav()">India Map</a>
+      <a href="#categories" class="nav-link" onclick="closeMobileNav()">Domains</a>
+      <a href="#how-it-works" class="nav-link" onclick="closeMobileNav()">How It Works</a>
+      <a href="#universities" class="nav-link" onclick="closeMobileNav()">Universities</a>
+      <a href="#about" class="nav-link" onclick="closeMobileNav()">About</a>
+      <a href="#contact" class="nav-link" onclick="closeMobileNav()">Contact</a>
+    </div>
+    <a href="/login.html" class="btn btn-ghost" style="width:100%;justify-content:center;margin-bottom:10px">Login</a>
+    <a href="/register.html" class="btn btn-blue" style="width:100%;justify-content:center">Get Started</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+  HERO SECTION — IMAGE-RICH BACKGROUND
+═══════════════════════════════════════════════ -->
+<section class="hero" id="hero" style="background: linear-gradient(160deg, rgba(240,247,255,0.92) 0%, rgba(232,244,253,0.88) 35%, rgba(245,240,255,0.85) 70%, rgba(255,248,240,0.92) 100%), url('https://images.unsplash.com/photo-1532375810709-75b1da00537c?w=1600&q=80') center/cover no-repeat;">
+  <div class="hero-bg">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-orb hero-orb-3"></div>
+  </div>
+
+  <div class="container">
+    <div class="hero-content">
+      <!-- Left: Text Content -->
+      <div>
+        <div class="hero-badge">
+          <div class="hero-badge-dot"></div>
+          PS2643 · National Societal Innovation Platform
+        </div>
+
+        
+        
+        
+        <div id="heroDynamicQuote" style="background:rgba(255,255,255,0.92);backdrop-filter:blur(10px);border:1.5px solid rgba(0,45,98,0.15);border-radius:14px;padding:10px 18px;margin-bottom:16px;display:inline-flex;align-items:center;gap:10px;box-shadow:0 4px 14px rgba(0,45,98,0.06);transition:opacity 0.3s ease;">
+          <span style="font-size:18px;">&#127470;&#127475;</span>
+          <span id="heroQuoteText" style="font-size:14px;font-weight:800;color:#002D62;"></span>
+        </div>
+        <h1 class="hero-title" id="heroTitle">
+          Bridging Society with<br>
+          <span class="highlight">Universities & Industry</span><br>
+          for Real Impact
+        </h1>
+
+        <p class="hero-description">
+          Submit your community's challenges. Connect with India's premier universities and industry leaders. 
+          Transform local problems across all states into innovative, scalable solutions.
+        </p>
+
+        <div class="hero-ctas">
+          <a href="/register.html?role=citizen" class="btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            Submit a Challenge
+          </a>
+         
+           -->
+          <a href="/map" class="btn-secondary" style="border-color:#1a56db;color:#1a56db">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+            India Heatmap
+          </a>
+        </div>
+
+        <div class="hero-stats-row">
+          <div class="hero-stat">
+            <span class="hero-stat-number" id="stat-challenges">70</span>
+            <span class="hero-stat-label">Challenges Tracked</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-number" id="stat-universities">5</span>
+            <span class="hero-stat-label">Universities Active</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-number" id="stat-partners">5</span>
+            <span class="hero-stat-label">Industry Partners</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-number" id="stat-resolved">18</span>
+            <span class="hero-stat-label">Solutions Deployed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Interactive Live Visual Mockup -->
+      <div class="hero-visual">
+        <div class="hero-mockup">
+          <div class="mockup-header">
+            <div class="mockup-dot"></div>
+            <div class="mockup-dot"></div>
+            <div class="mockup-dot"></div>
+            <div class="mockup-title-bar"></div>
+          </div>
+
+          <div class="mockup-stats-grid">
+            <div class="mockup-stat-card">
+              <div class="mockup-stat-num" id="liveTotal">70</div>
+              <div style="font-size:11px;color:var(--primary);font-weight:600;margin-top:2px">Total Problems</div>
+            </div>
+            <div class="mockup-stat-card">
+              <div class="mockup-stat-num" id="liveUnivs" style="color:var(--secondary)">5</div>
+              <div style="font-size:11px;color:var(--secondary);font-weight:600;margin-top:2px">HEI Labs</div>
+            </div>
+            <div class="mockup-stat-card">
+              <div class="mockup-stat-num" id="liveResolved" style="color:var(--accent)">18</div>
+              <div style="font-size:11px;color:var(--accent);font-weight:600;margin-top:2px">Resolved</div>
+            </div>
+          </div>
+
+          <!-- Featured Challenge in Mockup -->
+          <div style="background:var(--gray-50);border-radius:var(--radius-lg);padding:16px;border:1px solid var(--gray-100);margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span class="badge badge-accent">In Progress</span>
+              <span style="font-size:11px;color:var(--gray-400)">Active Collaboration</span>
+            </div>
+            <div style="font-weight:700;font-size:13px;color:var(--gray-900);margin-bottom:4px">No Solar Energy Access for Off-Grid Villages</div>
+            <div style="font-size:12px;color:var(--gray-500);margin-bottom:10px">Assigned to: <strong>XISS Ranchi</strong> · Partner: <strong>Tata Power</strong></div>
+            <div class="progress-bar">
+              <div class="progress-fill progress-fill-primary" style="width:65%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-400);margin-top:4px">
+              <span>Prototype Testing</span>
+              <span>65% Complete</span>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--primary-50);border-radius:var(--radius-md)">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite"></div>
+              <span style="font-size:12px;font-weight:600;color:var(--primary)">Live AI Classification active</span>
+            </div>
+            <span style="font-size:11px;color:var(--primary);font-weight:700">94% Accuracy</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+  DOMAINS & CATEGORIES SECTION
+═══════════════════════════════════════════════ -->
+<section class="section" id="categories" style="background:white">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-badge">10 Core Focus Areas</div>
+      <h2 class="section-title">Societal Challenge Domains</h2>
+      <p class="section-subtitle">Categorized for precision evaluation by university researchers and domain-expert industry partners.</p>
+    </div>
+
+    <div class="categories-grid" id="categoriesGrid">
+      <!-- Populated dynamically by main.js -->
+      <div class="skeleton skeleton-card" style="height:140px"></div>
+      <div class="skeleton skeleton-card" style="height:140px"></div>
+      <div class="skeleton skeleton-card" style="height:140px"></div>
+      <div class="skeleton skeleton-card" style="height:140px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+  LIVE INDIA ACTIVITY MAP
+═══════════════════════════════════════════════ -->
+<section class="section" id="live-map-section" style="background:#f8fafc;padding:70px 0">
+  <div class="container">
+    <div class="section-header" style="text-align:center;margin-bottom:32px">
+      <div class="section-badge" style="display:inline-flex;align-items:center;gap:6px">
+        <span style="width:7px;height:7px;border-radius:50%;background:#16a34a"></span>
+        Pan-India Real-Time Tracking
+      </div>
+      <h2 class="section-title">Live India Activity Map</h2>
+      <p class="section-subtitle">Real-time geographic heatmap of crowdsourced civic challenges, university labs, and active field solutions across all 28 states & 8 UTs.</p>
+    </div>
+
+    <!-- Map Card Container -->
+    <div class="live-map-main-card" style="background:white;border-radius:24px;border:1px solid #e2e8f0;box-shadow:0 10px 30px rgba(0,0,0,0.06);overflow:hidden;position:relative">
+      <!-- Map Top Controls Bar -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid #f1f5f9;background:#fff;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:16px;font-weight:800;color:#0f172a">Live India Activity Map</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#16a34a;font-weight:700;background:#f0fdf4;padding:3px 8px;border-radius:20px;border:1px solid #bbf7d0">
+            <span style="width:6px;height:6px;border-radius:50%;background:#16a34a"></span> Real-time
+          </span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <select style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;color:#475569;background:#f8fafc;outline:none">
+            <option>All Cases</option>
+            <option>Active Cases</option>
+            <option>Resolved Solutions</option>
+          </select>
+          <select style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;color:#475569;background:#f8fafc;outline:none">
+            <option>All Categories</option>
+            <option>Water Management</option>
+            <option>Healthcare</option>
+            <option>Education</option>
+            <option>Agriculture</option>
+            <option>Urban Infrastructure</option>
+          </select>
+          <a href="/map" class="btn btn-blue btn-sm" style="font-size:12px;font-weight:700;padding:6px 14px">Open Full Map →</a>
+        </div>
+      </div>
+
+      <!-- Map Display with Floating Legend & Popup -->
+      <div style="position:relative;width:100%;height:480px">
+        <div id="homeIndiaMap" style="width:100%;height:100%;z-index:1"></div>
+
+        <!-- Floating Bottom-Left Legend -->
+        <div style="position:absolute;bottom:20px;left:20px;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);font-size:12px;font-weight:600;color:#334155;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:12px;height:12px;border-radius:3px;background:#dc2626;display:inline-block"></span>
+            <span>High (2000+)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:12px;height:12px;border-radius:3px;background:#eab308;display:inline-block"></span>
+            <span>Medium (500-2000)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:12px;height:12px;border-radius:3px;background:#22c55e;display:inline-block"></span>
+            <span>Low (50-500)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:12px;height:12px;border-radius:3px;background:#06b6d4;display:inline-block"></span>
+            <span>Very Low (&lt;50)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+  HOW IT WORKS — 5-STAGE COLLABORATIVE LIFECYCLE
+═══════════════════════════════════════════════ -->
+<section class="section" id="how-it-works" style="background:var(--gray-50)">
+
+  <div class="container">
+    <div class="section-header">
+      <div class="section-badge">From Problem to Solution</div>
+      <h2 class="section-title">The 5-Stage Innovation Lifecycle</h2>
+      <p class="section-subtitle">A transparent, accountable workflow connecting grassroots identification to scalable industrial deployment.</p>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-step">
+        <div class="timeline-step-number">1</div>
+        <div class="timeline-step-icon">📱</div>
+        <div class="timeline-step-title">Citizen Submission</div>
+        <div class="timeline-step-desc">Citizens, NGOs, or local bodies submit real problems with photos, GPS coordinates, priority, and impact description.</div>
+      </div>
+
+      <div class="timeline-step">
+        <div class="timeline-step-number">2</div>
+        <div class="timeline-step-icon">🤖</div>
+        <div class="timeline-step-title">AI Triage &amp; Review</div>
+        <div class="timeline-step-desc">Natural Language Processing automatically categorizes the problem, detects duplicates, and assigns priority. Admins validate.</div>
+      </div>
+
+      <div class="timeline-step">
+        <div class="timeline-step-number">3</div>
+        <div class="timeline-step-icon">🏛️</div>
+        <div class="timeline-step-title">HEI Assignment</div>
+        <div class="timeline-step-desc">Validated challenges are assigned to relevant university departments (IITs, NITs, Central &amp; State HEIs) for R&amp;D.</div>
+      </div>
+
+      <div class="timeline-step">
+        <div class="timeline-step-number">4</div>
+        <div class="timeline-step-icon">🏭</div>
+        <div class="timeline-step-title">Industry &amp; CSR Co-Creation</div>
+        <div class="timeline-step-desc">Industry partners provide technical mentorship, CSR funding, specialized equipment, and pilot infrastructure.</div>
+      </div>
+
+      <div class="timeline-step">
+        <div class="timeline-step-number">5</div>
+        <div class="timeline-step-icon">🚀</div>
+        <div class="timeline-step-title">Field Pilot &amp; Deployment</div>
+        <div class="timeline-step-desc">Solutions undergo rigorous field testing in affected communities. Citizen feedback confirms resolution before sign-off.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+  INDIA HEATMAP & LIVE FEED PREVIEW BANNER
+═══════════════════════════════════════════════ -->
+<section class="section" style="background: linear-gradient(135deg, rgba(15,23,42,0.92) 0%, rgba(26,86,219,0.85) 100%), url('https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1600&q=80') center/cover no-repeat; color: white;">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:48px;align-items:center">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:16px">
+          <span style="width:6px;height:6px;border-radius:50%;background:#4ade80"></span>
+          Live National Coverage
+        </div>
+        <h2 style="font-size:32px;font-weight:800;color:white;margin-bottom:16px;line-height:1.2">Real-Time Heatmap Across All Indian States</h2>
+        <p style="font-size:15px;color:rgba(255,255,255,0.85);line-height:1.7;margin-bottom:28px">
+          Visualize where citizen challenges are concentrated. Filter by state, domain, and urgency level to identify regions requiring immediate academic and industrial intervention.
+        </p>
+        <div style="display:flex;gap:14px;flex-wrap:wrap">
+          <a href="/map" class="btn btn-white" style="background:white;color:var(--primary);font-weight:700;padding:12px 24px;border-radius:99px">Open India Heatmap →</a>
+          <a href="/feed" class="btn" style="background:rgba(255,255,255,0.2);color:white;font-weight:700;padding:12px 24px;border-radius:99px;border:1px solid rgba(255,255,255,0.4)">View Social Feed 🔴</a>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,0.08);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.2);border-radius:24px;padding:24px;text-align:center">
+        <div style="font-size:48px;margin-bottom:8px">🗺️</div>
+        <div style="font-size:20px;font-weight:800;color:white;margin-bottom:4px">19+ States Active</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:20px">Interactive choropleth &amp; intensity mapping</div>
+        <a href="/map" style="display:block;background:var(--accent);color:white;padding:10px;border-radius:12px;font-weight:700;font-size:13px;text-decoration:none">Explore State Rankings →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+  UNIVERSITIES & HEI NETWORK
+═══════════════════════════════════════════════ -->
+<section class="section" id="universities" style="background:white">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-badge">Academic Powerhouses</div>
+      <h2 class="section-title">Participating Higher Education Institutions</h2>
+      <p class="section-subtitle">Premier institutions leading research, student innovation, and prototype development.</p>
+    </div>
+
+    <div class="categories-grid" id="universitiesGrid">
+      <div class="skeleton skeleton-card" style="height:180px"></div>
+      <div class="skeleton skeleton-card" style="height:180px"></div>
+      <div class="skeleton skeleton-card" style="height:180px"></div>
+      <div class="skeleton skeleton-card" style="height:180px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+  INDUSTRY & CSR PARTNERS
+═══════════════════════════════════════════════ -->
+<section class="section" id="industry" style="background:var(--gray-50)">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-badge">Corporate &amp; Tech Ecosystem</div>
+      <h2 class="section-title">Industry &amp; CSR Partners</h2>
+      <p class="section-subtitle">Bridging lab prototypes with financial resources, technical mentorship, and market deployment.</p>
+    </div>
+
+    <div class="categories-grid" id="industryPartnerCards">
+      <div class="skeleton skeleton-card" style="height:160px"></div>
+      <div class="skeleton skeleton-card" style="height:160px"></div>
+      <div class="skeleton skeleton-card" style="height:160px"></div>
+      <div class="skeleton skeleton-card" style="height:160px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+  ABOUT & IMPACT
+═══════════════════════════════════════════════ -->
+<section class="section" id="about" style="background:white">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center">
+      <div>
+        <div class="section-badge">About InnovateSphere</div>
+        <h2 class="section-title" style="text-align:left;margin-bottom:20px">Solving India's Toughest Challenges Through Synergy</h2>
+        <p style="color:var(--gray-600);font-size:15px;line-height:1.8;margin-bottom:16px">
+          Communities across India encounter critical issues in water access, rural education, sustainable farming, and urban infrastructure. While citizens are the first to identify these issues, there was no structured mechanism to funnel them to innovators.
+        </p>
+        <p style="color:var(--gray-600);font-size:15px;line-height:1.8;margin-bottom:24px">
+          InnovateSphere provides an end-to-end platform where problems are verified with AI, assigned to academic research labs, co-funded by industry CSR, and tracked through deployment with community accountability.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div style="padding:16px;background:var(--primary-50);border-radius:12px;border:1px solid var(--primary-100)">
+            <div style="font-weight:800;font-size:20px;color:var(--primary)">100%</div>
+            <div style="font-size:12px;color:var(--gray-600);margin-top:2px">Free &amp; Open for Citizens</div>
+          </div>
+          <div style="padding:16px;background:var(--accent-50);border-radius:12px;border:1px solid var(--accent-100)">
+            <div style="font-weight:800;font-size:20px;color:var(--accent)">SIH PS2643</div>
+            <div style="font-size:12px;color:var(--gray-600);margin-top:2px">Compliant Architecture</div>
+          </div>
+        </div>
+      </div>
+      <div style="position:relative;border-radius:24px;overflow:hidden;box-shadow:var(--shadow-xl)">
+        <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80" alt="Indian community collaboration" style="width:100%;height:400px;object-fit:cover" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+  FAQ SECTION
+═══════════════════════════════════════════════ -->
+<section class="section" id="faq" style="background:var(--gray-50)">
+  <div class="container" style="max-width:800px">
+    <div class="section-header">
+      <div class="section-badge">Common Inquiries</div>
+      <h2 class="section-title">Frequently Asked Questions</h2>
+      <p class="section-subtitle">Everything you need to know about participating in the innovation ecosystem.</p>
+    </div>
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>Who can submit a challenge on InnovateSphere?</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          Any Indian citizen, community representative, village head, NGO, or municipal body can register for free and submit societal challenges with description and photo/document evidence.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>How do universities get involved?</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          Higher Education Institutions (HEIs) register university accounts, map their departments (Engineering, Agriculture, Public Health, Social Sciences), and receive curated problem statements matched to their domain expertise.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>How does industry and CSR funding work?</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          Industry partners can browse assigned challenges, pledge CSR funding, provide specialized technology or mentorship, and partner with university labs to co-develop production-grade solutions.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>Is there AI duplicate detection and categorization?</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          Yes! The platform includes built-in Natural Language Processing that classifies problems into 10 domains and flags duplicate submissions from nearby GPS coordinates.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+  CALL TO ACTION (CTA)
+═══════════════════════════════════════════════ -->
+<section class="section" id="cta" style="background: linear-gradient(135deg, rgba(26,86,219,0.92) 0%, rgba(124,58,237,0.88) 100%), url('https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=1600&q=80') center/cover no-repeat; color:white; text-align:center;">
+  <div class="container" style="max-width:720px">
+    <h2 style="font-size:36px;font-weight:900;color:white;margin-bottom:16px;letter-spacing:-1px">Ready to Transform Your Community?</h2>
+    <p style="font-size:16px;color:rgba(255,255,255,0.85);margin-bottom:32px;line-height:1.7">
+      Join thousands of citizens, university researchers, and industry innovators building real solutions for India's future.
+    </p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <a href="/register.html?role=citizen" class="btn" style="background:white;color:var(--primary);font-weight:700;padding:14px 32px;border-radius:99px;box-shadow:0 8px 24px rgba(0,0,0,0.2)">Register as Citizen</a>
+      <a href="/register.html?role=university_rep" class="btn" style="background:rgba(255,255,255,0.15);color:white;border:1.5px solid rgba(255,255,255,0.4);font-weight:700;padding:14px 28px;border-radius:99px">University Onboarding</a>
+      <a href="/register.html?role=industry_rep" class="btn" style="background:rgba(255,255,255,0.15);color:white;border:1.5px solid rgba(255,255,255,0.4);font-weight:700;padding:14px 28px;border-radius:99px">Industry Partner</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+  FOOTER
+═══════════════════════════════════════════════ -->
+<footer class="footer" id="contact" style="background:#0f172a;color:white;padding:64px 0 32px">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <div class="navbar-logo" style="width:32px;height:32px">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div style="font-family:var(--font-display);font-size:18px;font-weight:800;color:white">InnovateSphere</div>
+        </div>
+        <p style="color:#94a3b8;font-size:13.5px;line-height:1.7;max-width:320px;margin-bottom:20px">
+          India's dedicated platform for crowdsourcing societal challenges and facilitating collaborative problem-solving through universities and industry.
+        </p>
+        <div style="font-size:12px;color:#64748b">Problem Statement 2643 · SIH</div>
+      </div>
+
+      <div>
+        <div style="font-weight:700;font-size:14px;color:white;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px">Platform</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:13.5px;color:#94a3b8">
+          <a href="/feed" style="color:#60a5fa;font-weight:600">Live Public Feed 🔴</a>
+          <a href="/map">India Heatmap</a>
+          <a href="#categories">Domain Categories</a>
+          <a href="#how-it-works">How It Works</a>
+          <a href="#universities">Universities</a>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-weight:700;font-size:14px;color:white;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px">Portals</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:13.5px;color:#94a3b8">
+          <a href="/dashboard/citizen.html">Citizen Dashboard</a>
+          <a href="/dashboard/university.html">University Dashboard</a>
+          <a href="/dashboard/industry.html">Industry Dashboard</a>
+          <a href="/dashboard/admin.html">Admin Command Center</a>
+          <a href="/login.html">Sign In</a>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-weight:700;font-size:14px;color:white;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px">Contact</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:13.5px;color:#94a3b8">
+          <span>support@innovatesphere.in</span>
+          <span>Delhi · Ranchi · Bengaluru</span>
+          <span>Open 24/7 for Civic Submissions</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid #1e293b;padding-top:24px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#64748b;flex-wrap:wrap;gap:12px">
+      <div>&copy; 2026 InnovateSphere. All rights reserved. Built for National Societal Impact.</div>
+      <div>Designed for SIH Problem Statement 2643</div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/js/leaflet-heat.js"></script>
+<script src="/js/heatmap-component.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+<script>
+  const LANDING_QUOTES = {
+    en: [
+      "Your Voice, Your Right — <span style='color:#138808;'>Resolving every issue, empowering our Jharkhand.</span>",
+      "Empowered Citizens, Developed Society — <span style='color:#138808;'>Direct action for every village & ward.</span>",
+      "Transparency and Trust — <span style='color:#138808;'>Bridging citizens, universities and industry.</span>",
+      "Your Grievance, Our Commitment — <span style='color:#138808;'>Building a smart, self-reliant Jharkhand.</span>"
+    ],
+    hi: [
+      "आपकी आवाज़, आपका अधिकार — <span style='color:#138808;'>सुलझेगी हर समस्या, बढ़ेगा हमारा बिहार व झारखण्ड।</span>",
+      "सशक्त नागरिक, विकसित समाज — <span style='color:#138808;'>हर गाँव और पंचायत तक पहुँचेगा जमीनी समाधान।</span>",
+      "पारदर्शिता और अटूट विश्वास — <span style='color:#138808;'>जनसेतु के साथ जुड़ेगा हर एक जनमानस।</span>",
+      "समस्या आपकी, संकल्प हमारा — <span style='color:#138808;'>डिजिटल तकनीक से आत्मनिर्भर झारखण्ड।</span>"
+    ],
+    hinglish: [
+      "Aapki Awaaz, Aapka Adhikar — <span style='color:#138808;'>Suljhegi har samasya, badhega hamara Jharkhand.</span>",
+      "Gaon se lekar shehar tak — <span style='color:#138808;'>Har nagrik ki pareshani ka pakka samadhan.</span>",
+      "Seedhe authority aur university tak — <span style='color:#138808;'>JanSetu ke saath.</span>",
+      "Problem aapki, sankalp hamara — <span style='color:#138808;'>Behtar kal ke liye aaj hi judiye.</span>"
+    ]
+  };
+
+  const LANDING_I18N = {
+    en: {
+      hero_title: "Bridging Society with<br><span class='highlight'>Universities & Industry</span><br>for Real Impact",
+      hero_desc: "Submit your community's challenges. Connect with India's premier universities and industry leaders. Transform local problems across all states into innovative, scalable solutions.",
+      btn_submit: "Submit a Challenge",
+      btn_heatmap: "India Heatmap",
+      stat_chal: "Challenges Tracked",
+      stat_univ: "Universities Active",
+      stat_part: "Industry Partners",
+      stat_sol: "Solutions Deployed"
+    },
+    hi: {
+      hero_title: "समाज को जोड़ें<br><span class='highlight'>विश्वविद्यालयों और उद्योग</span><br>के वास्तविक समाधान से",
+      hero_desc: "अपनी सामुदायिक समस्याएं दर्ज करें। देश के प्रमुख विश्वविद्यालयों एवं औद्योगिक विशेषज्ञों से जुड़ें। स्थानीय समस्याओं को स्थायी व नवाचारी समाधान में बदलें।",
+      btn_submit: "समस्या दर्ज करें",
+      btn_heatmap: "भारत मानचित्र",
+      stat_chal: "दर्ज चुनौतियां",
+      stat_univ: "सक्रिय विश्वविद्यालय",
+      stat_part: "औद्योगिक साझेदार",
+      stat_sol: "लागू समाधान"
+    },
+    hinglish: {
+      hero_title: "Society ko jodein<br><span class='highlight'>Universities & Industry</span><br>ke Real Solutions se",
+      hero_desc: "Apni community problems submit karein. Top universities aur industry taskforces ke saath milkar ground problems ka pakka samadhan paayein.",
+      btn_submit: "Challenge Submit Karein",
+      btn_heatmap: "India Heatmap",
+      stat_chal: "Total Challenges",
+      stat_univ: "Active Universities",
+      stat_part: "Industry Partners",
+      stat_sol: "Solved Solutions"
+    }
+  };
+
+  let landingLang = localStorage.getItem('jansetu_language') || 'hi';
+  let landingQuoteIdx = 0;
+  let landingQuoteTimer = null;
+
+  function setLandingLanguage(lang) {
+    landingLang = lang;
+    localStorage.setItem('jansetu_language', lang);
+
+    ['en', 'hi', 'hinglish'].forEach(l => {
+      const btn = document.getElementById('langBtn_' + l);
+      if (btn) {
+        if (l === lang) {
+          btn.style.background = '#002D62';
+          btn.style.color = '#FFF';
+        } else {
+          btn.style.background = 'transparent';
+          btn.style.color = '#475569';
+        }
+      }
+    });
+
+    const d = LANDING_I18N[lang] || LANDING_I18N['hi'];
+    const titleEl = document.getElementById('heroTitle');
+    if (titleEl) titleEl.innerHTML = d.hero_title;
+
+    const descEl = document.querySelector('.hero-description');
+    if (descEl) descEl.innerHTML = d.hero_desc;
+
+    updateLandingQuote(false);
+  }
+
+  function updateLandingQuote(fade = true) {
+    const el = document.getElementById('heroQuoteText');
+    if (!el) return;
+    const quotes = LANDING_QUOTES[landingLang] || LANDING_QUOTES['hi'];
+    const nextQ = quotes[landingQuoteIdx % quotes.length];
+
+    if (fade) {
+      el.style.opacity = '0';
+      setTimeout(() => {
+        el.innerHTML = nextQ;
+        el.style.opacity = '1';
+      }, 300);
+    } else {
+      el.innerHTML = nextQ;
+      el.style.opacity = '1';
+    }
+  }
+
+  function startLandingQuoteRotator() {
+    if (landingQuoteTimer) clearInterval(landingQuoteTimer);
+    updateLandingQuote(false);
+    landingQuoteTimer = setInterval(() => {
+      landingQuoteIdx++;
+      updateLandingQuote(true);
+    }, 10000);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setLandingLanguage(landingLang);
+    startLandingQuoteRotator();
+  });
+</script>
+</body>
+</html>

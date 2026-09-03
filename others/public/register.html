@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account — InnovateSphere</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/auth.css">
+  <link rel="stylesheet" href="/css/components.css">
+</head>
+<body>
+<div class="auth-layout">
+  <!-- Left Panel -->
+  <div class="auth-left">
+    <div class="auth-left-grid"></div>
+    <div class="auth-left-content">
+      <a href="/" class="auth-logo">
+        <div class="auth-logo-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <div class="auth-logo-name">InnovateSphere</div>
+      </a>
+      <h1 class="auth-left-title">Join India's<br>Civic Innovation<br>Movement</h1>
+      <p class="auth-left-desc">Be part of a nationwide ecosystem connecting citizens, HEIs, and industry innovators to solve real societal problems.</p>
+      <div class="auth-features">
+        <div class="auth-feature">
+          <div class="auth-feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <div class="auth-feature-text">Submit unlimited challenges — completely free</div>
+        </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.08 9.82 19.79 19.79 0 01.01 1.21 2 2 0 012 0h3.09a2 2 0 012 1.72c.12.96.36 1.9.71 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.91.35 1.85.59 2.81.71A2 2 0 0120.05 15z"/></svg>
+          </div>
+          <div class="auth-feature-text">Real-time notifications at every stage of your challenge</div>
+        </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="auth-feature-text">Secure, transparent and government-backed platform</div>
+        </div>
+      </div>
+    </div>
+    <div class="auth-left-stats">
+      <div><div class="auth-left-stat-num">3 Roles</div><div class="auth-left-stat-lbl">Citizen / University / Industry</div></div>
+      <div><div class="auth-left-stat-num">Free</div><div class="auth-left-stat-lbl">No cost to join</div></div>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="auth-right" style="padding:40px;align-items:flex-start;overflow-y:auto">
+    <div class="auth-form-container" style="max-width:500px;padding-top:20px">
+      <div class="auth-form-header">
+        <a href="/" class="auth-back-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Back to home
+        </a>
+        <h2 class="auth-form-title">Create your account</h2>
+        <p class="auth-form-subtitle">Already have an account? <a href="/login.html">Sign in here</a></p>
+      </div>
+
+      <div id="registerAlert" style="display:none"></div>
+
+      <!-- Role Selector -->
+      <div style="margin-bottom:24px">
+        <label class="form-label">I am joining as<span class="required">*</span></label>
+        <div class="role-selector">
+          <div class="role-option">
+            <input type="radio" name="role" id="role-citizen" value="citizen" checked>
+            <label class="role-option-label" for="role-citizen">
+              <div class="role-icon" style="background:var(--primary-50)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <div class="role-name">Citizen</div>
+            </label>
+          </div>
+          <div class="role-option">
+            <input type="radio" name="role" id="role-university" value="university_rep">
+            <label class="role-option-label" for="role-university">
+              <div class="role-icon" style="background:var(--secondary-50)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              </div>
+              <div class="role-name">University</div>
+            </label>
+          </div>
+          <div class="role-option">
+            <input type="radio" name="role" id="role-industry" value="industry_rep">
+            <label class="role-option-label" for="role-industry">
+              <div class="role-icon" style="background:var(--accent-50)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+              </div>
+              <div class="role-name">Industry</div>
+            </label>
+          </div>
+          <div class="role-option" style="display:none">
+            <input type="radio" name="role" id="role-admin" value="admin">
+          </div>
+        </div>
+      </div>
+
+      <form id="registerForm" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="regName">Full Name<span class="required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <input type="text" class="form-control" id="regName" placeholder="Your full name" required>
+            </div>
+            <div class="form-error" id="nameError" style="display:none"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regPhone">Phone Number</label>
+            <div class="input-with-icon">
+              <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.08 9.82 19.79 19.79 0 01.01 1.21 2 2 0 012 0h3.09a2 2 0 012 1.72c.12.96.36 1.9.71 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.91.35 1.85.59 2.81.71A2 2 0 0120.05 15z"/></svg>
+              <input type="tel" class="form-control" id="regPhone" placeholder="+91 9XXXXXXXXX">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="regEmail">Email Address<span class="required">*</span></label>
+          <div class="input-with-icon">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input type="email" class="form-control" id="regEmail" placeholder="your@email.com" required>
+          </div>
+          <div class="form-error" id="regEmailError" style="display:none"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="regPassword">Password<span class="required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              <input type="password" class="form-control" id="regPassword" placeholder="Min 6 characters" required>
+            </div>
+            <div class="form-error" id="regPasswordError" style="display:none"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regConfirmPassword">Confirm Password<span class="required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              <input type="password" class="form-control" id="regConfirmPassword" placeholder="Repeat password" required>
+            </div>
+            <div class="form-error" id="confirmPasswordError" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Citizen Fields -->
+        <div id="citizenFields">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="city">City/Village</label>
+              <input type="text" class="form-control" id="city" placeholder="Your city or village">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="district">District</label>
+              <select class="form-control" id="district">
+                <option value="">Select District</option>
+                <option>Ranchi</option><option>Dhanbad</option><option>Jamshedpur</option>
+                <option>Bokaro</option><option>Hazaribagh</option><option>Giridih</option>
+                <option>Deoghar</option><option>Dumka</option><option>Pakur</option>
+                <option>Sahibganj</option><option>Godda</option><option>Jamtara</option>
+                <option>Chatra</option><option>Koderma</option><option>Palamu</option>
+                <option>Garhwa</option><option>Latehar</option><option>Lohardaga</option>
+                <option>Gumla</option><option>Simdega</option><option>West Singhbhum</option>
+                <option>East Singhbhum</option><option>Seraikela Kharsawan</option>
+                <option>Ramgarh</option><option>Khunti</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- University Fields -->
+        <div id="universityFields" style="display:none">
+          <div class="form-group">
+            <label class="form-label" for="universitySelect">Select Your University<span class="required">*</span></label>
+            <select class="form-control" id="universitySelect">
+              <option value="">-- Select University --</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="designation">Your Designation</label>
+              <input type="text" class="form-control" id="designation" placeholder="e.g. Professor, Coordinator">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="department">Department</label>
+              <input type="text" class="form-control" id="department" placeholder="e.g. Computer Science">
+            </div>
+          </div>
+        </div>
+
+        <!-- Industry Fields -->
+        <div id="industryFields" style="display:none">
+          <div class="form-group">
+            <label class="form-label" for="industrySelect">Select Your Organization<span class="required">*</span></label>
+            <select class="form-control" id="industrySelect">
+              <option value="">-- Select Organization --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="designationInd">Your Designation</label>
+            <input type="text" class="form-control" id="designationInd" placeholder="e.g. CSR Manager, Innovation Lead">
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:24px;font-size:13px;color:var(--gray-600)">
+          <input type="checkbox" id="agreeTerms" style="width:16px;height:16px;accent-color:var(--primary);margin-top:2px;flex-shrink:0" required>
+          <label for="agreeTerms">I agree to the <a href="#" style="color:var(--primary);font-weight:600">Terms of Service</a> and <a href="#" style="color:var(--primary);font-weight:600">Privacy Policy</a></label>
+        </div>
+
+        <button type="submit" class="btn-auth-submit" id="registerBtn">
+          <span class="btn-text">Create Account</span>
+          <div class="btn-spinner"></div>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="/js/utils.js"></script>
+<script src="/js/auth.js"></script>
+</body>
+</html>

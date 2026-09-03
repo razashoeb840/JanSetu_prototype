@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>University Dashboard — InnovateSphere</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="dashboard-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-name">InnovateSphere</div>
+        <div class="sidebar-brand-sub" id="univNameSub">University Portal</div>
+      </div>
+      <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Navigation</div>
+      <a href="/" class="sidebar-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span class="sidebar-link-text">Public Feed</span>
+      </a>
+      <a href="/map" class="sidebar-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        <span class="sidebar-link-text">India Map</span>
+      </a>
+      <div class="sidebar-section-label">Dashboard</div>
+      <a class="sidebar-link active" id="nav-overview" onclick="showSection('overview')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span class="sidebar-link-text">Overview</span>
+      </a>
+
+      <a class="sidebar-link" id="nav-assigned" onclick="showSection('assigned')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="sidebar-link-text">Assigned Challenges</span>
+        <span class="sidebar-badge" id="assignedBadge" style="display:none">0</span>
+      </a>
+      <a class="sidebar-link" id="nav-milestones" onclick="showSection('milestones')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        <span class="sidebar-link-text">Milestones</span>
+      </a>
+      <a class="sidebar-link" id="nav-notifications" onclick="showSection('notifications')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="sidebar-link-text">Notifications</span>
+        <span class="sidebar-badge notif-badge-count" style="display:none">0</span>
+      </a>
+      <a class="sidebar-link" id="nav-profile" onclick="showSection('profile')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        <span class="sidebar-link-text">University Profile</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="sidebarAvatar">U</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebarName">University Rep</div>
+          <div class="sidebar-user-role">University Representative</div>
+        </div>
+      </div>
+      <button onclick="logout()" class="sidebar-link" style="width:100%;color:var(--danger);margin-top:8px">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span class="sidebar-link-text">Logout</span>
+      </button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
+
+  <main class="main-content" id="mainContent">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="topbar-btn" onclick="openMobileSidebar()" id="mobileSidebarBtn" style="display:none">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div>
+          <div class="topbar-page-title" id="pageTitle">University Overview</div>
+          <div class="topbar-breadcrumb">University Portal / <span id="pageBreadcrumb">Overview</span></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-user" onclick="showSection('profile')">
+          <div class="topbar-user-avatar" id="topbarAvatar" style="background:linear-gradient(135deg,var(--secondary),var(--secondary-light))">U</div>
+          <div class="topbar-user-name" id="topbarName">University Rep</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- ── OVERVIEW ── -->
+      <div id="section-overview" class="dashboard-section">
+        <div class="welcome-banner univ-banner">
+          <div class="welcome-content">
+            <div class="welcome-greeting">University Dashboard</div>
+            <div class="welcome-name" id="welcomeName">Welcome!</div>
+            <div class="welcome-message">Manage assigned challenges, track milestones, and collaborate with industry partners to deliver impactful solutions.</div>
+            <div class="welcome-actions">
+              <button onclick="showSection('assigned')" class="btn-white">View Assigned Challenges</button>
+              <button onclick="showSection('milestones')" class="btn-white-outline">Track Milestones</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-header"><div class="metric-icon" style="background:var(--primary-50)"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg></div></div>
+            <div class="metric-value" id="m-assigned">0</div>
+            <div class="metric-label">Total Assigned</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header"><div class="metric-icon" style="background:#fef3c7"><span style="font-size:18px">⟳</span></div></div>
+            <div class="metric-value" id="m-inprogress">0</div>
+            <div class="metric-label">In Progress</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header"><div class="metric-icon" style="background:var(--accent-50)"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div></div>
+            <div class="metric-value" id="m-resolved">0</div>
+            <div class="metric-label">Resolved</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header"><div class="metric-icon" style="background:#f3e8ff"><span style="font-size:18px">📊</span></div></div>
+            <div class="metric-value" id="m-score">0</div>
+            <div class="metric-label">Performance Score</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="chart-container">
+            <div class="chart-header"><div><div class="chart-title">Resolution Progress</div></div></div>
+            <div class="chart-body"><canvas id="univChart"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header" style="padding:20px 24px 0"><div style="font-weight:700;font-size:16px;color:var(--gray-900)">Recent Assignments</div></div>
+            <div class="card-body" id="recentAssigned">
+              <div class="skeleton skeleton-card" style="height:60px;margin-bottom:8px"></div>
+              <div class="skeleton skeleton-card" style="height:60px;margin-bottom:8px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ASSIGNED CHALLENGES ── -->
+      <div id="section-assigned" class="dashboard-section" style="display:none">
+        <div style="margin-bottom:24px"><h2 style="font-size:22px;font-weight:800;color:var(--gray-900)">Assigned Challenges</h2><div style="font-size:13px;color:var(--gray-400)">Challenges assigned to your university for solution development</div></div>
+        <div class="filter-bar">
+          <select class="filter-select" id="univStatusFilter" onchange="loadAssigned()">
+            <option value="">All Statuses</option>
+            <option value="assigned">Assigned</option>
+            <option value="in_progress">In Progress</option>
+            <option value="testing">Testing</option>
+            <option value="resolved">Resolved</option>
+          </select>
+        </div>
+        <div id="assignedList" style="display:flex;flex-direction:column;gap:16px"></div>
+      </div>
+
+      <!-- ── MILESTONES ── -->
+      <div id="section-milestones" class="dashboard-section" style="display:none">
+        <div style="margin-bottom:24px"><h2 style="font-size:22px;font-weight:800;color:var(--gray-900)">Milestone Tracker</h2><div style="font-size:13px;color:var(--gray-400)">Track progress milestones across all assigned challenges</div></div>
+        <div id="milestonesList" style="display:flex;flex-direction:column;gap:20px"></div>
+      </div>
+
+      <!-- ── NOTIFICATIONS ── -->
+      <div id="section-notifications" class="dashboard-section" style="display:none">
+        <div style="margin-bottom:24px"><h2 style="font-size:22px;font-weight:800;color:var(--gray-900)">Notifications</h2></div>
+        <div class="card"><div class="card-body" id="notifList"><div class="skeleton skeleton-card" style="height:70px;margin-bottom:10px"></div></div></div>
+      </div>
+
+      <!-- ── PROFILE ── -->
+      <div id="section-profile" class="dashboard-section" style="display:none">
+        <div style="max-width:700px;margin:0 auto">
+          <h2 style="font-size:22px;font-weight:800;color:var(--gray-900);margin-bottom:24px">University Profile</h2>
+          <div class="card" id="univProfileCard">
+            <div class="card-body">
+              <div class="skeleton skeleton-card" style="height:200px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Challenge Update Modal -->
+<div class="modal-overlay" id="updateModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">Update Challenge Status</div>
+      <button class="modal-close" onclick="closeModal('updateModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="updateChallengeTitle" style="font-weight:600;color:var(--gray-800);margin-bottom:16px"></div>
+      <div class="form-group">
+        <label class="form-label">New Status</label>
+        <select class="form-control" id="updateStatus">
+          <option value="in_progress">In Progress</option>
+          <option value="testing">Testing / Pilot</option>
+          <option value="resolved">Resolved</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Progress Note</label>
+        <textarea class="form-control" id="updateNote" rows="3" placeholder="Describe the current progress..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('updateModal')" class="btn btn-ghost">Cancel</button>
+      <button onclick="confirmUpdate()" class="btn btn-blue">Update Status</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="/js/utils.js"></script>
+<script src="/js/dashboard/university.js"></script>
+</body>
+</html>
