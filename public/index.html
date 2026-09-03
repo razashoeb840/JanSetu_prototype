@@ -48,6 +48,11 @@
       </div>
 
       <div class="navbar-actions">
+      <div class="lang-switcher-pill" style="display:inline-flex;align-items:center;background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:30px;padding:2px 4px;margin-right:8px;">
+        <button type="button" class="lang-btn" id="langBtn_en" onclick="setLandingLanguage('en')" style="border:none;background:transparent;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;transition:all 0.15s ease;">EN</button>
+        <button type="button" class="lang-btn" id="langBtn_hi" onclick="setLandingLanguage('hi')" style="border:none;background:transparent;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;transition:all 0.15s ease;">हिन्दी</button>
+        <button type="button" class="lang-btn" id="langBtn_hinglish" onclick="setLandingLanguage('hinglish')" style="border:none;background:transparent;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;transition:all 0.15s ease;">Hinglish</button>
+      </div>
         <a href="/login.html" class="btn-nav-login">Login</a>
         <a href="/register.html" class="btn-nav-cta">Get Started →</a>
         <button class="hamburger" id="hamburger" aria-label="Menu">
@@ -99,7 +104,12 @@
           PS2643 · National Societal Innovation Platform
         </div>
 
-        <h1 class="hero-title">
+        
+        <div id="heroDynamicQuote" style="background:rgba(255,255,255,0.92);backdrop-filter:blur(10px);border:1.5px solid rgba(0,45,98,0.15);border-radius:14px;padding:10px 18px;margin-bottom:16px;display:inline-flex;align-items:center;gap:10px;box-shadow:0 4px 14px rgba(0,45,98,0.06);transition:opacity 0.3s ease;">
+          <span style="font-size:18px;">🇮🇳</span>
+          <span id="heroQuoteText" style="font-size:14px;font-weight:800;color:#002D62;">आपकी आवाज़, आपका अधिकार — सुलझेगी हर समस्या, बढ़ेगा हमारा झारखण्ड।</span>
+        </div>
+        <h1 class="hero-title" id="heroTitle">
           Bridging Society with<br>
           <span class="highlight">Universities & Industry</span><br>
           for Real Impact
@@ -578,6 +588,126 @@
 <script src="/js/heatmap-component.js"></script>
 <script src="/js/utils.js"></script>
 <script src="/js/main.js"></script>
+
+<script>
+  const LANDING_QUOTES = {
+    en: [
+      "Your Voice, Your Right — <span style='color:#138808;'>Resolving every issue, empowering our Jharkhand.</span>",
+      "Empowered Citizens, Developed Society — <span style='color:#138808;'>Direct action for every village & ward.</span>",
+      "Transparency and Trust — <span style='color:#138808;'>Bridging citizens, universities and industry.</span>",
+      "Your Grievance, Our Commitment — <span style='color:#138808;'>Building a smart, self-reliant Jharkhand.</span>"
+    ],
+    hi: [
+      "आपकी आवाज़, आपका अधिकार — <span style='color:#138808;'>सुलझेगी हर समस्या, बढ़ेगा हमारा बिहार व झारखण्ड।</span>",
+      "सशक्त नागरिक, विकसित समाज — <span style='color:#138808;'>हर गाँव और पंचायत तक पहुँचेगा जमीनी समाधान।</span>",
+      "पारदर्शिता और अटूट विश्वास — <span style='color:#138808;'>जनसेतु के साथ जुड़ेगा हर एक जनमानस।</span>",
+      "समस्या आपकी, संकल्प हमारा — <span style='color:#138808;'>डिजिटल तकनीक से आत्मनिर्भर झारखण्ड।</span>"
+    ],
+    hinglish: [
+      "Aapki Awaaz, Aapka Adhikar — <span style='color:#138808;'>Suljhegi har samasya, badhega hamara Jharkhand.</span>",
+      "Gaon se lekar shehar tak — <span style='color:#138808;'>Har nagrik ki pareshani ka pakka samadhan.</span>",
+      "Seedhe authority aur university tak — <span style='color:#138808;'>JanSetu ke saath.</span>",
+      "Problem aapki, sankalp hamara — <span style='color:#138808;'>Behtar kal ke liye aaj hi judiye.</span>"
+    ]
+  };
+
+  const LANDING_I18N = {
+    en: {
+      hero_title: "Bridging Society with<br><span class='highlight'>Universities & Industry</span><br>for Real Impact",
+      hero_desc: "Submit your community's challenges. Connect with India's premier universities and industry leaders. Transform local problems across all states into innovative, scalable solutions.",
+      btn_submit: "Submit a Challenge",
+      btn_heatmap: "India Heatmap",
+      stat_chal: "Challenges Tracked",
+      stat_univ: "Universities Active",
+      stat_part: "Industry Partners",
+      stat_sol: "Solutions Deployed"
+    },
+    hi: {
+      hero_title: "समाज को जोड़ें<br><span class='highlight'>विश्वविद्यालयों और उद्योग</span><br>के वास्तविक समाधान से",
+      hero_desc: "अपनी सामुदायिक समस्याएं दर्ज करें। देश के प्रमुख विश्वविद्यालयों एवं औद्योगिक विशेषज्ञों से जुड़ें। स्थानीय समस्याओं को स्थायी व नवाचारी समाधान में बदलें।",
+      btn_submit: "समस्या दर्ज करें",
+      btn_heatmap: "भारत मानचित्र",
+      stat_chal: "दर्ज चुनौतियां",
+      stat_univ: "सक्रिय विश्वविद्यालय",
+      stat_part: "औद्योगिक साझेदार",
+      stat_sol: "लागू समाधान"
+    },
+    hinglish: {
+      hero_title: "Society ko jodein<br><span class='highlight'>Universities & Industry</span><br>ke Real Solutions se",
+      hero_desc: "Apni community problems submit karein. Top universities aur industry taskforces ke saath milkar ground problems ka pakka samadhan paayein.",
+      btn_submit: "Challenge Submit Karein",
+      btn_heatmap: "India Heatmap",
+      stat_chal: "Total Challenges",
+      stat_univ: "Active Universities",
+      stat_part: "Industry Partners",
+      stat_sol: "Solved Solutions"
+    }
+  };
+
+  let landingLang = localStorage.getItem('jansetu_language') || 'hi';
+  let landingQuoteIdx = 0;
+  let landingQuoteTimer = null;
+
+  function setLandingLanguage(lang) {
+    landingLang = lang;
+    localStorage.setItem('jansetu_language', lang);
+
+    ['en', 'hi', 'hinglish'].forEach(l => {
+      const btn = document.getElementById('langBtn_' + l);
+      if (btn) {
+        if (l === lang) {
+          btn.style.background = '#002D62';
+          btn.style.color = '#FFF';
+        } else {
+          btn.style.background = 'transparent';
+          btn.style.color = '#475569';
+        }
+      }
+    });
+
+    const data = LANDING_I18N[lang] || LANDING_I18N['hi'];
+    const titleEl = document.getElementById('heroTitle');
+    if (titleEl) titleEl.innerHTML = data.hero_title;
+
+    const descEl = document.querySelector('.hero-description');
+    if (descEl) descEl.innerHTML = data.hero_desc;
+
+    updateLandingQuote(false);
+  }
+
+  function updateLandingQuote(fade = true) {
+    const el = document.getElementById('heroQuoteText');
+    if (!el) return;
+    const quotes = LANDING_QUOTES[landingLang] || LANDING_QUOTES['hi'];
+    const nextQ = quotes[landingQuoteIdx % quotes.length];
+
+    if (fade) {
+      el.style.opacity = '0';
+      setTimeout(() => {
+        el.innerHTML = nextQ;
+        el.style.opacity = '1';
+      }, 300);
+    } else {
+      el.innerHTML = nextQ;
+      el.style.opacity = '1';
+    }
+  }
+
+  function startLandingQuoteRotator() {
+    if (landingQuoteTimer) clearInterval(landingQuoteTimer);
+    updateLandingQuote(false);
+    landingQuoteTimer = setInterval(() => {
+      landingQuoteIdx++;
+      updateLandingQuote(true);
+    }, 10000); // exactly 10 seconds
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setLandingLanguage(landingLang);
+    startLandingQuoteRotator();
+  });
+</script>
+
 </body>
 </html>
 
