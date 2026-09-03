@@ -1,0 +1,652 @@
+const Challenge = require('../models/Challenge');
+const University = require('../models/University');
+const User = require('../models/User');
+const { classifyChallenge, generateTags, suggestPriority } = require('../services/aiClassifier');
+const { notifyChallenge, notifyStatusChange, notifyUniversityAssignment, logActivity } = require('../services/notificationService');
+const path = require('path');
+
+// @desc    Get all challenges (with search, filter, pagination)
+// @route   GET /api/challenges
+// @access  Public/Private (different views)
+exports.getChallenges = async (req, res, next) => {
+  try {
+    const {
+      search, category, status, priority, district, assignedUniversity,
+      page = 1, limit = 10, sort = '-createdAt', startDate, endDate, myOnly
+    } = req.query;
+
+    let query = {};
+
+    // Role-based filtering
+    if (req.user) {
+      if (req.user.role === 'citizen' && myOnly === 'true') {
+        query.submittedBy = req.user.id;
+      } else if (req.user.role === 'university_rep') {
+        query.assignedUniversity = req.user.universityId;
+      } else if (req.user.role === 'industry_rep') {
+        // Industry reps see all non-draft challenges
+        query.status = { $ne: 'draft' };
+      }
+    } else {
+      // Public: only show validated+ public challenges
+      query.isPublic = true;
+      query.status = { $in: ['validated', 'assigned', 'in_progress', 'testing', 'resolved'] };
+    }
+
+    // Filters
+    if (search) query.$text = { $search: search };
+    if (category) query.category = category;
+    if (status && status !== 'all') query.status = status;
+    if (priority) query.priority = priority;
+    if (district) query['location.district'] = district;
+    if (assignedUniversity) query.assignedUniversity = assignedUniversity;
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const [challenges, total] = await Promise.all([
+      Challenge.find(query)
+        .populate('submittedBy', 'name email avatar role')
+        .populate('assignedUniversity', 'name shortName logo')
+        .populate('assignedBy', 'name')
+        .sort(sort)
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      Challenge.countDocuments(query)
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: challenges,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum)
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get single challenge
+// @route   GET /api/challenges/:id
+// @access  Public/Private
+exports.getChallenge = async (req, res, next) => {
+  try {
+    const challenge = await Challenge.findById(req.params.id)
+      .populate('submittedBy', 'name email avatar phone')
+      .populate('assignedUniversity', 'name shortName logo departments contact location')
+      .populate('assignedBy', 'name role')
+      .populate('industryCollaborators.partner', 'name type logo sector')
+      .populate('statusHistory.changedBy', 'name role');
+
+    if (!challenge) {
+      return res.status(404).json({ success: false, message: 'Challenge not found' });
+    }
+
+    // Increment view count
+    await Challenge.findByIdAndUpdate(req.params.id, { $inc: { viewCount: 1 } });
+
+    res.status(200).json({ success: true, data: challenge });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Create challenge
+// @route   POST /api/challenges
+// @access  Private (Citizen, Admin)
+exports.createChallenge = async (req, res, next) => {
+  try {
+    const {
+      title, description, category, priority, location,
+      submitterContact, deadline, isPublic = true
+    } = req.body;
+
+    // AI classification
+    const aiResult = classifyChallenge(title, description);
+    const tags = generateTags(`${title} ${description}`);
+    const suggestedPriority = suggestPriority(`${title} ${description}`);
+
+    const attachments = req.files ? req.files.map(f => ({
+      filename: f.filename,
+      originalName: f.originalname,
+      mimetype: f.mimetype,
+      size: f.size,
+      url: `/uploads/challenges/${f.filename}`
+    })) : [];
+
+    const challenge = await Challenge.create({
+      title: title.trim(),
+      description,
+      category: category || aiResult.category,
+      aiSuggestedCategory: aiResult.category,
+      aiConfidenceScore: aiResult.confidence,
+      tags,
+      priority: priority || suggestedPriority,
+      submittedBy: req.user.id,
+      submitterContact: submitterContact || {
+        name: req.user.name,
+        email: req.user.email,
+        phone: req.user.phone
+      },
+      location: typeof location === 'string' ? JSON.parse(location) : location,
+      attachments,
+      deadline: deadline ? new Date(deadline) : null,
+      isPublic,
+      status: 'submitted',
+      statusHistory: [{
+        status: 'submitted',
+        changedBy: req.user.id,
+        note: 'Challenge submitted by citizen'
+      }]
+    });
+
+    // Update user stats
+    await User.findByIdAndUpdate(req.user.id, { $inc: { 'stats.challengesSubmitted': 1 } });
+
+    // Notify
+    await notifyChallenge(challenge, req.user);
+
+    await logActivity({
+      actor: req.user,
+      action: 'challenge_created',
+      target: { type: 'Challenge', id: challenge._id, name: challenge.title },
+      description: `New challenge submitted: "${challenge.title}" by ${req.user.name}`,
+      req
+    });
+
+    res.status(201).json({ success: true, data: challenge, message: `Challenge submitted! ID: ${challenge.challengeId}` });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update challenge (admin/university)
+// @route   PUT /api/challenges/:id
+// @access  Private
+exports.updateChallenge = async (req, res, next) => {
+  try {
+    let challenge = await Challenge.findById(req.params.id);
+    if (!challenge) return res.status(404).json({ success: false, message: 'Challenge not found' });
+
+    // Only submitter or admin can update
+    if (challenge.submittedBy.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    const allowedUpdates = ['title', 'description', 'category', 'priority', 'location', 'deadline', 'isPublic', 'validationNotes', 'rejectionReason', 'impactMetrics'];
+    const updateData = {};
+    allowedUpdates.forEach(f => { if (req.body[f] !== undefined) updateData[f] = req.body[f]; });
+
+    challenge = await Challenge.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
+
+    await logActivity({
+      actor: req.user,
+      action: 'challenge_updated',
+      target: { type: 'Challenge', id: challenge._id, name: challenge.title },
+      description: `Challenge updated: "${challenge.title}"`,
+      req
+    });
+
+    res.status(200).json({ success: true, data: challenge });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update challenge status (Admin)
+// @route   PUT /api/challenges/:id/status
+// @access  Private (Admin, UniversityRep)
+exports.updateStatus = async (req, res, next) => {
+  try {
+    const { status, note, rejectionReason } = req.body;
+    const challenge = await Challenge.findById(req.params.id).populate('submittedBy', 'name email');
+
+    if (!challenge) return res.status(404).json({ success: false, message: 'Challenge not found' });
+
+    const validTransitions = {
+      submitted: ['under_review', 'rejected'],
+      under_review: ['validated', 'rejected'],
+      validated: ['assigned', 'rejected'],
+      assigned: ['in_progress', 'rejected'],
+      in_progress: ['testing', 'rejected'],
+      testing: ['resolved', 'in_progress'],
+      resolved: ['closed']
+    };
+
+    const allowed = validTransitions[challenge.status] || [];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot transition from '${challenge.status}' to '${status}'`
+      });
+    }
+
+    const oldStatus = challenge.status;
+    challenge.status = status;
+    if (rejectionReason) challenge.rejectionReason = rejectionReason;
+    if (status === 'resolved') {
+      challenge.resolvedAt = new Date();
+      await User.findByIdAndUpdate(challenge.submittedBy, { $inc: { 'stats.challengesResolved': 1 } });
+    }
+
+    challenge.statusHistory.push({
+      status,
+      changedBy: req.user.id,
+      changedAt: new Date(),
+      note
+    });
+
+    await challenge.save();
+
+    // Notify submitter
+    await notifyStatusChange(challenge, oldStatus, status, req.user);
+
+    await logActivity({
+      actor: req.user,
+      action: 'challenge_status_changed',
+      target: { type: 'Challenge', id: challenge._id, name: challenge.title },
+      description: `Status changed: ${oldStatus} → ${status}`,
+      metadata: new Map([['oldStatus', oldStatus], ['newStatus', status]]),
+      req
+    });
+
+    res.status(200).json({ success: true, data: challenge, message: `Status updated to ${status}` });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Assign challenge to university
+// @route   POST /api/challenges/:id/assign
+// @access  Private (Admin)
+exports.assignChallenge = async (req, res, next) => {
+  try {
+    const { universityId, deadline, note } = req.body;
+
+    const [challenge, university] = await Promise.all([
+      Challenge.findById(req.params.id).populate('submittedBy'),
+      University.findById(universityId).populate('representatives', 'name email')
+    ]);
+
+    if (!challenge) return res.status(404).json({ success: false, message: 'Challenge not found' });
+    if (!university) return res.status(404).json({ success: false, message: 'University not found' });
+
+    const oldStatus = challenge.status;
+    challenge.assignedUniversity = universityId;
+    challenge.assignedAt = new Date();
+    challenge.assignedBy = req.user.id;
+    challenge.status = 'assigned';
+    if (deadline) challenge.deadline = new Date(deadline);
+
+    challenge.statusHistory.push({
+      status: 'assigned',
+      changedBy: req.user.id,
+      note: note || `Assigned to ${university.name}`
+    });
+
+    await challenge.save();
+
+    // Update university stats
+    await University.findByIdAndUpdate(universityId, { $inc: { 'stats.totalAssigned': 1 } });
+
+    // Notify citizen
+    await notifyStatusChange(challenge, oldStatus, 'assigned', req.user);
+
+    // Notify university reps
+    for (const rep of (university.representatives || [])) {
+      await notifyUniversityAssignment(challenge, rep._id, req.user);
+    }
+
+    await logActivity({
+      actor: req.user,
+      action: 'challenge_assigned',
+      target: { type: 'Challenge', id: challenge._id, name: challenge.title },
+      description: `Challenge assigned to ${university.name}`,
+      req
+    });
+
+    const populated = await Challenge.findById(challenge._id)
+      .populate('assignedUniversity', 'name shortName logo');
+
+    res.status(200).json({ success: true, data: populated, message: `Challenge assigned to ${university.name}` });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Submit feedback/rating for resolved challenge
+// @route   POST /api/challenges/:id/feedback
+// @access  Private (Citizen - submitter only)
+exports.submitFeedback = async (req, res, next) => {
+  try {
+    const { rating, review } = req.body;
+    const challenge = await Challenge.findById(req.params.id);
+
+    if (!challenge) return res.status(404).json({ success: false, message: 'Challenge not found' });
+    if (challenge.submittedBy.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Only the submitter can provide feedback' });
+    }
+    if (challenge.status !== 'resolved') {
+      return res.status(400).json({ success: false, message: 'Feedback can only be submitted for resolved challenges' });
+    }
+    if (challenge.feedback && challenge.feedback.rating) {
+      return res.status(400).json({ success: false, message: 'Feedback already submitted' });
+    }
+
+    challenge.feedback = {
+      rating: parseInt(rating),
+      review,
+      submittedAt: new Date(),
+      submittedBy: req.user.id
+    };
+
+    await challenge.save();
+
+    await logActivity({
+      actor: req.user,
+      action: 'feedback_submitted',
+      target: { type: 'Challenge', id: challenge._id, name: challenge.title },
+      description: `Feedback submitted: ${rating}/5 stars`,
+      req
+    });
+
+    res.status(200).json({ success: true, message: 'Thank you for your feedback!', data: challenge.feedback });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete challenge
+// @route   DELETE /api/challenges/:id
+// @access  Private (Admin or submitter if draft)
+exports.deleteChallenge = async (req, res, next) => {
+  try {
+    const challenge = await Challenge.findById(req.params.id);
+    if (!challenge) return res.status(404).json({ success: false, message: 'Challenge not found' });
+
+    if (req.user.role !== 'admin' && challenge.submittedBy.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    if (req.user.role !== 'admin' && challenge.status !== 'draft') {
+      return res.status(400).json({ success: false, message: 'Cannot delete a submitted challenge' });
+    }
+
+    await challenge.deleteOne();
+    res.status(200).json({ success: true, message: 'Challenge deleted' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get challenges submitted by current user
+// @route   GET /api/challenges/my
+// @access  Private
+exports.getMyChallenges = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 10, status } = req.query;
+    const query = { submittedBy: req.user.id };
+    if (status) query.status = status;
+
+    const [challenges, total] = await Promise.all([
+      Challenge.find(query)
+        .populate('assignedUniversity', 'name shortName logo')
+        .sort('-createdAt')
+        .skip((parseInt(page) - 1) * parseInt(limit))
+        .limit(parseInt(limit)),
+      Challenge.countDocuments(query)
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: challenges,
+      pagination: { total, page: parseInt(page), limit: parseInt(limit), pages: Math.ceil(total / parseInt(limit)) }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get public challenge stats
+// @route   GET /api/challenges/stats
+// @access  Public
+exports.getChallengeStats = async (req, res, next) => {
+  try {
+    const [statusStats, categoryStats, districtStats] = await Promise.all([
+      Challenge.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
+      Challenge.aggregate([{ $group: { _id: '$category', count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
+      Challenge.aggregate([
+        { $group: { _id: '$location.district', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 10 }
+      ])
+    ]);
+
+    const total = await Challenge.countDocuments();
+    const resolved = await Challenge.countDocuments({ status: 'resolved' });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        total,
+        resolved,
+        resolutionRate: total > 0 ? Math.round((resolved / total) * 100) : 0,
+        byStatus: statusStats.reduce((acc, s) => { acc[s._id] = s.count; return acc; }, {}),
+        byCategory: categoryStats,
+        byDistrict: districtStats
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Live classify challenge text with AI
+// @route   POST /api/challenges/classify
+// @access  Public
+exports.classifyChallengeText = async (req, res, next) => {
+  try {
+    const { title = '', description = '' } = req.body;
+    const classification = classifyChallenge(title, description);
+    const suggestedPriority = suggestPriority(`${title} ${description}`);
+    const tags = generateTags(`${title} ${description}`);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        category: classification.category,
+        confidence: classification.confidence,
+        suggestedPriority,
+        tags,
+        scores: classification.scores
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Toggle support (like) on a challenge
+// @route   POST /api/challenges/:id/support
+// @access  Private
+exports.toggleSupport = async (req, res, next) => {
+  try {
+    const challenge = await Challenge.findById(req.params.id);
+    if (!challenge) return res.status(404).json({ success: false, message: 'Challenge not found' });
+
+    const userId = req.user.id;
+    const alreadySupported = challenge.supports.some(id => id.toString() === userId);
+
+    if (alreadySupported) {
+      challenge.supports = challenge.supports.filter(id => id.toString() !== userId);
+      challenge.supportCount = Math.max(0, (challenge.supportCount || 1) - 1);
+    } else {
+      challenge.supports.push(userId);
+      challenge.supportCount = (challenge.supportCount || 0) + 1;
+    }
+
+    await challenge.save();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        supported: !alreadySupported,
+        supportCount: challenge.supportCount
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get public social feed
+// @route   GET /api/feed
+// @access  Public
+exports.getPublicFeed = async (req, res, next) => {
+  try {
+    const {
+      page = 1, limit = 10,
+      state, category, status,
+      sort = 'recent', search
+    } = req.query;
+
+    const query = {
+      isPublic: true,
+      status: { $nin: ['draft', 'rejected'] }
+    };
+
+    if (state && state !== 'all') query['location.state'] = state;
+    if (category) query.category = category;
+    if (status && status !== 'all') query.status = status;
+    if (search) query.$text = { $search: search };
+
+    const sortOptions = {
+      recent: '-createdAt',
+      supported: '-supportCount',
+      discussed: '-commentCount',
+      oldest: 'createdAt'
+    };
+    const sortBy = sortOptions[sort] || '-createdAt';
+
+    const [challenges, total] = await Promise.all([
+      Challenge.find(query)
+        .populate('submittedBy', 'name avatar role')
+        .populate('assignedUniversity', 'name shortName')
+        .select('title description category priority status location attachments coverImage supportCount commentCount viewCount createdAt submittedBy assignedUniversity isFeatured submitterContact')
+        .sort(sortBy)
+        .skip((parseInt(page) - 1) * parseInt(limit))
+        .limit(parseInt(limit)),
+      Challenge.countDocuments(query)
+    ]);
+
+    // Increment view counts in background
+    const ids = challenges.map(c => c._id);
+    Challenge.updateMany({ _id: { $in: ids } }, { $inc: { viewCount: 1 } }).exec();
+
+    res.status(200).json({
+      success: true,
+      data: challenges,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total / parseInt(limit)),
+        hasMore: parseInt(page) < Math.ceil(total / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get India-wide map data (state-wise counts)
+// @route   GET /api/map-data
+// @access  Public
+exports.getMapData = async (req, res, next) => {
+  try {
+    const { category, startDate, endDate } = req.query;
+
+    const matchQuery = {};
+    if (category) matchQuery.category = category;
+    if (startDate || endDate) {
+      matchQuery.createdAt = {};
+      if (startDate) matchQuery.createdAt.$gte = new Date(startDate);
+      if (endDate) matchQuery.createdAt.$lte = new Date(endDate);
+    }
+
+    const stateData = await Challenge.aggregate([
+      { $match: matchQuery },
+      {
+        $group: {
+          _id: '$location.state',
+          total: { $sum: 1 },
+          active: { $sum: { $cond: [{ $in: ['$status', ['submitted', 'under_review', 'validated', 'assigned', 'in_progress', 'testing']] }, 1, 0] } },
+          resolved: { $sum: { $cond: [{ $eq: ['$status', 'resolved'] }, 1, 0] } },
+          pending: { $sum: { $cond: [{ $in: ['$status', ['submitted', 'under_review']] }, 1, 0] } },
+          urgent: { $sum: { $cond: [{ $eq: ['$priority', 'urgent'] }, 1, 0] } },
+          avgLat: { $avg: '$location.coordinates.lat' },
+          avgLng: { $avg: '$location.coordinates.lng' }
+        }
+      },
+      { $sort: { total: -1 } }
+    ]);
+
+    // Category breakdown per state
+    const categoryData = await Challenge.aggregate([
+      { $match: matchQuery },
+      {
+        $group: {
+          _id: { state: '$location.state', category: '$category' },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Format category data
+    const categoryByState = {};
+    categoryData.forEach(item => {
+      const state = item._id.state;
+      if (!categoryByState[state]) categoryByState[state] = {};
+      categoryByState[state][item._id.category] = item.count;
+    });
+
+    const formattedData = stateData.map(s => ({
+      state: s._id || 'Unknown',
+      total: s.total,
+      active: s.active,
+      resolved: s.resolved,
+      pending: s.pending,
+      urgent: s.urgent,
+      resolutionRate: s.total > 0 ? Math.round((s.resolved / s.total) * 100) : 0,
+      categories: categoryByState[s._id] || {}
+    }));
+
+    const summary = {
+      totalStates: stateData.length,
+      totalChallenges: stateData.reduce((sum, s) => sum + s.total, 0),
+      totalActive: stateData.reduce((sum, s) => sum + s.active, 0),
+      totalResolved: stateData.reduce((sum, s) => sum + s.resolved, 0),
+      topState: stateData[0]?._id || 'N/A'
+    };
+
+    res.status(200).json({
+      success: true,
+      data: formattedData,
+      summary
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

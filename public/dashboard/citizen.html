@@ -1,0 +1,2206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JanSetu — Citizen Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ============================================================
+       RESET & BASE DESIGN SYSTEM
+       ============================================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --primary: #703bf7;
+      --primary-hover: #5d2ad9;
+      --primary-light: #f5f0fe;
+      --primary-border: #e3d5fc;
+      --saffron: #FF9933;
+      --saffron-dark: #ea580c;
+      --saffron-light: #fff7ed;
+      --india-green: #138808;
+      --india-green-light: #edfcf2;
+      --navy: #000080;
+      --gray-900: #111827;
+      --gray-800: #1f2937;
+      --gray-700: #374151;
+      --gray-600: #4b5563;
+      --gray-500: #6b7280;
+      --gray-400: #9ca3af;
+      --gray-300: #d1d5db;
+      --gray-200: #e5e7eb;
+      --gray-100: #f3f4f6;
+      --gray-50: #f9fafb;
+      --white: #ffffff;
+      --font-main: 'Inter', sans-serif;
+      --font-hindi: 'Noto Sans Devanagari', 'Inter', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      font-family: var(--font-main);
+      background-color: #f2eee5;
+      color: var(--gray-800);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-layout {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+
+    /* ============================================================
+       TRICOLOR-THEMED SIDEBAR (CLEAN, NO REDUNDANT LINKS)
+       ============================================================ */
+    .sidebar {
+      width: 245px;
+      min-width: 245px;
+      background: var(--white);
+      border-right: 1px solid #e8e4db;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      z-index: 50;
+      overflow-y: auto;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .sidebar-tricolor-ribbon {
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(to right, #FF9933 33.33%, #ffffff 33.33%, #ffffff 66.66%, #138808 66.66%);
+      flex-shrink: 0;
+    }
+
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 4px; }
+
+    /* Brand Header */
+    .sidebar-brand {
+      padding: 18px 18px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .brand-icon-svg { width: 42px; height: 42px; flex-shrink: 0; }
+    .brand-text-block { display: flex; flex-direction: column; }
+    .brand-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--gray-900);
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+    .brand-title .brand-saffron { color: #FF9933; }
+    .brand-title .brand-green { color: #138808; }
+    .brand-tagline { font-size: 11px; color: var(--gray-500); font-weight: 500; margin-top: 2px; }
+
+    /* Distinct Non-Redundant Menu */
+    .sidebar-menu {
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--gray-700);
+      text-decoration: none;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+
+    .nav-item:hover { background: #fff9f4; color: var(--gray-900); }
+    .nav-item.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 700;
+      border-left: 3.5px solid #FF9933;
+    }
+
+    .nav-item svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--gray-500);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+      transition: stroke 0.15s;
+    }
+
+    .nav-item:hover svg { stroke: #FF9933; }
+    .nav-item.active svg { stroke: var(--primary); }
+
+    /* Contribute Card */
+    .sidebar-contribute-card {
+      margin: 10px 12px 14px;
+      background: linear-gradient(180deg, #fff9f2 0%, #ffffff 45%, #f0fdf4 100%);
+      border: 1.5px solid #fed7aa;
+      border-radius: 16px;
+      padding: 16px 14px 10px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(255, 153, 51, 0.08);
+    }
+
+    .contribute-icon-wrapper {
+      width: 36px;
+      height: 36px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+    }
+
+    .contribute-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .contribute-title-dot { width: 6px; height: 6px; border-radius: 50%; background: #FF9933; }
+    .contribute-desc { font-size: 11.5px; color: var(--gray-600); line-height: 1.45; margin-bottom: 12px; }
+
+    .btn-contribute {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      background: linear-gradient(135deg, #703bf7 0%, #5821db 100%);
+      color: var(--white);
+      border: none;
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(112, 59, 247, 0.35);
+      transition: all 0.18s;
+      position: relative;
+      z-index: 2;
+    }
+
+    .btn-contribute:hover {
+      background: linear-gradient(135deg, #5e2de0 0%, #4a15be 100%);
+      transform: translateY(-1px);
+    }
+
+    .monuments-graphic-wrapper {
+      margin-top: 10px;
+      width: 100%;
+      height: 48px;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .monuments-svg { width: 100%; height: 100%; opacity: 0.95; }
+    .sidebar-tricolor-footer-ribbon {
+      height: 3px;
+      width: calc(100% - 24px);
+      margin: 0 auto 10px;
+      border-radius: 2px;
+      background: linear-gradient(to right, #FF9933 33.33%, #ffffff 33.33%, #ffffff 66.66%, #138808 66.66%);
+    }
+    .sidebar-copyright { padding: 0 16px 14px; font-size: 11px; color: var(--gray-400); line-height: 1.4; }
+
+    /* ============================================================
+       MAIN CONTENT VIEWPORT & CONTINUOUS SEAMLESS BACKGROUND (WARM IVORY / SAND)
+       ============================================================ */
+    .main-viewport {
+      flex: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      position: relative;
+      /* Warm natural canvas with continuous watercolor brush sweeps */
+      background-color: #f2eee5;
+      background-image: 
+        radial-gradient(ellipse 850px 380px at 85% 30px, rgba(255, 153, 51, 0.22) 0%, transparent 70%),
+        radial-gradient(ellipse 750px 420px at 98% 340px, rgba(19, 136, 8, 0.16) 0%, transparent 65%),
+        radial-gradient(ellipse 700px 320px at 15% 90px, rgba(255, 153, 51, 0.12) 0%, transparent 60%),
+        linear-gradient(180deg, #f7f3ec 0%, #f2eee5 320px, #ece7dc 100%);
+    }
+
+    .main-viewport::-webkit-scrollbar { width: 6px; }
+    .main-viewport::-webkit-scrollbar-thumb { background: #d5d0c5; border-radius: 4px; }
+
+    /* TOP PANORAMA: COMPACT (165px), NATURAL SEAMLESS BLEND, VIVID INDIA GATE */
+    .top-panorama-wrapper {
+      position: relative;
+      width: 100%;
+      min-height: 165px;
+      max-height: 175px;
+      background: url('/images/india-gate-bg.jpg') 68% 28% / cover no-repeat;
+      overflow: hidden;
+      flex-shrink: 0;
+      padding: 14px 28px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Soft natural atmospheric gradient that flows continuously into the warm canvas */
+    .top-panorama-wrapper::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: 
+        linear-gradient(90deg, rgba(245, 241, 233, 0.94) 0%, rgba(245, 241, 233, 0.74) 42%, rgba(245, 241, 233, 0.12) 75%, rgba(245, 241, 233, 0.52) 100%),
+        radial-gradient(circle at 88% 20%, rgba(255, 153, 51, 0.52) 0%, transparent 60%),
+        radial-gradient(circle at 10% 90%, rgba(19, 136, 8, 0.42) 0%, transparent 55%),
+        linear-gradient(180deg, transparent 50%, rgba(242, 238, 229, 0.98) 100%);
+      z-index: 1;
+    }
+
+    .tricolor-brush-saffron {
+      position: absolute;
+      top: -25px;
+      right: -10px;
+      width: 480px;
+      height: 120px;
+      background: radial-gradient(ellipse at 85% 15%, rgba(255, 153, 51, 0.85) 0%, rgba(255, 120, 0, 0.35) 50%, transparent 75%);
+      transform: rotate(-3deg);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .tricolor-brush-green {
+      position: absolute;
+      bottom: -15px;
+      left: -15px;
+      width: 420px;
+      height: 95px;
+      background: radial-gradient(ellipse at 15% 85%, rgba(19, 136, 8, 0.6) 0%, rgba(34, 197, 94, 0.22) 50%, transparent 75%);
+      transform: rotate(2deg);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Top Row Actions */
+    .panorama-top-row {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .notif-bell-btn {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .notif-bell-btn:hover { transform: scale(1.05); }
+    .notif-bell-btn svg { width: 17px; height: 17px; stroke: var(--gray-700); stroke-width: 2; fill: none; }
+    .notif-pink-badge {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      background: #ff4757;
+      color: var(--white);
+      font-size: 10px;
+      font-weight: 800;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--white);
+    }
+
+    .profile-pill {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 40px;
+      padding: 3px 12px 3px 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .profile-pill:hover { background: var(--white); }
+    .profile-avatar-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .profile-text-meta { display: flex; flex-direction: column; text-align: left; }
+    .profile-name { font-size: 12.5px; font-weight: 800; color: var(--gray-900); line-height: 1.2; }
+    .profile-role-tag { font-size: 10px; color: var(--gray-500); }
+    .profile-caret { width: 12px; height: 12px; stroke: var(--gray-500); margin-left: 2px; }
+
+    .profile-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 170px;
+      background: var(--white);
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      padding: 5px;
+      display: none;
+      z-index: 100;
+    }
+
+    .profile-dropdown-menu.show { display: block; }
+    .dd-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--gray-700);
+      background: transparent;
+      border: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+    }
+    .dd-link:hover { background: var(--gray-100); color: var(--gray-900); }
+    .dd-link.danger { color: #dc2626; }
+    .dd-link.danger:hover { background: #fef2f2; }
+
+    /* Hero Quote & CTA Row */
+    .panorama-hero-row {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 100%;
+    }
+
+    .hero-quote-container { display: flex; flex-direction: column; max-width: 620px; }
+    .hero-quote-mark-open {
+      font-size: 42px;
+      color: var(--primary);
+      font-family: Georgia, serif;
+      line-height: 0.35;
+      margin-bottom: 5px;
+      display: inline-block;
+      opacity: 0.9;
+    }
+
+    .hero-quote-lines {
+      font-family: var(--font-hindi);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--gray-900);
+      line-height: 1.35;
+      text-shadow: 0 1px 4px rgba(255, 255, 255, 0.95);
+      letter-spacing: -0.2px;
+    }
+
+    .hero-quote-lines .highlight-green { color: var(--india-green); font-weight: 900; }
+    .hero-quote-mark-close {
+      font-size: 34px;
+      color: var(--india-green);
+      font-family: Georgia, serif;
+      line-height: 0.5;
+      display: inline-block;
+      margin-left: 6px;
+      vertical-align: middle;
+      opacity: 0.9;
+    }
+
+    .btn-report-hero {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--primary);
+      color: var(--white);
+      border: none;
+      border-radius: 12px;
+      padding: 11px 20px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(112, 59, 247, 0.35);
+      transition: all 0.18s ease;
+      flex-shrink: 0;
+      margin-bottom: 2px;
+    }
+
+    .btn-report-hero:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(112, 59, 247, 0.45);
+    }
+
+    .btn-report-hero svg { width: 15px; height: 15px; stroke: var(--white); stroke-width: 2.5; fill: none; }
+
+    /* ============================================================
+       DASHBOARD BODY CONTENT
+       ============================================================ */
+    .dashboard-content-body {
+      padding: 14px 28px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* STATS ROW (4 CARDS) */
+    .stats-grid-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .stat-card-box {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+
+    .stat-card-box:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    .stat-icon-square {
+      width: 48px;
+      height: 48px;
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .stat-icon-square.purple { background: #f5f0fe; }
+    .stat-icon-square.orange { background: #fff8eb; }
+    .stat-icon-square.green { background: var(--india-green-light); }
+    .stat-icon-square.red { background: #fef2f2; }
+    .stat-icon-square svg { width: 22px; height: 22px; }
+
+    .stat-card-info { display: flex; flex-direction: column; }
+    .stat-number-big {
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--gray-900);
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+    }
+    .stat-title-label { font-size: 13px; font-weight: 700; color: var(--gray-800); margin-top: 2px; }
+    .stat-subtitle-small { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
+
+    /* TWO-COLUMN LAYOUT */
+    .dashboard-two-col {
+      display: grid;
+      grid-template-columns: 1fr 330px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .section-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .section-header-title {
+      font-size: 15.5px;
+      font-weight: 800;
+      color: var(--gray-900);
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-view-all-btn {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      text-decoration: none;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+    .section-view-all-btn:hover { text-decoration: underline; }
+
+    /* MY ACTIVE REPORT CARD */
+    .active-report-card-container {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: box-shadow 0.15s;
+    }
+
+    .active-report-card-container:hover {
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .active-report-top-body { display: flex; gap: 16px; margin-bottom: 16px; }
+    .active-report-thumbnail {
+      width: 145px;
+      height: 98px;
+      border-radius: 12px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background-color: var(--gray-200);
+    }
+
+    .active-report-meta-details { flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+    .meta-headline-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .active-report-title-text { font-size: 16px; font-weight: 800; color: var(--gray-900); }
+    .status-badge-in-progress {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 11px;
+      border-radius: 20px;
+    }
+
+    .active-report-last-update { font-size: 11px; color: var(--gray-500); text-align: right; line-height: 1.4; }
+    .active-report-last-update span { display: block; color: var(--gray-400); }
+    .active-report-location-row { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--gray-600); margin-bottom: 6px; }
+    .active-report-location-row svg { width: 14px; height: 14px; stroke: var(--gray-400); }
+
+    .report-id-verified-row { display: flex; align-items: center; gap: 10px; }
+    .report-id-text { font-size: 12px; font-weight: 700; color: var(--gray-700); }
+    .badge-verified-green {
+      background: var(--india-green-light);
+      color: var(--india-green);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    /* 5-Step Timeline */
+    .timeline-milestones-row { display: flex; align-items: flex-start; position: relative; padding-top: 6px; }
+    .timeline-step-item { display: flex; flex-direction: column; align-items: center; flex: 1; text-align: center; position: relative; }
+    .timeline-dot-bubble {
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      z-index: 2;
+      border: 2px solid var(--gray-300);
+      background: var(--white);
+      color: transparent;
+    }
+
+    .timeline-dot-bubble.completed { background: var(--primary); border-color: var(--primary); color: var(--white); }
+    .timeline-dot-bubble.pending { border-color: var(--gray-300); background: var(--white); }
+    .timeline-step-label { font-size: 11px; font-weight: 700; color: var(--gray-800); margin-top: 5px; }
+    .timeline-step-date { font-size: 10px; color: var(--gray-400); margin-top: 2px; }
+    .timeline-connecting-line { flex: 1; height: 2px; background: var(--gray-200); margin-top: 12px; z-index: 1; }
+    .timeline-connecting-line.active-line { background: var(--primary); }
+
+    /* RECENT REPORTS CARD */
+    .recent-reports-container-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 0 18px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .report-list-row-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .report-list-row-item:last-child { border-bottom: none; }
+    .report-list-row-item:hover {
+      background: #fafbfe;
+      margin: 0 -18px;
+      padding: 13px 18px;
+      border-radius: 12px;
+    }
+
+    .report-row-thumb {
+      width: 58px;
+      height: 44px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background-color: var(--gray-200);
+    }
+
+    .report-row-center-info { flex: 1; min-width: 0; }
+    .report-row-title-text {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--gray-900);
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .report-row-location-text { font-size: 11px; color: var(--gray-500); margin-bottom: 2px; }
+    .report-row-id-text { font-size: 10.5px; color: var(--gray-400); }
+    .report-row-right-status { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+    .status-pill-assigned { background: #f5f0fe; color: var(--primary); font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
+    .status-pill-in-progress { background: #f5f0fe; color: var(--primary); font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
+    .status-pill-resolved { background: var(--india-green-light); color: var(--india-green); font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
+    .report-row-time-ago { font-size: 10.5px; color: var(--gray-400); display: flex; align-items: center; gap: 4px; }
+    .report-chevron-arrow { color: var(--gray-300); font-size: 16px; }
+
+    /* RIGHT COLUMN WIDGETS */
+    .right-widgets-column { display: flex; flex-direction: column; gap: 18px; }
+    .widget-panel-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 16px 18px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .tricolor-ribbon-divider {
+      height: 3px;
+      border-radius: 2px;
+      background: linear-gradient(to right, #FF9933 33.33%, #ffffff 33.33%, #ffffff 66.66%, #138808 66.66%);
+      margin: 9px 0 13px;
+    }
+
+    .impact-metric-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f6f7fa;
+    }
+
+    .impact-metric-row:last-of-type { border-bottom: none; }
+    .impact-label-with-icon { display: flex; align-items: center; gap: 10px; }
+    .impact-icon-badge {
+      width: 27px;
+      height: 27px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .impact-icon-badge.purple { background: #f5f0fe; color: var(--primary); }
+    .impact-icon-badge.green { background: var(--india-green-light); color: var(--india-green); }
+    .impact-icon-badge.orange { background: #fff8eb; color: var(--saffron); }
+    .impact-icon-badge.red { background: #fef2f2; color: #ef4444; }
+
+    .impact-label-name { font-size: 12.5px; font-weight: 500; color: var(--gray-700); }
+    .impact-value-number { font-size: 16.5px; font-weight: 900; color: var(--gray-900); }
+
+    .impact-hindi-quote-banner {
+      margin-top: 13px;
+      background: var(--saffron-light);
+      border-radius: 12px;
+      padding: 11px 13px;
+      position: relative;
+    }
+
+    .quote-mark-peach-open { font-size: 22px; color: #ea580c; font-family: Georgia, serif; line-height: 0.5; display: block; margin-bottom: 2px; }
+    .quote-text-hindi-content { font-family: var(--font-hindi); font-size: 12px; font-weight: 700; color: #7c2d12; line-height: 1.5; }
+    .quote-text-hindi-content span { display: block; font-weight: 600; color: #c2410c; margin-top: 2px; }
+    .quote-mark-peach-close { font-size: 20px; color: var(--india-green); font-family: Georgia, serif; line-height: 0.5; float: right; margin-top: 2px; }
+
+    .notif-items-list { display: flex; flex-direction: column; gap: 10px; }
+    .notif-item-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 4px 6px;
+      border-radius: 8px;
+    }
+
+    .notif-icon-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .notif-icon-circle.green { background: var(--india-green-light); color: var(--india-green); }
+    .notif-icon-circle.purple { background: #f5f0fe; color: var(--primary); }
+    .notif-icon-circle.orange { background: #fff8eb; color: var(--saffron); }
+
+    .notif-item-content-body { flex: 1; }
+    .notif-item-title-bold { font-size: 12.5px; font-weight: 800; color: var(--gray-900); margin-bottom: 2px; }
+    .notif-item-description-text { font-size: 11.5px; color: var(--gray-600); line-height: 1.4; }
+    .notif-item-timestamp { font-size: 10.5px; color: var(--gray-400); margin-top: 2px; }
+
+    /* ============================================================
+       PREMIUM "REPORT A PROBLEM" FORM MODAL
+       ============================================================ */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal-card-box {
+      background: var(--white);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+      animation: modalFadeIn 0.2s ease-out;
+      overflow: hidden;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96) translateY(12px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-header-bar {
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, #faf7ff 0%, #fff 100%);
+    }
+
+    .modal-header-title { font-size: 17px; font-weight: 800; color: var(--gray-900); display: flex; align-items: center; gap: 8px; }
+    .modal-close-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--gray-100);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      color: var(--gray-600);
+      transition: all 0.15s;
+    }
+    .modal-close-btn:hover { background: var(--gray-200); color: var(--gray-900); }
+    .modal-body-scroll { padding: 20px 22px; overflow-y: auto; flex: 1; }
+
+    /* Category Chips Grid */
+    .category-chips-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .category-chip-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 9px 6px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 12px;
+      background: var(--white);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gray-700);
+      text-align: center;
+    }
+
+    .category-chip-btn .cat-emoji { font-size: 17px; }
+    .category-chip-btn:hover { border-color: var(--primary); background: #faf7ff; }
+    .category-chip-btn.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(112, 59, 247, 0.15);
+    }
+
+    /* Priority Buttons */
+    .priority-pills-row { display: flex; gap: 10px; margin-bottom: 16px; }
+    .priority-pill-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1.5px solid var(--gray-200);
+      background: var(--white);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gray-600);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+
+    .priority-pill-btn.selected-low { border-color: #10b981; background: #edfcf2; color: #047857; }
+    .priority-pill-btn.selected-medium { border-color: #f59e0b; background: #fff8eb; color: #b45309; }
+    .priority-pill-btn.selected-high { border-color: #ef4444; background: #fef2f2; color: #b91c1c; }
+
+    .form-group-field { margin-bottom: 15px; }
+    .form-label-with-hint { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+    .form-label-text { font-size: 12px; font-weight: 700; color: var(--gray-700); }
+    .form-char-count { font-size: 11px; color: var(--gray-400); }
+
+    .form-input-control {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--gray-900);
+      background: var(--white);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .form-input-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(112, 59, 247, 0.1);
+    }
+
+    .form-row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .btn-gps-autodetect {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: 1px solid var(--primary-border);
+      border-radius: 8px;
+      padding: 3px 9px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-gps-autodetect:hover { background: #ebe3fc; }
+
+    .file-drop-container {
+      border: 2px dashed var(--gray-300);
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--gray-50);
+      transition: all 0.15s;
+    }
+
+    .file-drop-container:hover { border-color: var(--primary); background: var(--primary-light); }
+
+    .upload-preview-card {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 12px;
+      background: #edfcf2;
+      border: 1px solid #a7f3d0;
+      border-radius: 10px;
+      margin-top: 8px;
+    }
+
+    .upload-preview-card img { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; }
+    .upload-preview-info { flex: 1; text-align: left; }
+    .upload-preview-name { font-size: 12px; font-weight: 700; color: var(--gray-800); }
+    .upload-preview-size { font-size: 10.5px; color: var(--gray-500); }
+    .btn-remove-upload { background: transparent; border: none; color: #ef4444; font-size: 16px; cursor: pointer; padding: 4px; }
+
+    .btn-submit-action {
+      width: 100%;
+      background: linear-gradient(135deg, #703bf7 0%, #5821db 100%);
+      color: var(--white);
+      border: none;
+      border-radius: 12px;
+      padding: 13px;
+      font-size: 14.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.18s;
+      margin-top: 6px;
+      box-shadow: 0 4px 16px rgba(112, 59, 247, 0.35);
+    }
+
+    .btn-submit-action:hover {
+      background: linear-gradient(135deg, #5e2de0 0%, #4a15be 100%);
+      transform: translateY(-1px);
+    }
+
+    .detail-hero-image { width: 100%; height: 210px; border-radius: 14px; object-fit: cover; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ============================================================
+       TRICOLOR THEMED SIDEBAR (NON-REDUNDANT)
+       ============================================================ -->
+  <aside class="sidebar">
+    <div class="sidebar-tricolor-ribbon"></div>
+
+    <!-- Brand -->
+    <a href="/" class="sidebar-brand">
+      <svg class="brand-icon-svg" viewBox="0 0 48 48" fill="none">
+        <circle cx="16" cy="14" r="6" fill="#FF9933"/>
+        <path d="M7 32C7 25 12 21 17 21C22 21 27 25 27 32" stroke="#FF9933" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="24" cy="12" r="6" fill="#703bf7"/>
+        <path d="M15 30C15 23 20 19 25 19C30 19 35 23 35 30" stroke="#703bf7" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="32" cy="14" r="6" fill="#138808"/>
+        <path d="M23 32C23 25 28 21 33 21C38 21 43 25 43 32" stroke="#138808" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text-block">
+        <span class="brand-title"><span class="brand-saffron">Jan</span><span class="brand-green">Setu</span></span>
+        <span class="brand-tagline">Your Voice, Real Change.</span>
+      </div>
+    </a>
+
+    <!-- Clean Navigation List -->
+    <nav class="sidebar-menu">
+      <button class="nav-item active" onclick="navTo('dashboard')">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <span>Dashboard</span>
+      </button>
+
+      <button class="nav-item" onclick="openAllReportsModal()">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+        <span>My Reports</span>
+      </button>
+
+      <button class="nav-item" onclick="openImpactModal()">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        <span>My Impact</span>
+      </button>
+
+      <button class="nav-item" onclick="openProfileModal()">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span>Profile</span>
+      </button>
+
+      <button class="nav-item" onclick="alert('JanSetu Helpline: 1800-11-2026 / Email: support@jansetu.gov.in')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <span>Help &amp; Support</span>
+      </button>
+    </nav>
+
+    <!-- Contribute Card -->
+    <div class="sidebar-contribute-card">
+      <div class="contribute-icon-wrapper">
+        <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
+          <circle cx="13" cy="12" r="5" fill="#FF9933"/>
+          <circle cx="27" cy="12" r="5" fill="#138808"/>
+          <path d="M6 28C6 22 11 18 16 18C21 18 26 22 26 28" stroke="#FF9933" stroke-width="3" stroke-linecap="round"/>
+          <path d="M20 28C20 22 25 18 30 18C35 18 40 22 40 28" stroke="#138808" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="contribute-title">
+        <span>Contribute</span>
+        <span class="contribute-title-dot"></span>
+      </div>
+      <p class="contribute-desc">Your voice matters.<br>Your actions create real change.</p>
+      <button class="btn-contribute" onclick="openReportModal()">
+        <span>Make a Difference</span>
+        <span>→</span>
+      </button>
+
+      <!-- Silhouette of India Gate & Monuments -->
+      <div class="monuments-graphic-wrapper">
+        <svg class="monuments-svg" viewBox="0 0 220 50" fill="none" preserveAspectRatio="none">
+          <ellipse cx="60" cy="16" rx="55" ry="16" fill="#FF9933" fill-opacity="0.32" />
+          <ellipse cx="160" cy="14" rx="50" ry="14" fill="#FF9933" fill-opacity="0.25" />
+          <ellipse cx="110" cy="38" rx="90" ry="12" fill="#138808" fill-opacity="0.32" />
+          <path d="M15 50 L15 32 Q25 20 35 32 L35 50 Z" fill="#995213" fill-opacity="0.5" />
+          <circle cx="25" cy="20" r="2.5" fill="#FF9933" />
+          <path d="M90 50 L90 18 L96 18 L96 50 Z" fill="#7a3e0b" fill-opacity="0.65" />
+          <path d="M124 50 L124 18 L130 18 L130 50 Z" fill="#7a3e0b" fill-opacity="0.65" />
+          <path d="M96 32 Q110 20 124 32 L124 18 L96 18 Z" fill="#7a3e0b" fill-opacity="0.65" />
+          <path d="M85 18 L135 18 L132 12 L88 12 Z" fill="#8f4a0e" fill-opacity="0.8" />
+          <path d="M92 12 L128 12 L126 8 L94 8 Z" fill="#9e5210" fill-opacity="0.85" />
+          <path d="M175 50 L175 28 Q185 18 195 28 L195 50 Z" fill="#138808" fill-opacity="0.45" />
+          <path d="M165 50 L167 20 L170 20 L170 50 Z" fill="#138808" fill-opacity="0.55" />
+          <path d="M200 50 L200 20 L203 20 L205 50 Z" fill="#138808" fill-opacity="0.55" />
+          <path d="M0 50 C 40 45, 80 47, 110 46 C 140 45, 180 47, 220 50 Z" fill="#138808" fill-opacity="0.4" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="sidebar-tricolor-footer-ribbon"></div>
+    <div class="sidebar-copyright">© 2026 JanSetu<br>All rights reserved.</div>
+  </aside>
+
+  <!-- ============================================================
+       MAIN CONTENT VIEWPORT
+       ============================================================ -->
+  <main class="main-viewport">
+
+    <!-- COMPACT TOP PANORAMA: VIVID INDIA GATE + TRICOLOR BLEND (165px) -->
+    <div class="top-panorama-wrapper">
+      <div class="tricolor-brush-saffron"></div>
+      <div class="tricolor-brush-green"></div>
+
+      <!-- Top Row: Notifications & Profile -->
+      <div class="panorama-top-row">
+        <button class="notif-bell-btn" onclick="openNotificationsModal()" title="Notifications">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span class="notif-pink-badge">3</span>
+        </button>
+
+        <div class="profile-pill" onclick="toggleProfileDropdown()">
+          <div class="profile-avatar-circle" id="userAvatarCircle">A</div>
+          <div class="profile-text-meta">
+            <span class="profile-name" id="userNameDisplay">Abhishek</span>
+            <span class="profile-role-tag">Citizen</span>
+          </div>
+          <svg class="profile-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+
+          <!-- Dropdown -->
+          <div class="profile-dropdown-menu" id="profileDropdown">
+            <button class="dd-link" onclick="openProfileModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <span>My Profile</span>
+            </button>
+            <button class="dd-link" onclick="openAllReportsModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
+              <span>All Reports</span>
+            </button>
+            <div style="height: 1px; background: #f3f4f6; margin: 3px 0;"></div>
+            <button class="dd-link danger" onclick="handleLogout()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Row: Hindi Quote & Report Problem CTA -->
+      <div class="panorama-hero-row">
+        <div class="hero-quote-container">
+          <span class="hero-quote-mark-open">“</span>
+          <div class="hero-quote-lines">
+            छोटा कदम, बड़ा बदलाव<br>
+            आइए, मिलकर बनाएं<br>
+            एक बेहतर <span class="highlight-green">भारत।</span>
+            <span class="hero-quote-mark-close">”</span>
+          </div>
+        </div>
+
+        <button class="btn-report-hero" onclick="openReportModal()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>Report a Problem</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD CONTENT BODY -->
+    <div class="dashboard-content-body">
+
+      <!-- ============================================================
+           STATS ROW (4 CARDS)
+           ============================================================ -->
+      <div class="stats-grid-row">
+        <!-- Card 1 -->
+        <div class="stat-card-box">
+          <div class="stat-icon-square purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#703bf7" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+          </div>
+          <div class="stat-card-info">
+            <div class="stat-number-big" id="statTotal">12</div>
+            <div class="stat-title-label">Total Reports</div>
+            <div class="stat-subtitle-small">All time</div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="stat-card-box">
+          <div class="stat-icon-square orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+          </div>
+          <div class="stat-card-info">
+            <div class="stat-number-big" id="statInProgress">3</div>
+            <div class="stat-title-label">In Progress</div>
+            <div class="stat-subtitle-small">Active reports</div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="stat-card-box">
+          <div class="stat-icon-square green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          </div>
+          <div class="stat-card-info">
+            <div class="stat-number-big" id="statResolved">7</div>
+            <div class="stat-title-label">Resolved</div>
+            <div class="stat-subtitle-small">Successfully closed</div>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="stat-card-box">
+          <div class="stat-icon-square red">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          </div>
+          <div class="stat-card-info">
+            <div class="stat-number-big" id="statAwaiting">2</div>
+            <div class="stat-title-label">Awaiting Action</div>
+            <div class="stat-subtitle-small">From authorities</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           TWO-COLUMN MAIN CONTENT (LEFT: 68%, RIGHT: 32%)
+           ============================================================ -->
+      <div class="dashboard-two-col">
+
+        <!-- LEFT COLUMN -->
+        <div class="left-main-column">
+
+          <!-- Section: My Active Report -->
+          <div class="section-header-row">
+            <h3 class="section-header-title">My Active Report</h3>
+          </div>
+
+          <!-- Clickable Active Report Card -->
+          <div class="active-report-card-container" onclick="showActiveReportDetail()" title="Click to view full details">
+            <div class="active-report-top-body">
+              <img src="/images/pothole-road.jpg" alt="Active Report" class="active-report-thumbnail" id="activeReportThumb" onerror="this.src='/images/pothole-road.jpg'"/>
+
+              <div class="active-report-meta-details">
+                <div class="meta-headline-row">
+                  <div class="active-report-title-text" id="activeReportTitle">Large Pothole on Main Road</div>
+                  <span class="status-badge-in-progress" id="activeReportBadge">In Progress</span>
+                  <div class="active-report-last-update">
+                    <span>Last Update</span>
+                    2 hours ago
+                  </div>
+                </div>
+
+                <div class="active-report-location-row" id="activeReportLocation">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <span>Rohini, Delhi</span>
+                </div>
+
+                <div class="report-id-verified-row">
+                  <span class="report-id-text" id="activeReportId">Report ID: #DL10482</span>
+                  <span class="badge-verified-green">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Verified
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5-Step Horizontal Timeline -->
+            <div class="timeline-milestones-row">
+              <div class="timeline-step-item">
+                <div class="timeline-dot-bubble completed">✓</div>
+                <span class="timeline-step-label">Submitted</span>
+                <span class="timeline-step-date">28 Aug 2026</span>
+              </div>
+              <div class="timeline-connecting-line active-line"></div>
+
+              <div class="timeline-step-item">
+                <div class="timeline-dot-bubble completed">✓</div>
+                <span class="timeline-step-label">Verified</span>
+                <span class="timeline-step-date">29 Aug 2026</span>
+              </div>
+              <div class="timeline-connecting-line active-line"></div>
+
+              <div class="timeline-step-item">
+                <div class="timeline-dot-bubble completed">✓</div>
+                <span class="timeline-step-label">In Progress</span>
+                <span class="timeline-step-date">31 Aug 2026</span>
+              </div>
+              <div class="timeline-connecting-line"></div>
+
+              <div class="timeline-step-item">
+                <div class="timeline-dot-bubble pending"></div>
+                <span class="timeline-step-label">Resolution</span>
+                <span class="timeline-step-date">Pending</span>
+              </div>
+              <div class="timeline-connecting-line"></div>
+
+              <div class="timeline-step-item">
+                <div class="timeline-dot-bubble pending"></div>
+                <span class="timeline-step-label">Closed</span>
+                <span class="timeline-step-date">Pending</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Recent Reports (With Single Purposeful View All) -->
+          <div class="section-header-row">
+            <h3 class="section-header-title">Recent Reports</h3>
+            <button class="section-view-all-btn" onclick="openAllReportsModal()">View All</button>
+          </div>
+
+          <!-- 3 Clickable Report Rows -->
+          <div class="recent-reports-container-card" id="recentReportsContainer">
+            <!-- Row 1: Drinking Water Facility Not Working -->
+            <div class="report-list-row-item" onclick="openSpecificDetail('water')" title="Click to view details">
+              <img src="/images/water-tap.jpg" alt="Drinking water" class="report-row-thumb" onerror="this.src='/images/water-tap.jpg'"/>
+              <div class="report-row-center-info">
+                <div class="report-row-title-text">Drinking Water Facility Not Working</div>
+                <div class="report-row-location-text">Government School, Jaipur, Rajasthan</div>
+                <div class="report-row-id-text">ID: #RJ20481</div>
+              </div>
+              <div class="report-row-right-status">
+                <span class="status-pill-assigned">University Assigned</span>
+                <div class="report-row-time-ago">
+                  <span>1 day ago</span>
+                  <span class="report-chevron-arrow">›</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 2: Garbage Accumulation on Street -->
+            <div class="report-list-row-item" onclick="openSpecificDetail('garbage')" title="Click to view details">
+              <img src="/images/garbage-street.jpg" alt="Garbage street" class="report-row-thumb" onerror="this.src='/images/garbage-street.jpg'"/>
+              <div class="report-row-center-info">
+                <div class="report-row-title-text">Garbage Accumulation on Street</div>
+                <div class="report-row-location-text">Lalpur, Ranchi, Jharkhand</div>
+                <div class="report-row-id-text">ID: #JH30912</div>
+              </div>
+              <div class="report-row-right-status">
+                <span class="status-pill-in-progress">In Progress</span>
+                <div class="report-row-time-ago">
+                  <span>2 days ago</span>
+                  <span class="report-chevron-arrow">›</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 3: Street Light Not Working -->
+            <div class="report-list-row-item" onclick="openSpecificDetail('streetlight')" title="Click to view details">
+              <img src="/images/street-light.jpg" alt="Street light" class="report-row-thumb" onerror="this.src='/images/street-light.jpg'"/>
+              <div class="report-row-center-info">
+                <div class="report-row-title-text">Street Light Not Working</div>
+                <div class="report-row-location-text">Sector 7, Gurgaon, Haryana</div>
+                <div class="report-row-id-text">ID: #HR11209</div>
+              </div>
+              <div class="report-row-right-status">
+                <span class="status-pill-resolved">Resolved</span>
+                <div class="report-row-time-ago">
+                  <span>5 days ago</span>
+                  <span class="report-chevron-arrow">›</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="right-widgets-column">
+
+          <!-- Widget 1: My Impact -->
+          <div class="widget-panel-card">
+            <div class="section-header-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#703bf7" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              <span>My Impact</span>
+            </div>
+
+            <div class="tricolor-ribbon-divider"></div>
+
+            <div class="impact-metric-row">
+              <div class="impact-label-with-icon">
+                <div class="impact-icon-badge purple">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
+                </div>
+                <span class="impact-label-name">Problems Reported</span>
+              </div>
+              <span class="impact-value-number" id="impReported">12</span>
+            </div>
+
+            <div class="impact-metric-row">
+              <div class="impact-label-with-icon">
+                <div class="impact-icon-badge green">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <span class="impact-label-name">Problems Resolved</span>
+              </div>
+              <span class="impact-value-number" style="color: var(--india-green);" id="impResolved">7</span>
+            </div>
+
+            <div class="impact-metric-row">
+              <div class="impact-label-with-icon">
+                <div class="impact-icon-badge orange">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </div>
+                <span class="impact-label-name">People Supported</span>
+              </div>
+              <span class="impact-value-number" style="color: var(--primary);" id="impSupported">428</span>
+            </div>
+
+            <div class="impact-metric-row">
+              <div class="impact-label-with-icon">
+                <div class="impact-icon-badge red">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="2"></line><line x1="15" y1="22" x2="15" y2="2"></line></svg>
+                </div>
+                <span class="impact-label-name">Projects Initiated</span>
+              </div>
+              <span class="impact-value-number" id="impProjects">3</span>
+            </div>
+
+            <!-- Hindi Peach Quote Banner -->
+            <div class="impact-hindi-quote-banner">
+              <span class="quote-mark-peach-open">“</span>
+              <div class="quote-text-hindi-content">
+                आपका योगदान, देश का उत्थान।
+                <span>— एक कदम बदलाव की ओर</span>
+              </div>
+              <span class="quote-mark-peach-close">”</span>
+            </div>
+          </div>
+
+          <!-- Widget 2: Recent Notifications -->
+          <div class="widget-panel-card">
+            <div class="section-header-title" style="margin-bottom: 0;">
+              <span>Recent Notifications</span>
+            </div>
+
+            <div class="tricolor-ribbon-divider"></div>
+
+            <div class="notif-items-list">
+              <div class="notif-item-row" onclick="openNotificationsModal()" title="View all notifications">
+                <div class="notif-icon-circle green">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <div class="notif-item-content-body">
+                  <div class="notif-item-title-bold">Report Verified</div>
+                  <div class="notif-item-description-text">Your report #DL10482 has been verified.</div>
+                  <div class="notif-item-timestamp">29 Aug 2026 • 10:30 AM</div>
+                </div>
+              </div>
+
+              <div class="notif-item-row" onclick="openNotificationsModal()" title="View all notifications">
+                <div class="notif-icon-circle purple">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </div>
+                <div class="notif-item-content-body">
+                  <div class="notif-item-title-bold">Update on Report</div>
+                  <div class="notif-item-description-text">Work has started on your report #DL10482.</div>
+                  <div class="notif-item-timestamp">31 Aug 2026 • 09:15 AM</div>
+                </div>
+              </div>
+
+              <div class="notif-item-row" onclick="openNotificationsModal()" title="View all notifications">
+                <div class="notif-icon-circle orange">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div class="notif-item-content-body">
+                  <div class="notif-item-title-bold">Action Required</div>
+                  <div class="notif-item-description-text">Please provide additional info for report #RJ20481.</div>
+                  <div class="notif-item-timestamp">31 Aug 2026 • 11:45 AM</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+</div>
+
+<!-- ============================================================
+     MODAL 1: PREMIUM, USER-FRIENDLY & MAST PROBLEM SUBMISSION FORM
+     ============================================================ -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal-card-box">
+    <div class="modal-header-bar">
+      <div class="modal-header-title">
+        <span>📝</span>
+        <span>Report a Community Problem</span>
+      </div>
+      <button class="modal-close-btn" onclick="closeModal('reportModal')">✕</button>
+    </div>
+    <div class="modal-body-scroll">
+      <form id="submitProblemForm" onsubmit="handleProblemSubmit(event)">
+
+        <!-- Step 1: Visual Category Selection Cards -->
+        <div class="form-group-field">
+          <label class="form-label-text">Select Category *</label>
+          <div class="category-chips-grid">
+            <button type="button" class="category-chip-btn selected" onclick="selectCategory(this, 'Urban Infrastructure')">
+              <span class="cat-emoji">🛣️</span>
+              <span>Roads &amp; Infra</span>
+            </button>
+            <button type="button" class="category-chip-btn" onclick="selectCategory(this, 'Water Management')">
+              <span class="cat-emoji">💧</span>
+              <span>Water Supply</span>
+            </button>
+            <button type="button" class="category-chip-btn" onclick="selectCategory(this, 'Sanitation & Environment')">
+              <span class="cat-emoji">♻️</span>
+              <span>Sanitation</span>
+            </button>
+            <button type="button" class="category-chip-btn" onclick="selectCategory(this, 'Energy & Technology')">
+              <span class="cat-emoji">⚡</span>
+              <span>Electricity</span>
+            </button>
+            <button type="button" class="category-chip-btn" onclick="selectCategory(this, 'Healthcare')">
+              <span class="cat-emoji">🏥</span>
+              <span>Healthcare</span>
+            </button>
+            <button type="button" class="category-chip-btn" onclick="selectCategory(this, 'Education')">
+              <span class="cat-emoji">📚</span>
+              <span>Education</span>
+            </button>
+            <button type="button" class="category-chip-btn" onclick="selectCategory(this, 'Agriculture')">
+              <span class="cat-emoji">🌾</span>
+              <span>Agriculture</span>
+            </button>
+            <button type="button" class="category-chip-btn" onclick="selectCategory(this, 'Rural Livelihoods')">
+              <span class="cat-emoji">🏘️</span>
+              <span>Livelihoods</span>
+            </button>
+          </div>
+          <input type="hidden" id="reportCategory" value="Urban Infrastructure" />
+        </div>
+
+        <!-- Step 2: Problem Title -->
+        <div class="form-group-field">
+          <div class="form-label-with-hint">
+            <label class="form-label-text" for="reportTitle">Problem Title *</label>
+            <span class="form-char-count" id="titleCount">0/80</span>
+          </div>
+          <input type="text" id="reportTitle" class="form-input-control" placeholder="e.g. Deep pothole causing accidents near main junction" required minlength="10" maxlength="80" oninput="updateTitleCount(this)" />
+        </div>
+
+        <!-- Step 3: Priority Selector -->
+        <div class="form-group-field">
+          <label class="form-label-text">Severity / Priority</label>
+          <div class="priority-pills-row">
+            <button type="button" class="priority-pill-btn" onclick="selectPriority(this, 'low')">🟢 Low</button>
+            <button type="button" class="priority-pill-btn selected-medium" onclick="selectPriority(this, 'medium')">🟡 Medium</button>
+            <button type="button" class="priority-pill-btn" onclick="selectPriority(this, 'high')">🔴 High / Urgent</button>
+          </div>
+          <input type="hidden" id="reportPriority" value="medium" />
+        </div>
+
+        <!-- Step 4: Description -->
+        <div class="form-group-field">
+          <div class="form-label-with-hint">
+            <label class="form-label-text" for="reportDescription">Problem Description *</label>
+            <span class="form-char-count" id="descCount">0/500</span>
+          </div>
+          <textarea id="reportDescription" class="form-input-control" rows="3" placeholder="Describe the problem, since when it has been occurring, and how it impacts people in your area..." required minlength="20" maxlength="500" oninput="updateDescCount(this)"></textarea>
+        </div>
+
+        <!-- Step 5: Location with GPS Autodetect -->
+        <div class="form-group-field">
+          <div class="form-label-with-hint">
+            <label class="form-label-text">Location Details *</label>
+            <button type="button" class="btn-gps-autodetect" onclick="autoDetectLocation()">
+              <span>📍</span>
+              <span>Auto-Detect Location</span>
+            </button>
+          </div>
+          <div class="form-row-2col">
+            <input type="text" id="reportState" class="form-input-control" placeholder="State (e.g. Delhi)" value="Delhi" required />
+            <input type="text" id="reportDistrict" class="form-input-control" placeholder="District / City (e.g. Rohini)" value="Rohini" required />
+          </div>
+          <input type="text" id="reportAddress" class="form-input-control" style="margin-top: 8px;" placeholder="Specific landmark, street or school name (e.g. Near Sector 3 Bus Stand)" />
+        </div>
+
+        <!-- Step 6: Photo Upload with Live Preview -->
+        <div class="form-group-field">
+          <label class="form-label-text">Photo / Proof Evidence</label>
+          <div class="file-drop-container" onclick="document.getElementById('photoInput').click()">
+            <input type="file" id="photoInput" accept="image/*" style="display: none;" onchange="handlePhotoSelect(this.files)" />
+            <div style="font-size: 26px; margin-bottom: 4px;">📷</div>
+            <div style="font-size: 13px; color: var(--gray-700); font-weight: 600;">Drag photo here, or <span style="color: var(--primary);">browse</span></div>
+            <div style="font-size: 11px; color: var(--gray-400); margin-top: 2px;">Supports JPG, PNG, WEBP (up to 10MB)</div>
+          </div>
+          <!-- Live Preview Card -->
+          <div class="upload-preview-card" id="uploadPreviewCard">
+            <img id="uploadPreviewImg" src="" alt="preview" />
+            <div class="upload-preview-info">
+              <div class="upload-preview-name" id="uploadPreviewName">filename.jpg</div>
+              <div class="upload-preview-size" id="uploadPreviewSize">1.2 MB</div>
+            </div>
+            <button type="button" class="btn-remove-upload" onclick="removeUploadedPhoto()">✕</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit-action" id="submitBtn">
+          <span>Submit Problem to JanSetu 🚀</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL 2: ALL REPORTS MODAL (BROWSE & INSPECT ANY REPORT)
+     ============================================================ -->
+<div class="modal-overlay" id="allReportsModal">
+  <div class="modal-card-box" style="max-width: 720px;">
+    <div class="modal-header-bar">
+      <div class="modal-header-title">
+        <span>📋</span>
+        <span>All Citizen Reports</span>
+      </div>
+      <button class="modal-close-btn" onclick="closeModal('allReportsModal')">✕</button>
+    </div>
+    <div class="modal-body-scroll" id="allReportsModalList" style="padding: 14px 20px;">
+      <!-- Populated dynamically -->
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL 3: REPORT DETAILS MODAL (FULL REPORT INSPECTOR)
+     ============================================================ -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-card-box">
+    <div class="modal-header-bar">
+      <div>
+        <div class="modal-header-title" id="detailModalTitle">Large Pothole on Main Road</div>
+        <div style="font-size: 11.5px; color: var(--gray-500); margin-top: 2px;" id="detailModalId">Report ID: #DL10482</div>
+      </div>
+      <button class="modal-close-btn" onclick="closeModal('detailModal')">✕</button>
+    </div>
+    <div class="modal-body-scroll">
+      <img src="/images/pothole-road.jpg" class="detail-hero-image" id="detailModalImage" alt="Evidence" onerror="this.src='/images/pothole-road.jpg'" />
+
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
+        <span class="status-badge-in-progress" id="detailModalStatus">In Progress</span>
+        <span class="badge-verified-green" id="detailModalVerified">✓ Verified by Municipal Authority</span>
+        <span style="font-size: 11.5px; color: var(--gray-400); margin-left: auto;" id="detailModalTime">Reported 3 days ago</span>
+      </div>
+
+      <div style="font-size: 14px; line-height: 1.6; color: var(--gray-800); margin-bottom: 16px;" id="detailModalDesc">
+        Deep dangerous pothole situated on the main arterial road causing severe traffic congestion and multiple bike accidents after recent monsoon rains. Needs immediate asphalt resurfacing and barricading.
+      </div>
+
+      <div style="background: #f8f9fa; border-radius: 12px; padding: 14px; border: 1px solid var(--gray-200); margin-bottom: 16px;">
+        <div style="font-size: 12px; font-weight: 700; color: var(--gray-700); margin-bottom: 6px;">Location &amp; Resolution Assignment</div>
+        <div style="font-size: 13px; color: var(--gray-900); margin-bottom: 4px;" id="detailModalLoc">📍 Rohini, Delhi</div>
+        <div style="font-size: 12.5px; color: var(--primary); font-weight: 700;" id="detailModalAssign">Assigned to: Delhi Technological University (DTU Civil Dept)</div>
+      </div>
+
+      <button class="btn-submit-action" onclick="closeModal('detailModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL 4: NOTIFICATIONS MODAL (ACCESSED VIA BELL ICON)
+     ============================================================ -->
+<div class="modal-overlay" id="notificationsModal">
+  <div class="modal-card-box" style="max-width: 520px;">
+    <div class="modal-header-bar">
+      <div class="modal-header-title">🔔 All Notifications</div>
+      <button class="modal-close-btn" onclick="closeModal('notificationsModal')">✕</button>
+    </div>
+    <div class="modal-body-scroll">
+      <div class="notif-items-list" id="allNotifsModalList">
+        <div class="notif-item-row" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+          <div class="notif-icon-circle green">✓</div>
+          <div class="notif-item-content-body">
+            <div class="notif-item-title-bold">Report Verified</div>
+            <div class="notif-item-description-text">Your report #DL10482 has been verified by the municipal authority.</div>
+            <div class="notif-item-timestamp">29 Aug 2026 • 10:30 AM</div>
+          </div>
+        </div>
+        <div class="notif-item-row" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+          <div class="notif-icon-circle purple">ℹ</div>
+          <div class="notif-item-content-body">
+            <div class="notif-item-title-bold">Update on Report</div>
+            <div class="notif-item-description-text">Delhi Technological University has started surveying the site for report #DL10482.</div>
+            <div class="notif-item-timestamp">31 Aug 2026 • 09:15 AM</div>
+          </div>
+        </div>
+        <div class="notif-item-row" style="padding: 10px 0;">
+          <div class="notif-icon-circle orange">👤</div>
+          <div class="notif-item-content-body">
+            <div class="notif-item-title-bold">Action Required</div>
+            <div class="notif-item-description-text">Please provide additional photos or landmark for report #RJ20481.</div>
+            <div class="notif-item-timestamp">31 Aug 2026 • 11:45 AM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL 5: CITIZEN PROFILE MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal-card-box" style="max-width: 500px;">
+    <div class="modal-header-bar">
+      <div class="modal-header-title">👤 Citizen Profile</div>
+      <button class="modal-close-btn" onclick="closeModal('profileModal')">✕</button>
+    </div>
+    <div class="modal-body-scroll">
+      <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+        <div style="width: 58px; height: 58px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800;" id="modalProfileAvatar">A</div>
+        <div>
+          <div style="font-size: 18px; font-weight: 800; color: var(--gray-900);" id="modalProfileName">Abhishek</div>
+          <div style="font-size: 12px; color: var(--gray-500);">Verified Citizen Contributor</div>
+        </div>
+      </div>
+
+      <form onsubmit="handleProfileSave(event)">
+        <div class="form-group-field">
+          <label class="form-label-text">Full Name</label>
+          <input type="text" id="profNameInput" class="form-input-control" value="Abhishek Kumar" />
+        </div>
+        <div class="form-group-field">
+          <label class="form-label-text">Email Address</label>
+          <input type="email" id="profEmailInput" class="form-input-control" value="abhishek@jansetu.in" />
+        </div>
+        <div class="form-group-field">
+          <label class="form-label-text">Phone Number</label>
+          <input type="tel" id="profPhoneInput" class="form-input-control" value="+91 98765 43210" />
+        </div>
+        <div class="form-group-field">
+          <label class="form-label-text">Location (District, State)</label>
+          <input type="text" id="profLocationInput" class="form-input-control" value="Rohini, Delhi" />
+        </div>
+        <button type="submit" class="btn-submit-action">Save Changes</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL 6: MY IMPACT MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="impactModal">
+  <div class="modal-card-box" style="max-width: 560px;">
+    <div class="modal-header-bar">
+      <div class="modal-header-title">📊 Community Impact Report</div>
+      <button class="modal-close-btn" onclick="closeModal('impactModal')">✕</button>
+    </div>
+    <div class="modal-body-scroll">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px;">
+        <div style="background: #f5f0fe; padding: 16px; border-radius: 12px; text-align: center;">
+          <div style="font-size: 32px; font-weight: 900; color: var(--primary);" id="impactModalReported">12</div>
+          <div style="font-size: 13px; font-weight: 700; color: var(--gray-700);">Problems Reported</div>
+        </div>
+        <div style="background: #edfcf2; padding: 16px; border-radius: 12px; text-align: center;">
+          <div style="font-size: 32px; font-weight: 900; color: var(--india-green);" id="impactModalResolved">7</div>
+          <div style="font-size: 13px; font-weight: 700; color: var(--gray-700);">Problems Resolved</div>
+        </div>
+      </div>
+      <div style="line-height: 1.6; font-size: 13.5px; color: var(--gray-700); background: #fafbfe; padding: 16px; border-radius: 12px; border: 1px solid var(--gray-200);">
+        <strong>JanSetu Citizen Impact Note:</strong><br>
+        Your civic vigilance has directly aided local municipalities and universities in surveying and prioritizing grassroots issues. Over <strong>428 citizens</strong> have benefited from faster problem resolutions.
+      </div>
+      <button class="btn-submit-action" style="margin-top: 18px;" onclick="closeModal('impactModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     CORE SCRIPT & LIVE DATA BINDING
+     ============================================================ -->
+<script src="/js/utils.js"></script>
+<script>
+  // ── Baseline & Live Reports Data ──
+  let allReportsList = [
+    {
+      id: '#DL10482',
+      title: 'Large Pothole on Main Road',
+      location: 'Rohini, Delhi',
+      status: 'In Progress',
+      image: '/images/pothole-road.jpg',
+      desc: 'Deep dangerous pothole situated on the main arterial road causing severe traffic congestion and multiple bike accidents after recent monsoon rains. Needs immediate asphalt resurfacing and barricading.',
+      assign: 'Delhi Technological University (DTU Civil Dept)',
+      timeAgo: '2 hours ago'
+    },
+    {
+      id: '#RJ20481',
+      title: 'Drinking Water Facility Not Working',
+      location: 'Government School, Jaipur, Rajasthan',
+      status: 'University Assigned',
+      image: '/images/water-tap.jpg',
+      desc: 'The primary reverse-osmosis filtration unit and water supply pipes in the government secondary school are corroded and non-functional, leaving 450+ students without potable drinking water.',
+      assign: 'MNIT Jaipur Water Resource Lab',
+      timeAgo: '1 day ago'
+    },
+    {
+      id: '#JH30912',
+      title: 'Garbage Accumulation on Street',
+      location: 'Lalpur, Ranchi, Jharkhand',
+      status: 'In Progress',
+      image: '/images/garbage-street.jpg',
+      desc: 'Overflowing community waste bin near local market creating extreme foul odor, health hazards, and blockage of drainage ditches.',
+      assign: 'BIT Mesra Environmental Science & Engineering',
+      timeAgo: '2 days ago'
+    },
+    {
+      id: '#HR11209',
+      title: 'Street Light Not Working',
+      location: 'Sector 7, Gurgaon, Haryana',
+      status: 'Resolved',
+      image: '/images/street-light.jpg',
+      desc: 'Series of 8 LED street lamps not functioning along the residential sector corridor, causing safety concerns for pedestrians at night. Successfully replaced with smart solar LED luminaires.',
+      assign: 'Gurugram Metropolitan Development Authority (GMDA)',
+      timeAgo: '5 days ago'
+    }
+  ];
+
+  // ── Clean Initialization on Load (NO POPUP OPENING AUTOMATICALLY) ──
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Clear URL hash to prevent unwanted popup triggers
+    if (window.location.hash) {
+      history.replaceState(null, null, window.location.pathname);
+    }
+
+    // Ensure all modals are closed initially
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+
+    // Bind authenticated user info
+    if (typeof Auth !== 'undefined' && Auth.isLoggedIn()) {
+      const user = Auth.getUser();
+      if (user && user.name) {
+        const firstName = user.name.split(' ')[0];
+        document.getElementById('userNameDisplay').textContent = firstName;
+        document.getElementById('userAvatarCircle').textContent = firstName.charAt(0).toUpperCase();
+        document.getElementById('modalProfileName').textContent = user.name;
+        document.getElementById('modalProfileAvatar').textContent = firstName.charAt(0).toUpperCase();
+        if (document.getElementById('profNameInput')) document.getElementById('profNameInput').value = user.name;
+        if (document.getElementById('profEmailInput') && user.email) document.getElementById('profEmailInput').value = user.email;
+      }
+    }
+
+    // Fetch live data from API
+    await fetchLiveAnalytics();
+  });
+
+  // ── Fetch Live Analytics & Real Challenges from API ──
+  async function fetchLiveAnalytics() {
+    try {
+      const res = await fetch('/api/challenges');
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.data) && data.data.length > 0) {
+        const challenges = data.data;
+        const total = challenges.length;
+        const resolved = challenges.filter(c => c.status === 'resolved').length;
+        const inProgress = challenges.filter(c => ['in_progress', 'assigned', 'testing'].includes(c.status)).length;
+        const awaiting = challenges.filter(c => ['submitted', 'under_review', 'validated'].includes(c.status)).length;
+
+        // Update Stat Cards with live data
+        document.getElementById('statTotal').textContent = total || 12;
+        document.getElementById('statInProgress').textContent = inProgress || 3;
+        document.getElementById('statResolved').textContent = resolved || 7;
+        document.getElementById('statAwaiting').textContent = awaiting || 2;
+
+        // Update Impact Card
+        document.getElementById('impReported').textContent = total || 12;
+        document.getElementById('impResolved').textContent = resolved || 7;
+        document.getElementById('impactModalReported').textContent = total || 12;
+        document.getElementById('impactModalResolved').textContent = resolved || 7;
+
+        // Add real challenges to list
+        challenges.slice(0, 10).forEach((c, idx) => {
+          const loc = c.location || {};
+          const locStr = [loc.district, loc.state].filter(Boolean).join(', ') || 'India';
+          const imagesPool = ['/images/pothole-road.jpg', '/images/water-tap.jpg', '/images/garbage-street.jpg', '/images/street-light.jpg'];
+          allReportsList.push({
+            id: '#' + (c.challengeId || c._id.slice(-6).toUpperCase()),
+            title: c.title,
+            location: locStr,
+            status: c.status === 'in_progress' ? 'In Progress' : c.status === 'assigned' ? 'University Assigned' : c.status === 'resolved' ? 'Resolved' : 'Submitted',
+            image: imagesPool[idx % imagesPool.length],
+            desc: c.description,
+            assign: c.assignedUniversity ? c.assignedUniversity.name : 'Municipal & University Taskforce',
+            timeAgo: 'Recently'
+          });
+        });
+      }
+    } catch(err) {
+      console.log('API load note:', err);
+    }
+  }
+
+  // ── Modal Handlers (Clean & Non-Redundant) ──
+  function openModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('active');
+  }
+
+  function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  }
+
+  function openReportModal() {
+    closeProfileDropdown();
+    openModal('reportModal');
+  }
+
+  function openNotificationsModal() {
+    openModal('notificationsModal');
+  }
+
+  function openProfileModal() {
+    closeProfileDropdown();
+    openModal('profileModal');
+  }
+
+  function openImpactModal() {
+    openModal('impactModal');
+  }
+
+  function openAllReportsModal() {
+    closeProfileDropdown();
+    renderAllReportsList();
+    openModal('allReportsModal');
+  }
+
+  function navTo(section) {
+    if (section === 'dashboard') {
+      document.querySelector('.main-viewport').scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  // ── Profile Dropdown ──
+  function toggleProfileDropdown() {
+    const dd = document.getElementById('profileDropdown');
+    if (dd) dd.classList.toggle('show');
+  }
+
+  function closeProfileDropdown() {
+    const dd = document.getElementById('profileDropdown');
+    if (dd) dd.classList.remove('show');
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.profile-pill')) {
+      closeProfileDropdown();
+    }
+    if (e.target.classList.contains('modal-overlay')) {
+      e.target.classList.remove('active');
+    }
+  });
+
+  // ── Render All Reports Inside Modal (Inspection) ──
+  function renderAllReportsList() {
+    const container = document.getElementById('allReportsModalList');
+    if (!container) return;
+
+    container.innerHTML = allReportsList.map((item, idx) => `
+      <div class="report-list-row-item" onclick="openDetailByIndex(${idx})" style="padding: 12px 14px; border-radius: 10px; margin-bottom: 6px; background: #fff; border: 1px solid #f1f2f5;">
+        <img src="${item.image}" alt="" class="report-row-thumb" style="width: 52px; height: 40px; border-radius: 8px; object-fit: cover;" onerror="this.src='/images/pothole-road.jpg'" />
+        <div class="report-row-center-info">
+          <div class="report-row-title-text" style="font-size: 13.5px;">${escapeHtml(item.title)}</div>
+          <div class="report-row-location-text">📍 ${escapeHtml(item.location)}</div>
+          <div class="report-row-id-text">ID: ${item.id}</div>
+        </div>
+        <div class="report-row-right-status">
+          <span class="status-pill-assigned" style="font-size: 10px;">${item.status}</span>
+          <span class="report-chevron-arrow">›</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openDetailByIndex(idx) {
+    const item = allReportsList[idx] || allReportsList[0];
+    populateDetailModal(item);
+  }
+
+  // ── Report Detail Viewers (Click any card to inspect) ──
+  function showActiveReportDetail() {
+    populateDetailModal(allReportsList[0]);
+  }
+
+  function openSpecificDetail(type) {
+    let item;
+    if (type === 'water') item = allReportsList[1];
+    else if (type === 'garbage') item = allReportsList[2];
+    else if (type === 'streetlight') item = allReportsList[3];
+    else item = allReportsList[0];
+    populateDetailModal(item);
+  }
+
+  function populateDetailModal(item) {
+    document.getElementById('detailModalTitle').textContent = item.title;
+    document.getElementById('detailModalId').textContent = 'Report ID: ' + item.id;
+    document.getElementById('detailModalImage').src = item.image;
+    document.getElementById('detailModalStatus').textContent = item.status;
+    document.getElementById('detailModalDesc').textContent = item.desc;
+    document.getElementById('detailModalLoc').textContent = '📍 ' + item.location;
+    document.getElementById('detailModalAssign').textContent = 'Assigned to: ' + item.assign;
+    document.getElementById('detailModalTime').textContent = item.timeAgo ? 'Reported ' + item.timeAgo : '';
+    openModal('detailModal');
+  }
+
+  // ── Problem Form Step & Interaction Handlers ──
+  function selectCategory(btn, cat) {
+    document.querySelectorAll('.category-chip-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('reportCategory').value = cat;
+  }
+
+  function selectPriority(btn, prio) {
+    document.querySelectorAll('.priority-pill-btn').forEach(b => {
+      b.classList.remove('selected-low', 'selected-medium', 'selected-high');
+    });
+    btn.classList.add('selected-' + prio);
+    document.getElementById('reportPriority').value = prio;
+  }
+
+  function updateTitleCount(input) {
+    document.getElementById('titleCount').textContent = input.value.length + '/80';
+  }
+
+  function updateDescCount(input) {
+    document.getElementById('descCount').textContent = input.value.length + '/500';
+  }
+
+  function autoDetectLocation() {
+    if (navigator.geolocation) {
+      const btn = event.currentTarget;
+      btn.textContent = '⏳ Locating...';
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          document.getElementById('reportDistrict').value = 'New Delhi';
+          document.getElementById('reportState').value = 'Delhi';
+          document.getElementById('reportAddress').value = 'GPS: ' + pos.coords.latitude.toFixed(4) + ', ' + pos.coords.longitude.toFixed(4);
+          btn.innerHTML = '<span>✓</span> <span>Located</span>';
+        },
+        () => {
+          document.getElementById('reportDistrict').value = 'Rohini';
+          document.getElementById('reportState').value = 'Delhi';
+          btn.innerHTML = '<span>✓</span> <span>Delhi Detected</span>';
+        },
+        { timeout: 3000 }
+      );
+    }
+  }
+
+  function handlePhotoSelect(files) {
+    if (files && files[0]) {
+      const file = files[0];
+      const previewCard = document.getElementById('uploadPreviewCard');
+      const previewImg = document.getElementById('uploadPreviewImg');
+      const previewName = document.getElementById('uploadPreviewName');
+      const previewSize = document.getElementById('uploadPreviewSize');
+
+      previewName.textContent = file.name;
+      previewSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImg.src = e.target.result;
+        previewCard.style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function removeUploadedPhoto() {
+    document.getElementById('photoInput').value = '';
+    document.getElementById('uploadPreviewCard').style.display = 'none';
+  }
+
+  // ── Form Submission ──
+  async function handleProblemSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = 'Submitting to JanSetu...';
+    btn.disabled = true;
+
+    const title = document.getElementById('reportTitle').value.trim();
+    const category = document.getElementById('reportCategory').value;
+    const priority = document.getElementById('reportPriority').value;
+    const description = document.getElementById('reportDescription').value.trim();
+    const state = document.getElementById('reportState').value.trim();
+    const district = document.getElementById('reportDistrict').value.trim();
+    const address = document.getElementById('reportAddress').value.trim();
+
+    try {
+      if (typeof API !== 'undefined') {
+        await API.post('/challenges', {
+          title,
+          category,
+          priority,
+          description,
+          location: { state, district, address }
+        });
+      }
+    } catch (err) {
+      console.log('Submission note:', err);
+    }
+
+    const randId = '#DL' + Math.floor(10000 + Math.random() * 90000);
+    const newReport = {
+      id: randId,
+      title: title,
+      location: district + ', ' + state,
+      status: 'Submitted',
+      image: document.getElementById('uploadPreviewImg').src || '/images/pothole-road.jpg',
+      desc: description,
+      assign: 'Verification in progress by JanSetu Authority',
+      timeAgo: 'Just now'
+    };
+
+    allReportsList.unshift(newReport);
+
+    document.getElementById('activeReportTitle').textContent = title;
+    document.getElementById('activeReportLocation').innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+      <span>${district}, ${state}</span>
+    `;
+    document.getElementById('activeReportId').textContent = 'Report ID: ' + randId;
+
+    const totalEl = document.getElementById('statTotal');
+    if (totalEl) totalEl.textContent = parseInt(totalEl.textContent || '12') + 1;
+    const repEl = document.getElementById('impReported');
+    if (repEl) repEl.textContent = parseInt(repEl.textContent || '12') + 1;
+
+    closeModal('reportModal');
+    btn.innerHTML = '<span>Submit Problem to JanSetu 🚀</span>';
+    btn.disabled = false;
+    alert('Thank you! Your problem has been submitted successfully to JanSetu.');
+  }
+
+  function handleProfileSave(e) {
+    e.preventDefault();
+    const newName = document.getElementById('profNameInput').value.trim();
+    if (newName) {
+      document.getElementById('userNameDisplay').textContent = newName.split(' ')[0];
+      document.getElementById('userAvatarCircle').textContent = newName.charAt(0).toUpperCase();
+      document.getElementById('modalProfileName').textContent = newName;
+      document.getElementById('modalProfileAvatar').textContent = newName.charAt(0).toUpperCase();
+      if (typeof Auth !== 'undefined') {
+        const u = Auth.getUser() || {};
+        u.name = newName;
+        localStorage.setItem('is_user', JSON.stringify(u));
+        localStorage.setItem('user', JSON.stringify(u));
+      }
+    }
+    closeModal('profileModal');
+    alert('Profile successfully updated.');
+  }
+
+  function handleLogout() {
+    if (typeof Auth !== 'undefined') {
+      Auth.clearAuth();
+    }
+    window.location.href = '/';
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g, tag => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    }[tag] || tag));
+  }
+</script>
+</body>
+</html>
