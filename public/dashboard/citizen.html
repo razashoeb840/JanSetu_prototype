@@ -2783,6 +2783,9 @@
     }
   ];
 
+  let currentLanguage = localStorage.getItem("jansetu_language") || "hi";
+  let quoteIndex = 0;
+  let quoteTimer = null;
   let allReportsList = [];
   let exploreList = [];
   let supportedIds = new Set();
