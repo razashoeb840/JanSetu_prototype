@@ -809,8 +809,188 @@
     .timeline-dot-bubble.completed { background: var(--navy); border-color: var(--navy); color: var(--white); }
     .timeline-dot-bubble.current { background: #FF9933; border-color: #FF9933; color: var(--white); }
     .timeline-step-label { font-size: 11px; font-weight: 700; color: var(--gray-800); margin-top: 6px; }
+    .timeline-step-date { font-size: 10px; font-weight: 700; color: #ea580c; margin-top: 3px; line-height: 1.2; }
+    .timeline-step-note { font-size: 9px; color: var(--gray-500); margin-top: 2px; line-height: 1.2; max-width: 95px; }
     .timeline-connecting-line { flex: 1; height: 2px; background: var(--gray-200); margin-top: 13px; z-index: 1; }
     .timeline-connecting-line.active-line { background: var(--navy); }
+
+    /* Detail Modal Stepper & Audit Log (कब क्या हुआ) */
+    .detail-timeline-container {
+      display: flex;
+      align-items: flex-start;
+      position: relative;
+      margin: 12px 0 6px;
+      padding: 4px 0;
+    }
+    .detail-timeline-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+    .detail-step-bubble {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      border: 2px solid #cbd5e1;
+      background: #ffffff;
+      color: #64748b;
+      transition: all 0.2s ease;
+    }
+    .detail-step-bubble.completed {
+      background: #166534;
+      border-color: #166534;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(22, 101, 52, 0.3);
+    }
+    .detail-step-bubble.current {
+      background: #ea580c;
+      border-color: #ea580c;
+      color: #ffffff;
+      box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.2);
+    }
+    .detail-step-line {
+      flex: 1;
+      height: 3px;
+      background: #e2e8f0;
+      margin-top: 13px;
+      z-index: 1;
+    }
+    .detail-step-line.active {
+      background: #166534;
+    }
+    .detail-step-title {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-top: 6px;
+      line-height: 1.2;
+    }
+    .detail-step-date {
+      font-size: 10px;
+      font-weight: 700;
+      color: #ea580c;
+      margin-top: 2px;
+      line-height: 1.2;
+    }
+    .detail-step-desc {
+      font-size: 9.5px;
+      color: #64748b;
+      margin-top: 1px;
+      line-height: 1.2;
+      max-width: 105px;
+    }
+    .detail-audit-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 10px;
+      background: #ffffff;
+      border: 1px solid #f1f5f9;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+    .detail-audit-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .detail-audit-badge.done {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .detail-audit-badge.active {
+      background: #ffedd5;
+      color: #c2410c;
+    }
+    .detail-audit-badge.wait {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    /* DETAILED MULTI-STAKEHOLDER ACTION CARDS */
+    .stakeholder-card {
+      border-radius: 12px;
+      padding: 12px 16px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      transition: all 0.2s ease;
+    }
+    .stakeholder-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .stakeholder-card.admin-card {
+      background: #FAF5FF;
+      border-color: #E9D5FF;
+    }
+    .stakeholder-card.industry-card {
+      background: #FFFBEB;
+      border-color: #FDE68A;
+    }
+    .stakeholder-card.university-card {
+      background: #EFF6FF;
+      border-color: #BFDBFE;
+    }
+    .stakeholder-card.citizen-card {
+      background: #F0FDF4;
+      border-color: #BBF7D0;
+    }
+    .stakeholder-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .stakeholder-card-title {
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stakeholder-card-badge {
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 12px;
+    }
+    .stakeholder-card-badge.done { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .stakeholder-card-badge.active { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+    .stakeholder-card-badge.wait { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+    .stakeholder-card-body {
+      font-size: 12px;
+      color: #334155;
+      line-height: 1.5;
+    }
+    .stakeholder-meta-row {
+      display: flex;
+      gap: 16px;
+      font-size: 11px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(0, 0, 0, 0.08);
+      flex-wrap: wrap;
+      color: #475569;
+    }
+    .stakeholder-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
 
     /* Problem Solution Check Widget */
     .solution-check-box {
@@ -1868,6 +2048,7 @@
                 <button type="button" style="background: #EFF6FF; border: 1px solid #BFDBFE; color: var(--navy); font-size: 11px; font-weight: 800; border-radius: 14px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" onclick="event.stopPropagation(); const a = getCurrentlyTrackedReport(); if (a) openReportSlip(a.id);" title="Download Official Slip">
                   <span>📄</span> <span>Slip</span>
                 </button>
+                <span id="activeTrackerDeleteAction"></span>
                 <span class="status-badge-in-progress" id="activeReportStatus">
                   <span class="tracker-pulse-dot"></span>
                   <span id="activeStatusLabelText">Being Worked On</span>
@@ -1884,33 +2065,44 @@
               <span>Namkum, Block Namkum, District Ranchi, Jharkhand</span>
             </div>
 
-            <!-- 5-Step Dynamic Timeline -->
+            <!-- 5-Step Dynamic Timeline with Dates & Notes -->
             <div class="timeline-milestones-row">
               <div class="timeline-step-item">
                 <div class="timeline-dot-bubble" id="timelineStepSubmitted">1</div>
                 <div class="timeline-step-label" data-i18n="step_submitted">Submitted</div>
+                <div class="timeline-step-date" id="timelineDateSubmitted">--</div>
+                <div class="timeline-step-note" id="timelineNoteSubmitted">--</div>
               </div>
               <div class="timeline-connecting-line" id="timelineConn1"></div>
               <div class="timeline-step-item">
                 <div class="timeline-dot-bubble" id="timelineStepVerified">2</div>
                 <div class="timeline-step-label" data-i18n="step_verified">Verified</div>
+                <div class="timeline-step-date" id="timelineDateVerified">--</div>
+                <div class="timeline-step-note" id="timelineNoteVerified">--</div>
               </div>
               <div class="timeline-connecting-line" id="timelineConn2"></div>
               <div class="timeline-step-item">
                 <div class="timeline-dot-bubble" id="timelineStepWorking">3</div>
                 <div class="timeline-step-label" data-i18n="step_working">Working</div>
+                <div class="timeline-step-date" id="timelineDateWorking">--</div>
+                <div class="timeline-step-note" id="timelineNoteWorking">--</div>
               </div>
               <div class="timeline-connecting-line" id="timelineConn3"></div>
               <div class="timeline-step-item">
                 <div class="timeline-dot-bubble" id="timelineStepResolution">4</div>
                 <div class="timeline-step-label" data-i18n="step_resolution">Resolution</div>
+                <div class="timeline-step-date" id="timelineDateResolution">--</div>
+                <div class="timeline-step-note" id="timelineNoteResolution">--</div>
               </div>
               <div class="timeline-connecting-line" id="timelineConn4"></div>
               <div class="timeline-step-item">
                 <div class="timeline-dot-bubble" id="timelineStepClosed">5</div>
                 <div class="timeline-step-label" data-i18n="step_closed">Closed</div>
+                <div class="timeline-step-date" id="timelineDateClosed">--</div>
+                <div class="timeline-step-note" id="timelineNoteClosed">--</div>
               </div>
             </div>
+
 
             <!-- Problem Solution Check Widget (Item 8) -->
             <div class="solution-check-box" id="solCheckBox" onclick="event.stopPropagation();">
@@ -2319,6 +2511,34 @@
         The primary piped water scheme pipeline is damaged, causing water loss and 400+ villagers without clean drinking water.
       </div>
 
+      <!-- Comprehensive Live Multi-Stakeholder Progress Bar & Action Details (प्रशासन, कॉलेज, इंडस्ट्री व नागरिक) -->
+      <div class="detail-section-block" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 18px 20px; box-shadow: 0 4px 16px rgba(0, 45, 98, 0.04);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <div class="detail-section-title" style="margin-bottom: 2px; font-size: 15px; color: var(--navy); display: flex; align-items: center; gap: 7px;">
+              <span>📊</span>
+              <span>LIVE PROGRESS &amp; AUDIT TRAIL (कब क्या हुआ)</span>
+            </div>
+            <div style="font-size: 11.5px; color: var(--gray-500);">
+              Real-time audit track: Admin verification, Industry supplies &amp; University field action
+            </div>
+          </div>
+          <span id="detailReportedTimestampBadge" style="font-size: 11px; font-weight: 800; color: #002D62; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 4px 12px; border-radius: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
+            📅 Reported: 01 Sep · 10:30 AM
+          </span>
+        </div>
+
+        <!-- 5-Step Visual Horizontal Progress Bar with Stakeholder Badges -->
+        <div class="detail-timeline-container" id="detailModalTimelineContainer" style="margin-bottom: 16px;">
+          <!-- Dynamically populated 5 steps -->
+        </div>
+
+        <!-- Detailed Stakeholder Action Cards: Kis Admin ne verify kiya, Kis Industry ne kya kiya, Kisko assign hua -->
+        <div id="detailStakeholderCardsGrid" style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px; border-top: 1.5px dashed #cbd5e1; padding-top: 14px;">
+          <!-- Dynamically populated cards for Admin, Industry, University, and Citizen -->
+        </div>
+      </div>
+
       <div class="detail-section-block">
         <div class="detail-section-title" data-i18n="detail_loc_title">📍 Location &amp; Ground Authority</div>
         <div style="font-size: 13.5px; color: var(--gray-900); margin-bottom: 6px;" id="detailLocationText">
@@ -2373,10 +2593,11 @@
         </div>
       </div>
 
-      <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+      <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; align-items: center;">
         <button type="button" class="btn-sol-yes" onclick="openReportSlipFromDetail()" style="background: #002D62; color: #fff; font-size: 12px; padding: 8px 14px; border-radius: 8px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
           📄 Download Official Slip (पर्ची)
         </button>
+        <span id="detailDeleteContainer"></span>
         <button type="button" class="btn-modal-primary" id="detailSupportBtn" onclick="toggleSupportFromDetail()" style="flex: 1;">
           👍 I am also affected
         </button>
@@ -2695,6 +2916,50 @@
         <button type="button" class="btn-modal-secondary" onclick="closeModal('reopenModal')" data-i18n="btn_cancel">Cancel</button>
         <button type="button" class="btn-modal-primary" style="background: #DC2626;" onclick="submitReopenProblem()">
           🔴 Reopen Grievance &amp; Alert Taskforce
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: DELETE GRIEVANCE CONFIRMATION (SECURITY VERIFICATION)
+     ============================================================ -->
+<div class="modal-overlay" id="deleteConfirmModal">
+  <div class="modal-card-box" style="max-width: 520px;">
+    <div class="modal-header-bar" style="background: #FEF2F2; border-bottom: 1.5px solid #FCA5A5;">
+      <div class="modal-header-title" style="color: #991B1B; display: flex; align-items: center; gap: 8px;">
+        <span>⚠️</span>
+        <span data-i18n="modal_delete_title">Delete Grievance (शिकायत हटाएं)</span>
+      </div>
+      <button class="modal-close-btn" onclick="closeModal('deleteConfirmModal')">✕</button>
+    </div>
+
+    <div class="modal-body-scroll" style="padding: 20px;">
+      <div style="background: #FEF2F2; border: 1.5px solid #FECACA; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+        <div style="font-size: 13px; font-weight: 800; color: #991B1B; display: flex; align-items: center; gap: 6px;">
+          <span>🚨</span> <span>Permanent Deletion Warning (स्थायी हटाने की चेतावनी)</span>
+        </div>
+        <p style="font-size: 12px; color: #7F1D1D; margin-top: 6px; line-height: 1.5; margin-bottom: 0;">
+          Are you sure you want to permanently delete Grievance <strong id="deleteTargetReportIdBadge" style="font-family: monospace; background: #FEE2E2; padding: 2px 6px; border-radius: 4px; color: #991B1B;">JH-2026-4819</strong>?
+          All photographic evidence, AI triage records, and location data will be wiped from JanSetu municipal servers.
+        </p>
+      </div>
+
+      <div style="font-size: 12.5px; color: #334155; margin-bottom: 8px;">
+        🔒 <strong>Security Verification (सुरक्षा सत्यापन):</strong><br/>
+        To prevent accidental deletion, please type <strong style="color: #DC2626; font-family: monospace; background: #FEE2E2; padding: 2px 6px; border-radius: 4px;">DELETE</strong> below:
+      </div>
+
+      <div class="form-group-field" style="margin-bottom: 16px;">
+        <input type="text" class="form-input-control" id="deleteSecurityInput" placeholder="Type DELETE to confirm" oninput="onDeleteSecurityInputChange()" autocomplete="off" style="font-family: monospace; font-weight: 800; font-size: 14px; text-transform: uppercase;" />
+        <div style="font-size: 10.5px; color: #64748b; margin-top: 4px;">Notice: Unverified grievances only. Once verified by government admin, deletion is locked for civic audit.</div>
+      </div>
+
+      <div class="modal-footer-nav" style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" class="btn-modal-secondary" onclick="closeModal('deleteConfirmModal')">Cancel</button>
+        <button type="button" id="btnExecuteDeleteReport" class="btn-modal-primary" style="background: #DC2626; border-color: #B91C1C; opacity: 0.45; cursor: not-allowed;" disabled onclick="executeReportDeletion()">
+          🗑️ Permanently Delete Grievance
         </button>
       </div>
     </div>
@@ -3181,15 +3446,16 @@
       id: 'JH-2026-4819',
       title: 'Drinking Water Supply Broken — Piped Scheme Leakage in Village Namkum',
       location: 'Village Namkum, Namkum, Ranchi, Jharkhand',
-      status: 'Being Worked On',
+      status: 'Submitted',
       category: 'Water Management',
       image: '/images/water-tap.jpg',
       desc: 'The primary piped water scheme pipeline is damaged, causing severe water leakage and 400+ villagers without clean drinking water. Needs pipe welding and valve replacement.',
-      assign: 'BIT Mesra Civil & Environmental Engineering Taskforce',
-      timeAgo: '4 days ago',
+      assign: 'Verification in progress by JanSetu Authority',
+      timeAgo: 'Just now',
       supports: 14,
       needsAction: false,
-      isResolved: false
+      isResolved: false,
+      isVerified: false
     },
     {
       id: 'JH-2026-3812',
@@ -3389,6 +3655,18 @@
         r.beforeImg = r.image;
       }
     });
+
+    // Ensure an unverified report is readily available so citizen can test grievance deletion
+    const hasUnverified = allReportsList.some(r => r.status === 'Submitted' || r.isVerified === false);
+    if (!hasUnverified) {
+      const rep4819 = allReportsList.find(r => r.id === 'JH-2026-4819');
+      if (rep4819) {
+        rep4819.status = 'Submitted';
+        rep4819.isVerified = false;
+        rep4819.assign = 'Verification in progress by JanSetu Authority';
+        saveReportsState();
+      }
+    }
 
     const storedExplore = localStorage.getItem('jansetu_explore_list');
     if (storedExplore) {
@@ -3591,7 +3869,395 @@
     showToast(currentLanguage === 'hi' ? 'डैशबोर्ड पर सक्रिय ट्रैकर अपडेट हुआ' : 'Active tracker updated on dashboard');
   }
 
-  function updateTrackerTimeline(status, isResolved, citizenVerified) {
+  function getStakeholderActionData(r) {
+    if (!r) return null;
+    const isSolved = r.status === 'Solved' || r.isResolved;
+    const isWorking = (r.status === 'Being Worked On' || r.status === 'In Progress' || r.status === 'University Assigned') && r.isVerified !== false;
+    const isSubmitted = r.status === 'Submitted' || r.isVerified === false || (!isWorking && !isSolved);
+    const isVerified = (isWorking || isSolved || r.status === 'Verified') && !isSubmitted;
+
+    let baseDate = r.submittedDate || '01 Sep 2026';
+    if (r.timeAgo === 'Just now') {
+      const now = new Date();
+      baseDate = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    } else if (r.timeAgo === '4 days ago') {
+      baseDate = '01 Sep 2026';
+    } else if (r.timeAgo === '2 days ago') {
+      baseDate = '03 Sep 2026';
+    } else if (r.timeAgo === '1 week ago') {
+      baseDate = '28 Aug 2026';
+    }
+
+    const cat = r.category || 'Water Management';
+
+    // Tailored Admin, Industry, and University mapping by category
+    let adminInfo = {
+      name: 'Dr. A. K. Sinha, IAS (District Magistrate & Collector, Ranchi)',
+      dept: 'Department of Drinking Water & Sanitation (DWSD), Govt of Jharkhand',
+      orderId: 'WO-DWSD-' + (r.id ? r.id.replace('JH-', '') : '2026-8812'),
+      action: 'Verified grievance coordinates via GIS satellite map. Categorized priority as Urgent. Approved civic joint-action work order and authorized mobilization of university taskforce and industry CSR supplies.',
+      time: `${baseDate} · 01:15 PM`,
+      verified: isVerified
+    };
+
+    let industryInfo = {
+      company: 'Tata Steel Rural Development Society (TSRDS) & Jindal Water Infra Ltd',
+      csrId: 'CSR-GRANT-TATA-JH-' + (r.id ? r.id.slice(-4) : '4402'),
+      materials: '120m high-density polyethylene (HDPE) pipeline, pressure relief valves, industrial flange gaskets & safety toolkits',
+      action: 'Dispatched emergency materials shipment directly to ground site under CSR Rural Infrastructure Partnership. Full logistics tracking enabled.',
+      time: `${baseDate} · 03:30 PM`,
+      supplied: isWorking || isSolved
+    };
+
+    let universityInfo = {
+      name: r.assign || 'BIT Mesra (Birla Institute of Technology) — Civil & Environmental Engineering Lab',
+      team: 'Prof. S. Sen (Faculty Lead) & 4 Student Field Innovation Fellows',
+      action: 'Deployed field taskforce with acoustic leak sensors and pressure diagnostic kit. Conducted excavation, replaced ruptured pipe section, welded flange coupling, and certified water flow pressure.',
+      time: isSolved ? (r.resolvedDate || `${baseDate} · 04:45 PM`) : `${baseDate} · 02:15 PM`,
+      working: isWorking || isSolved,
+      completed: isSolved
+    };
+
+    if (cat === 'Urban Infrastructure') {
+      adminInfo.name = 'Sanjay Kumar, IAS (Municipal Commissioner, Ranchi Municipal Corporation)';
+      adminInfo.dept = 'Urban Development & Housing Department (UDHD), Govt of Jharkhand';
+      adminInfo.orderId = 'WO-RMC-RD-' + (r.id ? r.id.slice(-4) : '7721');
+      adminInfo.action = 'Approved emergency road repair tender and released municipal maintenance budget. Coordinated traffic diversion and field clearance.';
+
+      industryInfo.company = 'Larsen & Toubro (L&T) Construction CSR & Central Coalfields Limited (CCL)';
+      industryInfo.csrId = 'CSR-LNT-INFRA-8910';
+      industryInfo.materials = '15 Tonnes eco-composite cold-mix asphalt, bitumen emulsion & vibratory road roller compaction unit';
+      industryInfo.action = 'Sourced durable polymer-modified asphalt materials ensuring zero cratering during monsoon heavy vehicle transit.';
+
+      universityInfo.name = 'National Institute of Foundry & Forge Technology (NIFFT) & NIT Jamshedpur Civil Dept';
+      universityInfo.team = 'Dr. Rajesh P. (Structural Engineering) & 6 Student Technicians';
+      universityInfo.action = 'Executed ground sub-base stabilization, poured cold-mix composite asphalt, compacted potholes, and restored smooth traffic surface.';
+    } else if (cat === 'Energy & Technology') {
+      adminInfo.name = 'Er. R. K. Singh (Superintending Engineer, JUVNL Ranchi)';
+      adminInfo.dept = 'Jharkhand Urja Vikas Nigam Limited (Energy Dept), Govt of Jharkhand';
+      adminInfo.orderId = 'WO-JUVNL-ENG-9104';
+      adminInfo.action = 'Approved high-priority power restoration permit and issued safety shutdown clearance for electrical line rewiring.';
+
+      industryInfo.company = 'SAIL Bokaro Steel Plant CSR & Adani Power Transmission Division';
+      industryInfo.csrId = 'CSR-SAIL-PWR-3310';
+      industryInfo.materials = '25kVA step-down copper-wound transformer unit, class-A surge arresters & armored aluminum conductors';
+      industryInfo.action = 'Allocated industrial-grade transformer equipment from regional engineering reserve warehouse within 4 hours.';
+
+      universityInfo.name = 'BIT Sindri High-Voltage Electrical Innovation Lab & State Electricity Taskforce';
+      universityInfo.team = 'Prof. Anup Kumar & 4 Power Systems Graduate Fellows';
+      universityInfo.action = 'Replaced burnt-out unit, installed lightning protection, balanced line load, and re-energized Anganwadi electrical feeder.';
+    } else if (cat === 'Sanitation & Environment') {
+      adminInfo.name = 'Meera Munda (Executive Officer, Urban Sanitation Mission, Jharkhand)';
+      adminInfo.dept = 'Swachh Bharat Rural Mission & Municipal Sanitation Division';
+      adminInfo.orderId = 'WO-SBM-SAN-4521';
+      adminInfo.action = 'Verified garbage vulnerable point via GPS. Dispatched municipal solid waste collection authorization.';
+
+      industryInfo.company = 'Hindalco Industries Sustainable CSR & Ramky Clean Environment Solutions';
+      industryInfo.csrId = 'CSR-HINDALCO-ENV-1120';
+      industryInfo.materials = 'Commercial bio-sanitizer spray units, 24 heavy-duty waste collection bins & composting inoculant bags';
+      industryInfo.action = 'Sponsored complete eco-sanitization equipment and provided protective bio-safety gear for community volunteers.';
+
+      universityInfo.name = 'Ranchi University Environmental Science & Public Health Dept';
+      universityInfo.team = 'Dr. Vandana Kumari & 8 Green Campus Ambassadors';
+      universityInfo.action = 'Conducted community clean-up drive, sprayed organic microbial deodorizer, and set up segregated composting pit.';
+    }
+
+    if (isSubmitted) {
+      adminInfo = {
+        name: currentLanguage === 'hi' ? 'जिला शिकायत निवारण एवं सत्यापन प्रकोष्ठ, रांची' : 'District Grievance Triage & Verification Desk, Ranchi',
+        dept: currentLanguage === 'hi' ? 'पेयजल एवं स्वच्छता विभाग / नगर निगम, झारखण्ड सरकार' : 'DW&S Department / Municipal Corporation, Govt of Jharkhand',
+        orderId: 'Pending Verification',
+        action: currentLanguage === 'hi' ? 'नागरिक द्वारा समस्या दर्ज की गई है। AI ट्राइएज व सेटेलाइट जीआईएस डुप्लीकेशन जांच पूरी। प्रशासनिक सत्यापन व कार्य आदेश कतार में है।' : 'Grievance submitted by citizen with geo-tagged proof. AI triage complete. Field inspection & official work order in municipal verification queue.',
+        time: `${baseDate} · Pending Admin Review`,
+        verified: false
+      };
+      industryInfo = {
+        company: currentLanguage === 'hi' ? 'कॉर्पोरेट सीएसआर पार्टनर नेटवर्क (Tata Steel / Jindal CSR Wing)' : 'Corporate CSR Partner Network (Tata Steel / Jindal CSR Wing)',
+        csrId: 'Standby Allocation',
+        materials: currentLanguage === 'hi' ? 'सामग्री आवश्यकता सूची तैयार; प्रशासनिक अनुमोदन के उपरांत तुरंत प्रेषण' : 'Materials bill of quantities generated; ready for immediate dispatch upon admin approval',
+        action: currentLanguage === 'hi' ? 'इंडस्ट्री पार्टनर इन्वेंटरी में आवश्यक उपकरण स्टैंडबाय पर रखे गए हैं।' : 'Required replacement equipment & supplies placed on standby in regional CSR warehouse.',
+        time: 'Queued',
+        supplied: false
+      };
+      universityInfo = {
+        name: currentLanguage === 'hi' ? 'जनसेतु इंजीनियरिंग कॉलेज टास्कफोर्स गठबंधन' : 'JanSetu Engineering Taskforce Alliance',
+        team: currentLanguage === 'hi' ? 'इंजीनियरिंग फील्ड डिप्लॉयमेंट सेल' : 'Engineering Field Deployment Cell',
+        action: currentLanguage === 'hi' ? 'प्रशासनिक सत्यापन के उपरांत निकटतम तकनीकी संस्थान (BIT Mesra / NIFFT) को स्थल पर भेजा जाएगा।' : 'Accredited local engineering team (BIT Mesra / NIFFT) will be mobilized for site repair upon admin verification.',
+        time: 'Awaiting Deployment',
+        working: false,
+        completed: false
+      };
+    }
+
+    return {
+      adminInfo,
+      industryInfo,
+      universityInfo,
+      baseDate,
+      isSolved,
+      isWorking,
+      isVerified
+    };
+  }
+
+  function generateReportMilestones(r) {
+    if (!r) return [];
+    const data = getStakeholderActionData(r);
+    if (!data) return [];
+
+    return [
+      {
+        num: 1,
+        icon: '👤',
+        name: currentLanguage === 'hi' ? 'समस्या दर्ज' : 'Submitted',
+        date: `${data.baseDate} · 10:30 AM`,
+        note: currentLanguage === 'hi' ? 'नागरिक द्वारा दर्ज' : 'Reported by Citizen',
+        desc: currentLanguage === 'hi' ? 'समस्या फोटो व लोकेशन सहित पोर्टल पर दर्ज हुई' : 'Grievance submitted with photo & GPS coords',
+        state: 'completed'
+      },
+      {
+        num: 2,
+        icon: '🏛️',
+        name: currentLanguage === 'hi' ? 'प्रशासनिक सत्यापन' : 'Admin Verified',
+        date: data.adminInfo.time,
+        note: data.isVerified ? 'IAS Admin Approved' : (currentLanguage === 'hi' ? 'सत्यापन कतार' : 'In Queue'),
+        desc: `${data.adminInfo.name} (${data.adminInfo.dept})`,
+        state: data.isVerified ? 'completed' : (r.status === 'Submitted' ? 'current' : 'pending')
+      },
+      {
+        num: 3,
+        icon: '🏭',
+        name: currentLanguage === 'hi' ? 'इंडस्ट्री सहयोग' : 'Industry Action',
+        date: data.industryInfo.time,
+        note: data.industryInfo.supplied ? 'CSR Supplies Sent' : (currentLanguage === 'hi' ? 'संसाधन आवंटन' : 'CSR Standby'),
+        desc: `${data.industryInfo.company} (${data.industryInfo.materials.slice(0, 45)}...)`,
+        state: data.industryInfo.supplied ? 'completed' : (data.isWorking ? 'current' : 'pending')
+      },
+      {
+        num: 4,
+        icon: '🎓',
+        name: currentLanguage === 'hi' ? 'कॉलेज टास्कफोर्स' : 'University Fixed',
+        date: data.universityInfo.time,
+        note: data.isSolved ? 'Field Engineering' : (data.isWorking ? 'Active Site Fix' : (currentLanguage === 'hi' ? 'टास्कफोर्स प्रतीक्षा' : 'Team Standby')),
+        desc: `${data.universityInfo.name}`,
+        state: data.isSolved ? 'completed' : (data.isWorking ? 'current' : 'pending')
+      },
+      {
+        num: 5,
+        icon: '🌟',
+        name: currentLanguage === 'hi' ? 'समाधान व पुष्टि' : 'Certified Closed',
+        date: data.isSolved ? 'Certified' : 'Pending',
+        note: currentLanguage === 'hi' ? 'नागरिक प्रमाण' : 'Citizen Signoff',
+        desc: (data.isSolved && r.citizenVerified) ? (currentLanguage === 'hi' ? 'नागरिक द्वारा समाधान सत्यापित, केस बंद' : 'Citizen verified resolution, grievance closed') : (data.isSolved ? (currentLanguage === 'hi' ? 'नागरिक पुष्टि का इंतजार' : 'Awaiting citizen verification feedback') : (currentLanguage === 'hi' ? 'अंतिम चरण' : 'Final Step')),
+        state: (data.isSolved && r.citizenVerified) ? 'completed' : (data.isSolved ? 'current' : 'pending')
+      }
+    ];
+  }
+
+  function renderDetailProgressTracker(item) {
+    const cont = document.getElementById('detailModalTimelineContainer');
+    const cardsGrid = document.getElementById('detailStakeholderCardsGrid');
+    const badge = document.getElementById('detailReportedTimestampBadge');
+    if (!item) return;
+
+    const data = getStakeholderActionData(item);
+    if (!data) return;
+
+    if (badge) {
+      badge.textContent = `${currentLanguage === 'hi' ? '📅 दर्ज:' : '📅 Reported:'} ${data.baseDate} · 10:30 AM`;
+    }
+
+    // 1. Horizontal Stepper (5 Multi-Stakeholder Stages)
+    if (cont) {
+      const steps = [
+        {
+          num: 1,
+          icon: '👤',
+          label: currentLanguage === 'hi' ? 'नागरिक रिपोर्ट' : 'Citizen Report',
+          date: `${data.baseDate} · 10:30 AM`,
+          role: currentLanguage === 'hi' ? 'समस्या दर्ज' : 'Submitted',
+          state: 'completed'
+        },
+        {
+          num: 2,
+          icon: '🏛️',
+          label: currentLanguage === 'hi' ? 'प्रशासनिक सत्यापन' : 'Admin Verified',
+          date: data.adminInfo.time,
+          role: 'IAS Admin Approved',
+          state: data.isVerified ? 'completed' : (item.status === 'Submitted' ? 'current' : 'pending')
+        },
+        {
+          num: 3,
+          icon: '🏭',
+          label: currentLanguage === 'hi' ? 'इंडस्ट्री सहयोग' : 'Industry Action',
+          date: data.industryInfo.time,
+          role: 'CSR Supplies Sent',
+          state: data.industryInfo.supplied ? 'completed' : (data.isWorking ? 'current' : 'pending')
+        },
+        {
+          num: 4,
+          icon: '🎓',
+          label: currentLanguage === 'hi' ? 'कॉलेज टास्कफोर्स' : 'University Fixed',
+          date: data.universityInfo.time,
+          role: 'Field Engineering',
+          state: data.isSolved ? 'completed' : (data.isWorking ? 'current' : 'pending')
+        },
+        {
+          num: 5,
+          icon: '🌟',
+          label: currentLanguage === 'hi' ? 'समाधान व पुष्टि' : 'Certified Closed',
+          date: data.isSolved ? 'Certified' : 'Pending',
+          role: currentLanguage === 'hi' ? 'नागरिक प्रमाण' : 'Citizen Signoff',
+          state: (data.isSolved && item.citizenVerified) ? 'completed' : (data.isSolved ? 'current' : 'pending')
+        }
+      ];
+
+      let stepperHtml = '';
+      steps.forEach((s, idx) => {
+        const bubbleClass = s.state === 'completed' ? 'detail-step-bubble completed' : (s.state === 'current' ? 'detail-step-bubble current' : 'detail-step-bubble');
+        const bubbleContent = s.state === 'completed' ? '✓' : (s.state === 'current' ? '⚡' : s.icon);
+
+        stepperHtml += `
+          <div class="detail-timeline-step">
+            <div class="${bubbleClass}" title="${s.label}">${bubbleContent}</div>
+            <div class="detail-step-title">${s.label}</div>
+            <div class="detail-step-date">${s.date}</div>
+            <div class="detail-step-desc">${s.role}</div>
+          </div>
+        `;
+
+        if (idx < steps.length - 1) {
+          const lineActive = steps[idx].state === 'completed' ? 'active' : '';
+          stepperHtml += `<div class="detail-step-line ${lineActive}"></div>`;
+        }
+      });
+      cont.innerHTML = stepperHtml;
+    }
+
+    // 2. Comprehensive Stakeholder Action Cards
+    if (cardsGrid) {
+      cardsGrid.innerHTML = buildStakeholderCardsHtml(item);
+    }
+  }
+
+  function buildStakeholderCardsHtml(item) {
+    if (!item) return '';
+    const data = getStakeholderActionData(item);
+    if (!data) return '';
+
+    return `
+      <!-- 1. ADMIN VERIFICATION CARD -->
+      <div class="stakeholder-card admin-card">
+        <div class="stakeholder-card-header">
+          <div class="stakeholder-card-title" style="color: #6b21a8;">
+            <span>🏛️</span>
+            <span>${currentLanguage === 'hi' ? 'प्रशासनिक सत्यापन व कार्य आदेश' : 'Administrative Review & Official Verification'}</span>
+          </div>
+          <span class="stakeholder-card-badge ${data.isVerified ? 'done' : 'active'}">
+            ${data.isVerified ? (currentLanguage === 'hi' ? 'प्रशासन द्वारा अनुमोदित ✓' : 'Admin Verified & Approved ✓') : (currentLanguage === 'hi' ? 'सत्यापन कतार में ⚡' : 'In Verification Queue ⚡')}
+          </span>
+        </div>
+        <div class="stakeholder-card-body">
+          <strong>${currentLanguage === 'hi' ? 'सत्यापन अधिकारी' : 'Verifying Officer'}:</strong> ${data.adminInfo.name}<br/>
+          <strong>${currentLanguage === 'hi' ? 'विभाग' : 'Department'}:</strong> ${data.adminInfo.dept}<br/>
+          <strong>${currentLanguage === 'hi' ? 'किये गए प्रशासनिक कार्य' : 'Administrative Action'}:</strong> ${data.adminInfo.action}
+        </div>
+        <div class="stakeholder-meta-row">
+          <div class="stakeholder-meta-item"><span>📋</span> <span><strong>Order:</strong> ${data.adminInfo.orderId}</span></div>
+          <div class="stakeholder-meta-item"><span>🕒</span> <span><strong>Timestamp:</strong> ${data.adminInfo.time}</span></div>
+          <div class="stakeholder-meta-item"><span>📍</span> <span><strong>GIS Deduplication:</strong> Verified (0 Conflicts)</span></div>
+        </div>
+        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+          <span style="font-size: 11px; color: #64748b;">
+            ${data.isVerified 
+              ? (currentLanguage === 'hi' ? '🏛️ प्रशासनिक आदेश जारी। सरकारी ऑडिट नियमों के अनुसार हटाना लॉक है।' : '🏛️ Municipal work order active. Deletion locked under audit rules.') 
+              : (currentLanguage === 'hi' ? '⏳ सत्यापन से पहले नागरिक अपनी शिकायत कभी भी हटा सकता है।' : '⏳ Deletable by citizen prior to administrative verification.')}
+          </span>
+          ${data.isVerified ? `
+            <button type="button" onclick="event.stopPropagation(); simulateAdminUnverify('${item.id}');" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Test Delete by reverting to unverified state">
+              <span>↩️</span> <span>${currentLanguage === 'hi' ? 'डेमो: सत्यापन वापस लें (Delete टेस्ट)' : 'Demo: Unverify (Test Delete)'}</span>
+            </button>
+          ` : `
+            <button type="button" onclick="event.stopPropagation(); simulateAdminVerify('${item.id}');" style="background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Approve grievance to test audit lock">
+              <span>🏛️</span> <span>${currentLanguage === 'hi' ? 'डेमो: प्रशासन सत्यापन करें' : 'Demo: Admin Verify'}</span>
+            </button>
+          `}
+        </div>
+      </div>
+
+      <!-- 2. INDUSTRY PARTNER ACTION CARD -->
+      <div class="stakeholder-card industry-card">
+        <div class="stakeholder-card-header">
+          <div class="stakeholder-card-title" style="color: #92400e;">
+            <span>🏭</span>
+            <span>${currentLanguage === 'hi' ? 'इंडस्ट्री पार्टनर व कॉर्पोरेट संसाधन सहयोग' : 'Industry Partner Action & Resource Sourcing'}</span>
+          </div>
+          <span class="stakeholder-card-badge ${data.industryInfo.supplied ? 'done' : (data.isWorking ? 'active' : 'wait')}">
+            ${data.industryInfo.supplied ? (currentLanguage === 'hi' ? 'संसाधन स्थल पर पहुंचे ✓' : 'Supplies Delivered to Site ✓') : (data.isWorking ? (currentLanguage === 'hi' ? 'आपूर्ति प्रक्रिया में ⚡' : 'Sourcing in Progress ⚡') : (currentLanguage === 'hi' ? 'आवंटन प्रतीक्षारत' : 'Pending Allocation'))}
+          </span>
+        </div>
+        <div class="stakeholder-card-body">
+          <strong>${currentLanguage === 'hi' ? 'सहयोगी इंडस्ट्री' : 'Partner Industry'}:</strong> ${data.industryInfo.company}<br/>
+          <strong>${currentLanguage === 'hi' ? 'इंडस्ट्री द्वारा की गई कार्रवाई' : 'Industry Action Performed'}:</strong> ${data.industryInfo.action}<br/>
+          <strong>${currentLanguage === 'hi' ? 'उपलब्ध कराई गई सामग्री' : 'Materials & Equipment Provided'}:</strong> <span style="color: #b45309; font-weight: 700;">${data.industryInfo.materials}</span>
+        </div>
+        <div class="stakeholder-meta-row">
+          <div class="stakeholder-meta-item"><span>🏢</span> <span><strong>CSR Grant ID:</strong> ${data.industryInfo.csrId}</span></div>
+          <div class="stakeholder-meta-item"><span>🕒</span> <span><strong>Dispatched:</strong> ${data.industryInfo.time}</span></div>
+          <div class="stakeholder-meta-item"><span>🚚</span> <span><strong>Logistics Status:</strong> Verified Ground Handover</span></div>
+        </div>
+      </div>
+
+      <!-- 3. UNIVERSITY TASKFORCE EXECUTION CARD -->
+      <div class="stakeholder-card university-card">
+        <div class="stakeholder-card-header">
+          <div class="stakeholder-card-title" style="color: #1e40af;">
+            <span>🎓</span>
+            <span>${currentLanguage === 'hi' ? 'यूनिवर्सिटी इंजीनियरिंग टास्कफोर्स जमीनी कार्य' : 'University Engineering Taskforce Ground Execution'}</span>
+          </div>
+          <span class="stakeholder-card-badge ${data.isSolved ? 'done' : (data.isWorking ? 'active' : 'wait')}">
+            ${data.isSolved ? (currentLanguage === 'hi' ? 'जमीनी समाधान पूर्ण ✓' : 'Ground Fix Complete ✓') : (data.isWorking ? (currentLanguage === 'hi' ? 'स्थल पर कार्य जारी ⚡' : 'Active On-Site ⚡') : (currentLanguage === 'hi' ? 'टास्कफोर्स प्रतीक्षा में' : 'Awaiting Deployment'))}
+          </span>
+        </div>
+        <div class="stakeholder-card-body">
+          <strong>${currentLanguage === 'hi' ? 'असाइन किया गया संस्थान' : 'Assigned Institution'}:</strong> ${data.universityInfo.name}<br/>
+          <strong>${currentLanguage === 'hi' ? 'फील्ड टीम' : 'Field Engineering Team'}:</strong> ${data.universityInfo.team}<br/>
+          <strong>${currentLanguage === 'hi' ? 'जमीनी कार्य व तकनीकी समाधान' : 'Technical Action Performed'}:</strong> ${data.universityInfo.action}
+        </div>
+        <div class="stakeholder-meta-row">
+          <div class="stakeholder-meta-item"><span>🛠️</span> <span><strong>Method:</strong> Acoustic Diagnostic &amp; Composite Flange Welding</span></div>
+          <div class="stakeholder-meta-item"><span>🕒</span> <span><strong>Execution Time:</strong> ${data.universityInfo.time}</span></div>
+          <div class="stakeholder-meta-item"><span>📸</span> <span><strong>Proof:</strong> Before &amp; After Geo-Tagged Photos</span></div>
+        </div>
+      </div>
+
+      <!-- 4. CITIZEN RESOLUTION & CLOSURE CARD -->
+      <div class="stakeholder-card citizen-card">
+        <div class="stakeholder-card-header">
+          <div class="stakeholder-card-title" style="color: #166534;">
+            <span>🌟</span>
+            <span>${currentLanguage === 'hi' ? 'नागरिक जमीनी सत्यापन व समाधान प्रमाण पत्र' : 'Citizen Ground Verification & Resolution Certificate'}</span>
+          </div>
+          <span class="stakeholder-card-badge ${(data.isSolved && item.citizenVerified) ? 'done' : (data.isSolved ? 'active' : 'wait')}">
+            ${(data.isSolved && item.citizenVerified) ? (currentLanguage === 'hi' ? 'केस प्रमाणित बंद ✓' : 'Case Certified Closed ✓') : (data.isSolved ? (currentLanguage === 'hi' ? 'नागरिक पुष्टि बाकी ⚡' : 'Awaiting Citizen Feedback ⚡') : (currentLanguage === 'hi' ? 'अंतिम चरण' : 'Final Step'))}
+          </span>
+        </div>
+        <div class="stakeholder-card-body">
+          ${(data.isSolved && item.citizenVerified) 
+            ? (currentLanguage === 'hi' ? 'नागरिक द्वारा समाधान सत्यापित किया गया। पानी का दबाव सामान्य है और कोई लीकेज नहीं है। डिजिटल समाधान प्रमाणपत्र जारी किया गया।' : 'Resolution verified by community citizens. Clean pressure water restored with zero leakage. Official digital resolution certificate issued.')
+            : (data.isSolved 
+              ? (currentLanguage === 'hi' ? 'टास्कफोर्स द्वारा कार्य पूर्ण घोषित किया गया है। कृपया नीचे दिए गए फीडबैक सेक्शन में समाधान की पुष्टि करें।' : 'Work marked complete by university engineers. Please verify on ground and confirm satisfaction in the feedback section below.')
+              : (currentLanguage === 'hi' ? 'समाधान कार्य पूरा होने के पश्चात नागरिक द्वारा भौतिक सत्यापन किया जाएगा और आधिकारिक पर्ची जारी होगी।' : 'Will be physically inspected and verified by citizen once field repair work is completed.'))}
+        </div>
+        <div class="stakeholder-meta-row">
+          <div class="stakeholder-meta-item"><span>📜</span> <span><strong>Grievance ID:</strong> ${item.id}</span></div>
+          <div class="stakeholder-meta-item"><span>👤</span> <span><strong>Citizen Signoff:</strong> ${item.citizenVerified ? 'Verified (5 ⭐ Rating)' : (data.isSolved ? 'Action Required from You' : 'Pending Resolution')}</span></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function updateTrackerTimeline(status, isResolved, citizenVerified, report) {
     const sSubmitted = document.getElementById('timelineStepSubmitted');
     const sVerified = document.getElementById('timelineStepVerified');
     const sWorking = document.getElementById('timelineStepWorking');
@@ -3664,8 +4330,33 @@
       // Default: JUST SUBMITTED (Only Step 1 active!)
       sSubmitted.className = 'timeline-dot-bubble current';
       sSubmitted.textContent = '⚡';
-      // Lines 1..4 remain inactive
-      // Steps 2..5 remain pending
+    }
+
+    // Populate dynamic dates and action notes under the 5 bubbles on dashboard
+    const active = report || getCurrentlyTrackedReport();
+    if (active) {
+      const milestones = generateReportMilestones(active);
+      const dSub = document.getElementById('timelineDateSubmitted');
+      const nSub = document.getElementById('timelineNoteSubmitted');
+      const dVer = document.getElementById('timelineDateVerified');
+      const nVer = document.getElementById('timelineNoteVerified');
+      const dWrk = document.getElementById('timelineDateWorking');
+      const nWrk = document.getElementById('timelineNoteWorking');
+      const dRes = document.getElementById('timelineDateResolution');
+      const nRes = document.getElementById('timelineNoteResolution');
+      const dClo = document.getElementById('timelineDateClosed');
+      const nClo = document.getElementById('timelineNoteClosed');
+
+      if (dSub) dSub.textContent = milestones[0]?.date || '--';
+      if (nSub) nSub.textContent = milestones[0]?.note || '--';
+      if (dVer) dVer.textContent = milestones[1]?.date || '--';
+      if (nVer) nVer.textContent = milestones[1]?.note || '--';
+      if (dWrk) dWrk.textContent = milestones[2]?.date || '--';
+      if (nWrk) nWrk.textContent = milestones[2]?.note || '--';
+      if (dRes) dRes.textContent = milestones[3]?.date || '--';
+      if (nRes) nRes.textContent = milestones[3]?.note || '--';
+      if (dClo) dClo.textContent = milestones[4]?.date || '--';
+      if (nClo) nClo.textContent = milestones[4]?.note || '--';
     }
   }
 
@@ -3704,28 +4395,50 @@
 
     const badge = document.getElementById('activeReportStatus');
     const label = document.getElementById('activeStatusLabelText');
-    if (label) label.textContent = active.status;
+    const isSolved = active.status === 'Solved' || active.isResolved;
+    const isUnverified = (active.status === 'Submitted' || !active.isVerified) && !isSolved;
 
     if (badge) {
-      if (active.status === 'Solved' || active.isResolved) {
+      if (isSolved) {
         badge.className = 'status-badge-in-progress resolved';
+        if (label) label.textContent = currentLanguage === 'hi' ? 'समाधान पूर्ण ✓' : 'Solved ✓';
         if (document.getElementById('solCheckBox')) document.getElementById('solCheckBox').classList.add('show');
-      } else if (active.status === 'Submitted') {
+      } else if (isUnverified) {
         badge.className = 'status-badge-in-progress';
         badge.style.background = '#EFF6FF';
-        badge.style.color = 'var(--navy)';
+        badge.style.color = '#1D4ED8';
         badge.style.borderColor = '#BFDBFE';
+        if (label) label.textContent = currentLanguage === 'hi' ? '⏳ सत्यापन प्रतीक्षारत' : '⏳ Awaiting Admin Verification';
         if (document.getElementById('solCheckBox')) document.getElementById('solCheckBox').classList.remove('show');
       } else {
         badge.className = 'status-badge-in-progress';
-        badge.style.background = '#fff7ed';
-        badge.style.color = '#ea580c';
-        badge.style.borderColor = '#fed7aa';
+        badge.style.background = '#F0FDF4';
+        badge.style.color = '#166534';
+        badge.style.borderColor = '#BBF7D0';
+        if (label) label.textContent = currentLanguage === 'hi' ? '✓ प्रशासन द्वारा सत्यापित · कार्य जारी' : '✓ Admin Verified · In Progress';
         if (document.getElementById('solCheckBox')) document.getElementById('solCheckBox').classList.remove('show');
       }
     }
 
-    updateTrackerTimeline(active.status, active.isResolved, active.citizenVerified);
+    updateTrackerTimeline(active.status, active.isResolved, active.citizenVerified, active);
+
+    // Deletion allowed only if unverified by Admin
+    const delSlot = document.getElementById('activeTrackerDeleteAction');
+    if (delSlot) {
+      if (isUnverified) {
+        delSlot.innerHTML = `
+          <button type="button" style="background: #FEF2F2; border: 1.5px solid #FECACA; color: #DC2626; font-size: 11px; font-weight: 800; border-radius: 14px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" onclick="event.stopPropagation(); promptDeleteReport('${active.id}');" title="${currentLanguage === 'hi' ? 'सत्यापन से पहले शिकायत हटाएं' : 'Delete unverified grievance'}">
+            <span>🗑️</span> <span>${currentLanguage === 'hi' ? 'हटाएं' : 'Delete'}</span>
+          </button>
+        `;
+      } else {
+        delSlot.innerHTML = `
+          <span style="font-size: 10.5px; color: #64748b; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 3px;" title="Official municipal work order active. Grievance locked under audit regulations.">
+            🔒 ${currentLanguage === 'hi' ? 'सत्यापित (लॉक)' : 'Verified (Locked)'}
+          </span>
+        `;
+      }
+    }
 
     const reqBanner = document.getElementById('actionRequiredBanner');
     if (reqBanner) {
@@ -3915,12 +4628,35 @@
       }
     }
 
-    document.getElementById('detailStatusBadge').textContent = item.status;
+    const isUnverified = (item.status === 'Submitted' || !item.isVerified) && !isSolved;
+
+    const detailBadge = document.getElementById('detailStatusBadge');
+    if (detailBadge) {
+      if (isSolved) {
+        detailBadge.textContent = currentLanguage === 'hi' ? '✓ समाधान पूर्ण' : '✓ Solved';
+        detailBadge.style.background = '#EDFCF2';
+        detailBadge.style.color = '#15803D';
+        detailBadge.style.borderColor = '#A7F3D0';
+      } else if (isUnverified) {
+        detailBadge.textContent = currentLanguage === 'hi' ? '⏳ सत्यापन प्रतीक्षारत' : '⏳ Awaiting Admin Verification';
+        detailBadge.style.background = '#EFF6FF';
+        detailBadge.style.color = '#1D4ED8';
+        detailBadge.style.borderColor = '#BFDBFE';
+      } else {
+        detailBadge.textContent = currentLanguage === 'hi' ? '✓ प्रशासन द्वारा सत्यापित · कार्य जारी' : '✓ Admin Verified · In Progress';
+        detailBadge.style.background = '#F0FDF4';
+        detailBadge.style.color = '#166534';
+        detailBadge.style.borderColor = '#BBF7D0';
+      }
+    }
+
     document.getElementById('detailCategoryBadge').textContent = '📂 ' + (item.category || 'General');
     document.getElementById('detailTimeAgo').textContent = 'Reported ' + (item.timeAgo || 'Recently');
     document.getElementById('detailDescription').textContent = item.desc || item.title;
     document.getElementById('detailLocationText').textContent = '📍 ' + (item.location || 'Jharkhand');
     document.getElementById('detailAssignmentText').textContent = 'Assigned Taskforce: ' + (item.assign || 'JanSetu Municipal Taskforce');
+
+    renderDetailProgressTracker(item);
 
     const isMyOwnReport = allReportsList.some(r => r.id === item.id);
     const supBtn = document.getElementById('detailSupportBtn');
@@ -3936,6 +4672,25 @@
           supBtn.innerHTML = (currentLanguage === 'hi' ? '👍 मैं भी प्रभावित हूँ (समर्थन दें)' : '👍 I am also affected') + ' (' + (item.supports || 1) + ')';
           supBtn.style.background = 'var(--navy)';
         }
+      }
+    }
+
+    const delContainer = document.getElementById('detailDeleteContainer');
+    if (delContainer) {
+      if (isMyOwnReport && isUnverified) {
+        delContainer.innerHTML = `
+          <button type="button" class="btn-sol-no" onclick="promptDeleteReport('${item.id}')" style="background: #FEF2F2; color: #DC2626; border: 1.5px solid #F87171; font-size: 12px; padding: 8px 14px; border-radius: 8px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+            🗑️ ${currentLanguage === 'hi' ? 'शिकायत हटाएं (Delete)' : 'Delete Grievance'}
+          </button>
+        `;
+      } else if (isMyOwnReport) {
+        delContainer.innerHTML = `
+          <span style="font-size: 11px; color: #64748b; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;" title="Official municipal work order active. Grievance locked under audit regulations.">
+            🔒 ${currentLanguage === 'hi' ? 'प्रशासन द्वारा सत्यापित (हटाना लॉक)' : 'Admin Verified (Locked)'}
+          </span>
+        `;
+      } else {
+        delContainer.innerHTML = '';
       }
     }
 
@@ -4697,6 +5452,11 @@
                 📌 Track
               </button>
             ` : ''}
+            ${(r.status === 'Submitted' || !r.isVerified) && r.status !== 'Solved' && !r.isResolved ? `
+              <button type="button" style="background:#FEF2F2; border:1px solid #FECACA; color:#DC2626; font-size:10px; font-weight:800; border-radius:6px; padding:4px 8px; cursor:pointer;" onclick="event.stopPropagation(); promptDeleteReport('${r.id}');" title="Delete Unverified Report">
+                🗑️ ${currentLanguage === 'hi' ? 'हटाएं' : 'Delete'}
+              </button>
+            ` : ''}
           </div>
         </div>
       </div>
@@ -4734,7 +5494,25 @@
     openModal('exploreModal');
   }
 
-  function openNeedInfoModal() { openModal('needInfoModal'); }
+  let currentNeedInfoTargetId = null;
+
+  function openNeedInfoModal(reportId) {
+    const target = (reportId ? allReportsList.find(r => r.id === reportId) : null) 
+      || getCurrentlyTrackedReport() 
+      || allReportsList.find(r => r.needsAction) 
+      || allReportsList[0];
+
+    currentNeedInfoTargetId = target ? target.id : null;
+
+    if (target && document.getElementById('needInfoQueryText')) {
+      document.getElementById('needInfoQueryText').textContent = 
+        target.authorityQuery || (currentLanguage === 'hi' 
+          ? `कृपया ${target.title} (${target.id}) के लिए लैंडमार्क या ताज़ा फ़ोटो साक्ष्य प्रदान करें।` 
+          : `Please provide landmark or fresh photo for ${target.title} (${target.id}).`);
+    }
+    openModal('needInfoModal');
+  }
+
   function recordNeedInfoVoice() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
@@ -4743,12 +5521,177 @@
     r.onresult = e => { document.getElementById('infoVoiceText').value = e.results[0][0].transcript; };
     r.start();
   }
+
   function submitNeedInfoResponse() {
-    if (allReportsList.length > 0) allReportsList[0].needsAction = false;
+    const target = (currentNeedInfoTargetId ? allReportsList.find(r => r.id === currentNeedInfoTargetId) : null) 
+      || getCurrentlyTrackedReport() 
+      || allReportsList.find(r => r.needsAction) 
+      || allReportsList[0];
+
+    if (target) {
+      target.needsAction = false;
+      if (target.status === 'Action Required') {
+        target.status = (target.assign && target.assign !== 'Not Assigned' && target.assign !== 'Verification in progress by JanSetu Authority') 
+          ? 'Being Worked On' 
+          : 'Submitted';
+      }
+      const lm = document.getElementById('infoLandmark')?.value.trim();
+      const vt = document.getElementById('infoVoiceText')?.value.trim();
+      if (lm) {
+        target.landmark = lm;
+        target.location = (target.location ? target.location + ' (' + lm + ')' : lm);
+      }
+      if (vt) {
+        target.citizenNote = vt;
+        target.desc = (target.desc || '') + ' [Citizen Additional Info: ' + vt + ']';
+      }
+      const fileInput = document.getElementById('infoProofFile');
+      if (fileInput && fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          target.image = e.target.result;
+          target.beforeImg = e.target.result;
+          saveReportsState();
+          renderAllViews();
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      }
+    }
+
+    // Explicitly clear needsAction flag across any matching report in the list so banner never gets stuck
+    allReportsList.forEach(r => {
+      if (!currentNeedInfoTargetId || r.id === currentNeedInfoTargetId || r.needsAction) {
+        r.needsAction = false;
+        if (r.status === 'Action Required') {
+          r.status = (r.assign && r.assign !== 'Not Assigned' && r.assign !== 'Verification in progress by JanSetu Authority') 
+            ? 'Being Worked On' 
+            : 'Submitted';
+        }
+      }
+    });
+
     saveReportsState();
     renderAllViews();
+
+    const reqBanner = document.getElementById('actionRequiredBanner');
+    if (reqBanner) reqBanner.style.display = 'none';
+
+    if (document.getElementById('infoLandmark')) document.getElementById('infoLandmark').value = '';
+    if (document.getElementById('infoVoiceText')) document.getElementById('infoVoiceText').value = '';
+    if (document.getElementById('infoProofFile')) document.getElementById('infoProofFile').value = '';
+    currentNeedInfoTargetId = null;
+
     closeModal('needInfoModal');
-    alert(currentLanguage === 'hi' ? '✅ जानकारी प्रशासन को भेज दी गई है!' : '✅ Additional information sent to JanSetu authority!');
+    alert(currentLanguage === 'hi' 
+      ? '✅ अतिरिक्त जानकारी प्रशासन को भेज दी गई है! स्टेटस अपडेट हो गया।' 
+      : '✅ Additional information sent to JanSetu authority! Status updated.');
+  }
+
+  /* ============================================================
+     SECURE GRIEVANCE DELETION SYSTEM (Pre-Admin Verification)
+     ============================================================ */
+  let pendingDeleteReportId = null;
+
+  function promptDeleteReport(reportId) {
+    const rep = allReportsList.find(r => r.id === reportId);
+    if (!rep) return;
+
+    // Check if admin has verified it
+    const isUnverified = (rep.status === 'Submitted' || !rep.isVerified) && rep.status !== 'Solved' && !rep.isResolved;
+    if (!isUnverified) {
+      alert(currentLanguage === 'hi' 
+        ? '🔒 यह शिकायत प्रशासन द्वारा सत्यापित (Admin Verified) हो चुकी है और आधिकारिक कार्य आदेश जारी है। सरकारी ऑडिट नियमों के तहत इसे अब हटाया नहीं जा सकता।'
+        : '🔒 This grievance has already been verified by the municipal administration. Official work orders are active, so this record cannot be deleted under municipal audit regulations.');
+      return;
+    }
+
+    pendingDeleteReportId = reportId;
+    const badge = document.getElementById('deleteTargetReportIdBadge');
+    if (badge) badge.textContent = reportId;
+
+    const inp = document.getElementById('deleteSecurityInput');
+    if (inp) inp.value = '';
+
+    const btn = document.getElementById('btnExecuteDeleteReport');
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.45';
+      btn.style.cursor = 'not-allowed';
+    }
+
+    openModal('deleteConfirmModal');
+  }
+
+  function onDeleteSecurityInputChange() {
+    const inp = document.getElementById('deleteSecurityInput');
+    const btn = document.getElementById('btnExecuteDeleteReport');
+    if (!inp || !btn) return;
+
+    const val = inp.value.trim().toUpperCase();
+    if (val === 'DELETE' || (pendingDeleteReportId && val === pendingDeleteReportId.toUpperCase())) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    } else {
+      btn.disabled = true;
+      btn.style.opacity = '0.45';
+      btn.style.cursor = 'not-allowed';
+    }
+  }
+
+  function executeReportDeletion() {
+    if (!pendingDeleteReportId) return;
+
+    const repIndex = allReportsList.findIndex(r => r.id === pendingDeleteReportId);
+    if (repIndex === -1) {
+      closeModal('deleteConfirmModal');
+      return;
+    }
+
+    const deletedId = pendingDeleteReportId;
+    allReportsList.splice(repIndex, 1);
+    saveReportsState();
+
+    if (activeTrackerIndex >= allReportsList.length) {
+      activeTrackerIndex = Math.max(0, allReportsList.length - 1);
+    }
+
+    closeModal('deleteConfirmModal');
+    closeModal('detailModal');
+
+    renderAllViews();
+
+    alert(currentLanguage === 'hi' 
+      ? `✅ शिकायत #${deletedId} को पोर्टल रिकॉर्ड से स्थायी रूप से हटा दिया गया है।`
+      : `✅ Grievance #${deletedId} has been permanently deleted from records.`);
+
+    pendingDeleteReportId = null;
+  }
+
+  function simulateAdminVerify(reportId) {
+    const r = allReportsList.find(x => x.id === reportId);
+    if (!r) return;
+    r.isVerified = true;
+    r.status = 'Being Worked On';
+    if (!r.assign || r.assign.includes('Verification in progress')) {
+      r.assign = 'BIT Mesra Civil & Environmental Engineering Taskforce';
+    }
+    saveReportsState();
+    renderAllViews();
+    openDetailModal(reportId);
+    showToast(currentLanguage === 'hi' ? '🏛️ प्रशासन द्वारा शिकायत सत्यापित व कार्य आदेश जारी!' : '🏛️ Admin verified report & issued work order!');
+  }
+
+  function simulateAdminUnverify(reportId) {
+    const r = allReportsList.find(x => x.id === reportId);
+    if (!r) return;
+    r.isVerified = false;
+    r.status = 'Submitted';
+    r.assign = 'Verification in progress by JanSetu Authority';
+    saveReportsState();
+    renderAllViews();
+    openDetailModal(reportId);
+    showToast(currentLanguage === 'hi' ? '⏳ शिकायत सत्यापन कतार में वापस (हटाने योग्य)' : '⏳ Reverted to unverified queue (deletable)');
   }
 
   function openReportModal() { goToStep(1); openModal('reportModal'); }
