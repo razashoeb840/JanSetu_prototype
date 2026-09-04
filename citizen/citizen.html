@@ -1065,6 +1065,13 @@
     }
     .modal-overlay.active { display: flex; }
 
+    #detailModal {
+      z-index: 1100;
+    }
+    #imageZoomModal {
+      z-index: 2500;
+    }
+
     .modal-card-box {
       background: var(--white);
       border-radius: 20px;
@@ -1790,7 +1797,7 @@
 
           <!-- Recent Reports List Card (Clean Horizontal Scrollable Squares) -->
           <div class="section-header-row">
-            <h3 class="section-header-title" data-i18n="section_recent">Recent Community Reports</h3>
+            <h3 class="section-header-title" data-i18n="section_recent">My Recent Reports</h3>
             <div style="display: flex; align-items: center; gap: 8px;">
               <div class="recent-scroll-btns">
                 <button type="button" class="scroll-arrow-btn" onclick="scrollRecentReports(-1)" title="Scroll Left" aria-label="Previous">❮</button>
@@ -2191,11 +2198,11 @@
         </div>
       </div>
 
-      <div style="display: flex; gap: 12px; margin-top: 4px;">
-        <button type="button" class="btn-modal-primary" id="detailSupportBtn" onclick="toggleSupportFromDetail()">
+      <div style="display: flex; gap: 12px; margin-top: 6px;">
+        <button type="button" class="btn-modal-primary" id="detailSupportBtn" onclick="toggleSupportFromDetail()" style="flex: 1;">
           👍 I am also affected
         </button>
-        <button type="button" class="btn-modal-secondary" onclick="closeModal('detailModal')" data-i18n="btn_close">
+        <button type="button" class="btn-modal-secondary" onclick="closeModal('detailModal')" data-i18n="btn_close" style="flex: 1;">
           Close Inspector
         </button>
       </div>
@@ -2442,7 +2449,7 @@
       sol_check_sub: "The authority and university team have reported the problem resolved. <strong>Has your problem been solved?</strong>",
       btn_sol_yes: "🟢 Yes, Problem is Solved",
       btn_sol_no: "🔴 No, Problem Still Persists",
-      section_recent: "Recent Community Reports",
+      section_recent: "My Recent Reports",
       btn_view_all: "View All Reports →",
       section_impact: "My Community Impact",
       impact_reported: "Problems Reported",
@@ -2929,6 +2936,15 @@
 
     renderAllViews();
     await fetchLiveChallenges();
+
+    // Setup backdrop dismiss for modals
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          closeModal(overlay.id);
+        }
+      });
+    });
   });
 
   function setLanguage(lang) {
@@ -3211,7 +3227,13 @@
     }
     renderActiveProblem();
     const trackerEl = document.querySelector('.active-tracker-card');
-    if (trackerEl) trackerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (trackerEl) {
+      trackerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      trackerEl.style.transition = 'box-shadow 0.3s ease, border-color 0.3s ease';
+      trackerEl.style.boxShadow = '0 0 0 4px var(--saffron)';
+      setTimeout(() => { trackerEl.style.boxShadow = ''; }, 1800);
+    }
+    showToast(currentLanguage === 'hi' ? 'डैशबोर्ड पर सक्रिय ट्रैकर अपडेट हुआ' : 'Active tracker updated on dashboard');
   }
 
   function updateTrackerTimeline(status, isResolved, citizenVerified) {
@@ -3474,13 +3496,21 @@
     document.getElementById('detailLocationText').textContent = '📍 ' + (item.location || 'Jharkhand');
     document.getElementById('detailAssignmentText').textContent = 'Assigned Taskforce: ' + (item.assign || 'JanSetu Municipal Taskforce');
 
+    const isMyOwnReport = allReportsList.some(r => r.id === item.id);
     const supBtn = document.getElementById('detailSupportBtn');
-    if (supportedIds.has(item.id)) {
-      supBtn.innerHTML = (currentLanguage === 'hi' ? '✓ आपने समर्थन दिया है' : '✓ You Supported This') + ' (' + (item.supports || 1) + ')';
-      supBtn.style.background = 'var(--india-green)';
-    } else {
-      supBtn.innerHTML = (currentLanguage === 'hi' ? '👍 मैं भी प्रभावित हूँ (समर्थन दें)' : '👍 I am also affected') + ' (' + (item.supports || 1) + ')';
-      supBtn.style.background = 'var(--navy)';
+    if (supBtn) {
+      if (isMyOwnReport) {
+        supBtn.style.display = 'none';
+      } else {
+        supBtn.style.display = 'inline-flex';
+        if (supportedIds.has(item.id)) {
+          supBtn.innerHTML = (currentLanguage === 'hi' ? '✓ आपने समर्थन दिया है' : '✓ You Supported This') + ' (' + (item.supports || 1) + ')';
+          supBtn.style.background = 'var(--india-green)';
+        } else {
+          supBtn.innerHTML = (currentLanguage === 'hi' ? '👍 मैं भी प्रभावित हूँ (समर्थन दें)' : '👍 I am also affected') + ' (' + (item.supports || 1) + ')';
+          supBtn.style.background = 'var(--navy)';
+        }
+      }
     }
 
     openModal('detailModal');
@@ -3505,9 +3535,10 @@
     let item = allReportsList.find(r => r.id === id) || exploreList.find(r => r.id === id);
     if (!item) return;
 
-    if (supportedIds.has(id)) {
+    const wasSupported = supportedIds.has(id);
+    if (wasSupported) {
       supportedIds.delete(id);
-      item.supports = Math.max(1, item.supports - 1);
+      item.supports = Math.max(1, (item.supports || 1) - 1);
     } else {
       supportedIds.add(id);
       item.supports = (item.supports || 0) + 1;
@@ -3516,11 +3547,35 @@
     saveSupportsState();
     saveReportsState();
     saveExploreState();
+
+    // 1. Re-render all dashboard views (background or foreground)
     renderAllViews();
 
+    // 2. Re-render All Reports modal list immediately in front of user
+    renderAllReportsModalList();
+
+    // 3. Re-render Explore modal list immediately in front of user
+    renderExploreModalList();
+
+    // 4. Update Detail Inspector button in place if currently inspecting this problem
     if (currentlyInspectedId === id) {
-      openDetailModal(id);
+      const supBtn = document.getElementById('detailSupportBtn');
+      if (supBtn) {
+        if (supportedIds.has(id)) {
+          supBtn.innerHTML = (currentLanguage === 'hi' ? '✓ आपने समर्थन दिया है' : '✓ You Supported This') + ' (' + (item.supports || 1) + ')';
+          supBtn.style.background = 'var(--india-green)';
+        } else {
+          supBtn.innerHTML = (currentLanguage === 'hi' ? '👍 मैं भी प्रभावित हूँ (समर्थन दें)' : '👍 I am also affected') + ' (' + (item.supports || 1) + ')';
+          supBtn.style.background = 'var(--navy)';
+        }
+      }
     }
+
+    // 5. Provide instant visual confirmation toast
+    const msg = wasSupported 
+      ? (currentLanguage === 'hi' ? 'समर्थन हटाया गया' : 'Support removed')
+      : (currentLanguage === 'hi' ? `👍 आपका समर्थन दर्ज हुआ! (${item.supports} नागरिक प्रभावित)` : `👍 You supported this issue! (${item.supports} citizens affected)`);
+    showToast(msg);
   }
 
   function toggleSupportFromDetail() {
@@ -3530,11 +3585,11 @@
   function zoomImage(src, caption) {
     document.getElementById('lightboxImg').src = src;
     document.getElementById('lightboxCaption').textContent = caption || 'Enlarged Photo';
-    document.getElementById('imageZoomModal').classList.add('active');
+    openModal('imageZoomModal');
   }
 
   function closeZoomModal() {
-    document.getElementById('imageZoomModal').classList.remove('active');
+    closeModal('imageZoomModal');
   }
 
   function confirmResolutionSolved() {
@@ -3932,10 +3987,10 @@
           <div class="report-row-location-text">📍 ${r.location}</div>
           <div class="report-row-id-text">${r.id} · <span style="color:var(--gray-500);font-weight:normal;">${r.assign || 'JanSetu Taskforce'}</span></div>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;">
           <span class="${r.status === 'Solved' ? 'status-pill-resolved' : 'status-pill-assigned'}">${r.status}</span>
           ${r.status !== 'Solved' && !r.isResolved ? `
-            <button type="button" style="background:#EFF6FF; border:1px solid #BFDBFE; color:var(--navy); font-size:10px; font-weight:700; border-radius:6px; padding:3px 7px; cursor:pointer;" onclick="event.stopPropagation(); trackSpecificReport('${r.id}'); closeModal('allReportsModal');">
+            <button type="button" style="background:#EFF6FF; border:1px solid #BFDBFE; color:var(--navy); font-size:10px; font-weight:700; border-radius:6px; padding:4px 8px; cursor:pointer;" onclick="event.stopPropagation(); trackSpecificReport('${r.id}'); closeModal('allReportsModal');">
               📌 Track on Dashboard
             </button>
           ` : ''}
@@ -3950,8 +4005,9 @@
     openModal('allReportsModal');
   }
 
-  function openExploreModal() {
+  function renderExploreModalList() {
     const cont = document.getElementById('exploreFullContainer');
+    if (!cont) return;
     cont.innerHTML = exploreList.map(c => {
       const isSupported = supportedIds.has(c.id);
       return `
@@ -3967,6 +4023,10 @@
         </div>
       `;
     }).join('');
+  }
+
+  function openExploreModal() {
+    renderExploreModalList();
     openModal('exploreModal');
   }
 
@@ -4005,17 +4065,60 @@
   }
   function navTo(view) {
     if (view === 'dashboard') {
-      document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+      document.querySelectorAll('.modal-overlay').forEach(m => {
+        m.classList.remove('active');
+        m.style.zIndex = '';
+      });
+      openModalsStack.length = 0;
+      highestModalZ = 1000;
     }
   }
+
+  let highestModalZ = 1000;
+  const openModalsStack = [];
+
   function openModal(id) {
     const el = document.getElementById(id);
-    if (el) el.classList.add('active');
+    if (!el) return;
+
+    // Dynamically stack in front of all open dialogs
+    highestModalZ += 20;
+    el.style.zIndex = highestModalZ;
+    el.classList.add('active');
+
+    if (!openModalsStack.includes(id)) {
+      openModalsStack.push(id);
+    }
   }
+
   function closeModal(id) {
     const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
+    if (!el) return;
+    el.classList.remove('active');
+    el.style.zIndex = '';
+
+    const idx = openModalsStack.indexOf(id);
+    if (idx !== -1) openModalsStack.splice(idx, 1);
+
+    if (openModalsStack.length === 0) {
+      highestModalZ = 1000;
+    }
+  }
+
+  let toastTimer = null;
+  function showToast(message) {
+    const toast = document.getElementById('jansetuToast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.style.display = 'flex';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toast.style.display = 'none';
+    }, 2400);
   }
 </script>
+
+<!-- Global JanSetu Toast Notification -->
+<div id="jansetuToast" style="display:none; position:fixed; bottom:28px; left:50%; transform:translateX(-50%); background:#0f172a; color:#fff; padding:10px 22px; border-radius:30px; font-size:13px; font-weight:700; z-index:99999; box-shadow:0 10px 30px rgba(0,0,0,0.35); align-items:center; gap:8px; border:1px solid rgba(255,255,255,0.2); pointer-events:none;"></div>
 </body>
 </html>
