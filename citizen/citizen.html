@@ -2517,7 +2517,7 @@
           <div>
             <div class="detail-section-title" style="margin-bottom: 2px; font-size: 15px; color: var(--navy); display: flex; align-items: center; gap: 7px;">
               <span>📊</span>
-              <span>LIVE PROGRESS &amp; AUDIT TRAIL (कब क्या हुआ)</span>
+              <span data-i18n="tracker_stakeholder_title">LIVE PROGRESS &amp; AUDIT TRAIL</span>
             </div>
             <div style="font-size: 11.5px; color: var(--gray-500);">
               Real-time audit track: Admin verification, Industry supplies &amp; University field action
@@ -2930,7 +2930,7 @@
     <div class="modal-header-bar" style="background: #FEF2F2; border-bottom: 1.5px solid #FCA5A5;">
       <div class="modal-header-title" style="color: #991B1B; display: flex; align-items: center; gap: 8px;">
         <span>⚠️</span>
-        <span data-i18n="modal_delete_title">Delete Grievance (शिकायत हटाएं)</span>
+        <span data-i18n="modal_delete_title">Delete Grievance</span>
       </div>
       <button class="modal-close-btn" onclick="closeModal('deleteConfirmModal')">✕</button>
     </div>
@@ -2938,28 +2938,27 @@
     <div class="modal-body-scroll" style="padding: 20px;">
       <div style="background: #FEF2F2; border: 1.5px solid #FECACA; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
         <div style="font-size: 13px; font-weight: 800; color: #991B1B; display: flex; align-items: center; gap: 6px;">
-          <span>🚨</span> <span>Permanent Deletion Warning (स्थायी हटाने की चेतावनी)</span>
+          <span>🚨</span> <span data-i18n="delete_warn_title">Permanent Deletion Warning</span>
         </div>
         <p style="font-size: 12px; color: #7F1D1D; margin-top: 6px; line-height: 1.5; margin-bottom: 0;">
-          Are you sure you want to permanently delete Grievance <strong id="deleteTargetReportIdBadge" style="font-family: monospace; background: #FEE2E2; padding: 2px 6px; border-radius: 4px; color: #991B1B;">JH-2026-4819</strong>?
-          All photographic evidence, AI triage records, and location data will be wiped from JanSetu municipal servers.
+          <span data-i18n="delete_warn_desc">Are you sure you want to permanently delete this grievance? All photographic evidence, AI triage records, and location data will be wiped from JanSetu municipal servers.</span>
+          <br/><span style="margin-top: 4px; display: inline-block;">Grievance ID: <strong id="deleteTargetReportIdBadge" style="font-family: monospace; background: #FEE2E2; padding: 2px 6px; border-radius: 4px; color: #991B1B;">JH-2026-4819</strong></span>
         </p>
       </div>
 
       <div style="font-size: 12.5px; color: #334155; margin-bottom: 8px;">
-        🔒 <strong>Security Verification (सुरक्षा सत्यापन):</strong><br/>
-        To prevent accidental deletion, please type <strong style="color: #DC2626; font-family: monospace; background: #FEE2E2; padding: 2px 6px; border-radius: 4px;">DELETE</strong> below:
+        🔒 <strong data-i18n="delete_security_label">To prevent accidental deletion, please type DELETE below:</strong>
       </div>
 
       <div class="form-group-field" style="margin-bottom: 16px;">
         <input type="text" class="form-input-control" id="deleteSecurityInput" placeholder="Type DELETE to confirm" oninput="onDeleteSecurityInputChange()" autocomplete="off" style="font-family: monospace; font-weight: 800; font-size: 14px; text-transform: uppercase;" />
-        <div style="font-size: 10.5px; color: #64748b; margin-top: 4px;">Notice: Unverified grievances only. Once verified by government admin, deletion is locked for civic audit.</div>
+        <div style="font-size: 10.5px; color: #64748b; margin-top: 4px;" data-i18n="delete_notice">Notice: Unverified grievances only. Once verified by government admin, deletion is locked for civic audit.</div>
       </div>
 
       <div class="modal-footer-nav" style="display: flex; gap: 10px; justify-content: flex-end;">
-        <button type="button" class="btn-modal-secondary" onclick="closeModal('deleteConfirmModal')">Cancel</button>
+        <button type="button" class="btn-modal-secondary" onclick="closeModal('deleteConfirmModal')" data-i18n="btn_cancel">Cancel</button>
         <button type="button" id="btnExecuteDeleteReport" class="btn-modal-primary" style="background: #DC2626; border-color: #B91C1C; opacity: 0.45; cursor: not-allowed;" disabled onclick="executeReportDeletion()">
-          🗑️ Permanently Delete Grievance
+          🗑️ <span data-i18n="btn_confirm_delete">Permanently Delete Grievance</span>
         </button>
       </div>
     </div>
@@ -3147,7 +3146,14 @@
       label_email: "Email",
       btn_logout: "Log Out",
       btn_save_profile: "Save Profile",
-      modal_notifications_title: "🔔 Notifications"
+      modal_notifications_title: "🔔 Notifications",
+      tracker_stakeholder_title: "LIVE PROGRESS & AUDIT TRAIL",
+      modal_delete_title: "Delete Grievance",
+      delete_warn_title: "Permanent Deletion Warning",
+      delete_warn_desc: "Are you sure you want to permanently delete this grievance? All photographic evidence, AI triage records, and location data will be wiped from JanSetu municipal servers.",
+      delete_security_label: "To prevent accidental deletion, please type DELETE below:",
+      delete_notice: "Notice: Unverified grievances only. Once verified by government admin, deletion is locked for civic audit.",
+      btn_confirm_delete: "Permanently Delete Grievance"
     },
     hi: {
       brand_tagline: "आपकी आवाज़, वास्तविक बदलाव।",
@@ -3265,7 +3271,14 @@
       label_email: "ईमेल",
       btn_logout: "लॉग आउट",
       btn_save_profile: "सहेजें",
-      modal_notifications_title: "🔔 सूचनाएं"
+      modal_notifications_title: "🔔 सूचनाएं",
+      tracker_stakeholder_title: "लाइव प्रगति एवं ऑडिट ट्रेल",
+      modal_delete_title: "शिकायत हटाएं",
+      delete_warn_title: "स्थायी हटाने की चेतावनी",
+      delete_warn_desc: "क्या आप वाकई इस शिकायत को स्थायी रूप से हटाना चाहते हैं? सभी फ़ोटो साक्ष्य, AI ट्राइएज रिकॉर्ड और स्थान विवरण जनसेतु सर्वर से हटा दिए जाएंगे।",
+      delete_security_label: "गलती से हटाने से बचने के लिए, कृपया नीचे DELETE लिखें:",
+      delete_notice: "सूचना: केवल असत्यापित शिकायतें हटाई जा सकती हैं। प्रशासनिक सत्यापन के बाद ऑडिट के लिए हटाना लॉक हो जाता है।",
+      btn_confirm_delete: "स्थायी रूप से हटाएं"
     },
     hinglish: {
       brand_tagline: "Aapki Awaaz, Real Change.",
@@ -3383,7 +3396,14 @@
       label_email: "Email",
       btn_logout: "Log Out",
       btn_save_profile: "Save Profile",
-      modal_notifications_title: "🔔 Notifications"
+      modal_notifications_title: "🔔 Notifications",
+      tracker_stakeholder_title: "Live Progress & Audit Trail",
+      modal_delete_title: "Grievance Delete Karein",
+      delete_warn_title: "Permanent Deletion Warning",
+      delete_warn_desc: "Kya aap sach mein is grievance ko permanently delete karna chahte hain? Sabhi photo proof aur records JanSetu server se delete ho jayenge.",
+      delete_security_label: "Galti se delete hone se bachne ke liye, kripya neeche DELETE type karein:",
+      delete_notice: "Notice: Sirf unverified grievances delete ho sakti hain. Admin verification ke baad audit lock lag jata hai.",
+      btn_confirm_delete: "Permanently Delete Karein"
     }
   };
 
@@ -4174,11 +4194,11 @@
               : (currentLanguage === 'hi' ? '⏳ सत्यापन से पहले नागरिक अपनी शिकायत कभी भी हटा सकता है।' : '⏳ Deletable by citizen prior to administrative verification.')}
           </span>
           ${data.isVerified ? `
-            <button type="button" onclick="event.stopPropagation(); simulateAdminUnverify('${item.id}');" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Test Delete by reverting to unverified state">
-              <span>↩️</span> <span>${currentLanguage === 'hi' ? 'डेमो: सत्यापन वापस लें (Delete टेस्ट)' : 'Demo: Unverify (Test Delete)'}</span>
+            <button type="button" onclick="event.stopPropagation(); simulateAdminUnverify('${item.id}');" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="${currentLanguage === 'hi' ? 'सत्यापन वापस लें' : 'Revert verification'}">
+              <span>↩️</span> <span>${currentLanguage === 'hi' ? 'डेमो: सत्यापन वापस लें' : 'Demo: Revert Verification'}</span>
             </button>
           ` : `
-            <button type="button" onclick="event.stopPropagation(); simulateAdminVerify('${item.id}');" style="background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Approve grievance to test audit lock">
+            <button type="button" onclick="event.stopPropagation(); simulateAdminVerify('${item.id}');" style="background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="${currentLanguage === 'hi' ? 'प्रशासन सत्यापन करें' : 'Admin verify'}">
               <span>🏛️</span> <span>${currentLanguage === 'hi' ? 'डेमो: प्रशासन सत्यापन करें' : 'Demo: Admin Verify'}</span>
             </button>
           `}
@@ -4433,8 +4453,8 @@
         `;
       } else {
         delSlot.innerHTML = `
-          <span style="font-size: 10.5px; color: #64748b; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 3px;" title="Official municipal work order active. Grievance locked under audit regulations.">
-            🔒 ${currentLanguage === 'hi' ? 'सत्यापित (लॉक)' : 'Verified (Locked)'}
+          <span style="font-size: 10.5px; color: #64748b; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 3px;" title="${currentLanguage === 'hi' ? 'प्रशासन द्वारा सत्यापित' : 'Admin Verified'}">
+            🔒 ${currentLanguage === 'hi' ? 'सत्यापित' : 'Verified'}
           </span>
         `;
       }
@@ -4669,7 +4689,7 @@
           supBtn.innerHTML = (currentLanguage === 'hi' ? '✓ आपने समर्थन दिया है' : '✓ You Supported This') + ' (' + (item.supports || 1) + ')';
           supBtn.style.background = 'var(--india-green)';
         } else {
-          supBtn.innerHTML = (currentLanguage === 'hi' ? '👍 मैं भी प्रभावित हूँ (समर्थन दें)' : '👍 I am also affected') + ' (' + (item.supports || 1) + ')';
+          supBtn.innerHTML = (currentLanguage === 'hi' ? '👍 मैं भी प्रभावित हूँ' : '👍 I am also affected') + ' (' + (item.supports || 1) + ')';
           supBtn.style.background = 'var(--navy)';
         }
       }
@@ -4680,13 +4700,13 @@
       if (isMyOwnReport && isUnverified) {
         delContainer.innerHTML = `
           <button type="button" class="btn-sol-no" onclick="promptDeleteReport('${item.id}')" style="background: #FEF2F2; color: #DC2626; border: 1.5px solid #F87171; font-size: 12px; padding: 8px 14px; border-radius: 8px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-            🗑️ ${currentLanguage === 'hi' ? 'शिकायत हटाएं (Delete)' : 'Delete Grievance'}
+            🗑️ ${currentLanguage === 'hi' ? 'शिकायत हटाएं' : 'Delete Grievance'}
           </button>
         `;
       } else if (isMyOwnReport) {
         delContainer.innerHTML = `
-          <span style="font-size: 11px; color: #64748b; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;" title="Official municipal work order active. Grievance locked under audit regulations.">
-            🔒 ${currentLanguage === 'hi' ? 'प्रशासन द्वारा सत्यापित (हटाना लॉक)' : 'Admin Verified (Locked)'}
+          <span style="font-size: 11px; color: #64748b; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;" title="${currentLanguage === 'hi' ? 'प्रशासन द्वारा सत्यापित' : 'Admin Verified'}">
+            🔒 ${currentLanguage === 'hi' ? 'प्रशासन द्वारा सत्यापित' : 'Admin Verified'}
           </span>
         `;
       } else {
@@ -4735,7 +4755,7 @@
     // Kis Din Kya Hua: Chronological Progress Track
     const rows = [
       {
-        milestone: 'Grievance Registered by Citizen (नागरिक द्वारा दर्ज)',
+        milestone: currentLanguage === 'hi' ? 'नागरिक द्वारा समस्या दर्ज' : 'Grievance Registered by Citizen',
         date: genDate + ' · 10:30 AM',
         taskforce: 'Citizen Direct Submission (JanSetu Portal)',
         status: 'Completed ✓'
@@ -5005,7 +5025,7 @@
           supBtn.innerHTML = (currentLanguage === 'hi' ? '✓ आपने समर्थन दिया है' : '✓ You Supported This') + ' (' + (item.supports || 1) + ')';
           supBtn.style.background = 'var(--india-green)';
         } else {
-          supBtn.innerHTML = (currentLanguage === 'hi' ? '👍 मैं भी प्रभावित हूँ (समर्थन दें)' : '👍 I am also affected') + ' (' + (item.supports || 1) + ')';
+          supBtn.innerHTML = (currentLanguage === 'hi' ? '👍 मैं भी प्रभावित हूँ' : '👍 I am also affected') + ' (' + (item.supports || 1) + ')';
           supBtn.style.background = 'var(--navy)';
         }
       }
@@ -5160,7 +5180,7 @@
         const lng = pos.coords.longitude;
         currentReportCoords = { lat, lng };
 
-        if (btn) btn.textContent = currentLanguage === 'hi' ? '✓ जीपीएस डिटेक्ट हुआ (रिम्स / नामकुम)' : '✓ GPS Detected (Namkum, Ranchi)';
+        if (btn) btn.textContent = currentLanguage === 'hi' ? '✓ जीपीएस लोकेशन प्राप्त हुई' : '✓ GPS Location Detected';
         document.getElementById('reportDistrict').value = 'Ranchi';
         document.getElementById('reportBlock').value = 'Namkum';
         document.getElementById('reportPanchayat').value = 'Tupudana';
@@ -5691,7 +5711,7 @@
     saveReportsState();
     renderAllViews();
     openDetailModal(reportId);
-    showToast(currentLanguage === 'hi' ? '⏳ शिकायत सत्यापन कतार में वापस (हटाने योग्य)' : '⏳ Reverted to unverified queue (deletable)');
+    showToast(currentLanguage === 'hi' ? '⏳ शिकायत सत्यापन कतार में वापस' : '⏳ Reverted to verification queue');
   }
 
   function openReportModal() { goToStep(1); openModal('reportModal'); }
