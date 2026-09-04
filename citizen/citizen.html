@@ -227,7 +227,7 @@
     }
 
     /* ============================================================
-       SIDEBAR CONTRIBUTE CARD: BLURRED TAJ MAHAL HERITAGE BACKGROUND
+       SIDEBAR CONTRIBUTE CARD: HERITAGE BACKGROUND
        ============================================================ */
     .sidebar-contribute-card {
       margin: 10px 14px 14px;
@@ -240,7 +240,7 @@
       background: #ffffff;
     }
 
-    /* Dedicated Crisp Blurred Taj Mahal Background Image */
+    /* Crisp Blurred India Gate Sunset Heritage Background Image */
     .taj-mahal-card-bg {
       position: absolute;
       top: 0;
@@ -248,21 +248,21 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center 20%; /* Focus on the iconic dome and arches */
-      filter: blur(1.8px) saturate(1.25) brightness(0.96);
-      transform: scale(1.08); /* prevents edge clipping */
+      object-position: center 40%;
+      filter: blur(2px) saturate(1.25) brightness(0.96);
+      transform: scale(1.08);
       pointer-events: none;
       z-index: 1;
     }
 
-    /* Soft Warm Light Overlay: Keeps Taj Mahal clearly visible while text is crisp */
+    /* Soft Warm Light Overlay: Keeps monument visible while text is crisp */
     .taj-mahal-card-scrim {
       position: absolute;
       inset: 0;
       background: linear-gradient(180deg, 
-        rgba(255, 255, 255, 0.58) 0%, 
-        rgba(255, 250, 242, 0.38) 45%, 
-        rgba(255, 255, 255, 0.68) 100%
+        rgba(255, 255, 255, 0.62) 0%, 
+        rgba(255, 250, 242, 0.45) 45%, 
+        rgba(255, 255, 255, 0.72) 100%
       );
       pointer-events: none;
       z-index: 2;
@@ -288,110 +288,44 @@
       font-size: 11.5px;
       color: #1e293b;
       line-height: 1.45;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       font-weight: 700;
       text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
     }
 
     /* ============================================================
-       TRICOLOR WAVING FLAG BUTTON (तिरंगा ध्वज लहरदार बटन)
+       VIBRANT ORANGE CTA BUTTON (साफ़ और सुंदर ऑरेंज बटन)
        ============================================================ */
-    @keyframes flagWaveMotion {
-      0% {
-        transform: perspective(400px) rotateY(-8deg) rotateZ(-1.5deg) skewY(1.8deg) translateY(0);
-        box-shadow: -4px 6px 16px rgba(255, 103, 31, 0.5), 4px 6px 16px rgba(19, 136, 8, 0.4);
-      }
-      25% {
-        transform: perspective(400px) rotateY(2deg) rotateZ(0.8deg) skewY(-1deg) translateY(-2.5px);
-      }
-      50% {
-        transform: perspective(400px) rotateY(8deg) rotateZ(-0.8deg) skewY(1.8deg) translateY(0);
-        box-shadow: 4px 8px 20px rgba(255, 103, 31, 0.55), -4px 6px 16px rgba(19, 136, 8, 0.45);
-      }
-      75% {
-        transform: perspective(400px) rotateY(-2deg) rotateZ(1.2deg) skewY(-1.2deg) translateY(-2px);
-      }
-      100% {
-        transform: perspective(400px) rotateY(-8deg) rotateZ(-1.5deg) skewY(1.8deg) translateY(0);
-        box-shadow: -4px 6px 16px rgba(255, 103, 31, 0.5), 4px 6px 16px rgba(19, 136, 8, 0.4);
-      }
-    }
-
-    @keyframes flagClothRipple {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    @keyframes flagSunlightSweep {
-      0% { transform: translateX(-150%) rotate(25deg); }
-      35%, 100% { transform: translateX(180%) rotate(25deg); }
-    }
-
-    @keyframes flagSvgFlutter {
-      0%, 100% { transform: rotate(0deg) scale(1); }
-      50% { transform: rotate(-8deg) scale(1.1); }
-    }
-
-    .btn-sidebar-report.flag-wave-btn {
+    .btn-sidebar-report {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 9px;
+      gap: 7px;
       width: 100%;
-      padding: 11px 12px;
+      background: linear-gradient(135deg, #FF9933 0%, #ea580c 100%);
+      color: #ffffff;
+      border: none;
       border-radius: 12px;
-      border: 1.5px solid rgba(255, 255, 255, 0.85);
-      font-size: 13px;
-      font-weight: 900;
-      color: #002D62; /* Navy Ashoka Chakra Blue */
-      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.95);
+      padding: 11px 14px;
+      font-size: 13.5px;
+      font-weight: 800;
       cursor: pointer;
+      box-shadow: 0 4px 14px rgba(255, 153, 51, 0.42);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       position: relative;
-      overflow: hidden;
-      /* Authentic Indian Flag 3-Stripe Silk Gradient */
-      background: linear-gradient(180deg, 
-        #FF671F 0%, 
-        #FF8822 32%, 
-        #FFFFFF 33%, 
-        #FFFFFF 67%, 
-        #138808 68%, 
-        #0A6603 100%
-      );
-      background-size: 100% 180%;
-      animation: flagWaveMotion 2.8s ease-in-out infinite, flagClothRipple 4s ease-in-out infinite;
-      box-shadow: 0 4px 18px rgba(255, 103, 31, 0.45), 0 3px 14px rgba(19, 136, 8, 0.35);
-      transition: all 0.25s ease;
-      transform-origin: left center;
+      z-index: 3;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    .btn-sidebar-report:hover {
+      background: linear-gradient(135deg, #ff8c1a 0%, #d94e04 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 7px 20px rgba(255, 153, 51, 0.55);
+    }
+    .btn-sidebar-report:active {
+      transform: translateY(0);
+      box-shadow: 0 3px 10px rgba(255, 153, 51, 0.35);
     }
 
-    .btn-sidebar-report.flag-wave-btn:hover {
-      animation-duration: 1.6s; /* Strong wind flutter on hover! */
-      box-shadow: 0 8px 26px rgba(255, 103, 31, 0.6), 0 6px 20px rgba(19, 136, 8, 0.5);
-      filter: brightness(1.06);
-    }
-
-    .btn-sidebar-report.flag-wave-btn::after {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -60%;
-      width: 220%;
-      height: 200%;
-      background: linear-gradient(
-        60deg,
-        rgba(255, 255, 255, 0) 25%,
-        rgba(255, 255, 255, 0.65) 50%,
-        rgba(255, 255, 255, 0) 75%
-      );
-      transform: rotate(25deg);
-      animation: flagSunlightSweep 3.2s ease-in-out infinite;
-      pointer-events: none;
-    }
-
-    .waving-flag-svg {
-      animation: flagSvgFlutter 2.2s ease-in-out infinite;
-    }
     .sidebar-tricolor-footer-ribbon {
       height: 3px;
       width: calc(100% - 28px);
@@ -421,57 +355,66 @@
     .main-viewport::-webkit-scrollbar-thumb { background: #d0cbc0; border-radius: 4px; }
     .main-viewport::-webkit-scrollbar-thumb:hover { background: #b0aba0; }
 
-    /* TOP PANORAMA: FIXED HEIGHT (174px) */
+    /* TOP PANORAMA: BEAUTIFULLY ALIGNED INDIA GATE SUNSET BANNER (176px) */
     .top-panorama-wrapper {
       position: relative;
       width: 100%;
-      height: 174px;
-      min-height: 174px;
-      max-height: 174px;
-      background: url('/images/india-gate-bg.jpg') 68% 28% / cover no-repeat;
+      height: 176px;
+      min-height: 176px;
+      max-height: 176px;
+      background: #FAF7F0;
       overflow: hidden;
       flex-shrink: 0;
       padding: 16px 36px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      border-bottom: 1px solid rgba(0, 45, 98, 0.08);
     }
 
-    .top-panorama-wrapper::before {
-      content: '';
+    /* Dedicated India Gate Sunset Monument Backdrop Layer */
+    .panorama-monument-layer {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 65%;
+      min-width: 540px;
+      max-width: 900px;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .panorama-monument-photo {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%);
+      width: 100%;
+      height: 140%;
+      object-fit: cover;
+      object-position: center 66%;
+      filter: contrast(1.1) saturate(1.22) brightness(0.98);
+    }
+
+    .panorama-monument-scrim {
       position: absolute;
       inset: 0;
       background: 
-        linear-gradient(90deg, rgba(245, 241, 233, 0.94) 0%, rgba(245, 241, 233, 0.74) 42%, rgba(245, 241, 233, 0.15) 75%, rgba(245, 241, 233, 0.55) 100%),
-        radial-gradient(circle at 88% 20%, rgba(255, 153, 51, 0.52) 0%, transparent 60%),
-        radial-gradient(circle at 10% 90%, rgba(19, 136, 8, 0.42) 0%, transparent 55%),
-        linear-gradient(180deg, transparent 50%, rgba(242, 238, 229, 0.98) 100%);
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    .tricolor-brush-saffron {
-      position: absolute;
-      top: -25px;
-      right: -10px;
-      width: 480px;
-      height: 120px;
-      background: radial-gradient(ellipse at 85% 15%, rgba(255, 153, 51, 0.85) 0%, rgba(255, 120, 0, 0.35) 50%, transparent 75%);
-      transform: rotate(-3deg);
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    .tricolor-brush-green {
-      position: absolute;
-      bottom: -15px;
-      left: -15px;
-      width: 420px;
-      height: 95px;
-      background: radial-gradient(ellipse at 15% 85%, rgba(19, 136, 8, 0.6) 0%, rgba(34, 197, 94, 0.22) 50%, transparent 75%);
-      transform: rotate(2deg);
-      pointer-events: none;
-      z-index: 2;
+        linear-gradient(90deg, 
+          #FAF7F0 0%, 
+          rgba(250, 247, 240, 0.98) 10%, 
+          rgba(250, 247, 240, 0.5) 35%, 
+          rgba(250, 247, 240, 0.05) 65%, 
+          rgba(250, 247, 240, 0.15) 100%
+        ),
+        linear-gradient(180deg, 
+          rgba(250, 247, 240, 0.3) 0%, 
+          transparent 24%, 
+          transparent 76%, 
+          rgba(250, 247, 240, 0.65) 100%
+        );
     }
 
     /* Top Row Controls & Language Switcher */
@@ -1163,6 +1106,40 @@
     .nearby-mini-title { font-size: 12.5px; font-weight: 800; color: var(--gray-900); }
     .nearby-mini-loc { font-size: 11px; color: var(--gray-500); margin: 3px 0 6px; }
 
+    .btn-explore-nearby,
+    .btn-contribute {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      margin-top: 14px;
+      background: linear-gradient(135deg, #002D62 0%, #001A3A 100%);
+      color: #ffffff !important;
+      border: 1px solid rgba(0, 45, 98, 0.2);
+      border-radius: 10px;
+      padding: 11px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 45, 98, 0.22);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      text-decoration: none;
+    }
+    .btn-explore-nearby:hover,
+    .btn-contribute:hover {
+      background: linear-gradient(135deg, #003b80 0%, #002D62 100%);
+      color: #ffffff !important;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 45, 98, 0.32);
+    }
+    .btn-explore-nearby:active,
+    .btn-contribute:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 6px rgba(0, 45, 98, 0.2);
+    }
+
     /* ============================================================
        MODALS SYSTEM
        ============================================================ */
@@ -1715,9 +1692,9 @@
       <button type="button" class="btn-sync-offline" onclick="syncOfflineReports()" data-i18n="btn_sync_now">Sync Now</button>
     </div>
 
-    <!-- Contribute Card with Taj Mahal Heritage & Waving Flag CTA -->
+    <!-- Contribute Card with Heritage Background & Normal Orange Button -->
     <div class="sidebar-contribute-card">
-      <img src="/images/taj-mahal-bg.jpg" class="taj-mahal-card-bg" alt="Taj Mahal" onerror="this.src='images/taj-mahal-bg.jpg'" />
+      <img src="/images/taj-mahal-bg.jpg" class="taj-mahal-card-bg" alt="Heritage" onerror="this.src='images/taj-mahal-bg.jpg'" />
       <div class="taj-mahal-card-scrim"></div>
       <div class="sidebar-card-content">
         <div class="sidebar-flag-badge" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.95);border:1px solid #FED7AA;border-radius:12px;padding:3px 9px;font-size:10px;font-weight:800;color:#EA580C;margin-bottom:6px;box-shadow:0 1px 4px rgba(0,0,0,0.08);"><span style="font-size:12px;">🇮🇳</span><span>जन भागीदारी पोर्टल</span></div>
@@ -1725,15 +1702,8 @@
         <div class="sidebar-card-desc" data-i18n="contribute_desc">
           Report community issues in your panchayat &amp; village directly to authorities.
         </div>
-        <button type="button" class="btn-sidebar-report flag-wave-btn" onclick="openReportModal();" title="Report a new societal issue">
-          <svg class="waving-flag-svg" viewBox="0 0 32 22" fill="none" style="width: 22px; height: 16px; flex-shrink: 0; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
-            <rect width="32" height="7.33" fill="#FF671F" rx="1"/>
-            <rect y="7.33" width="32" height="7.33" fill="#FFFFFF"/>
-            <rect y="14.66" width="32" height="7.33" fill="#138808" rx="1"/>
-            <circle cx="16" cy="11" r="3" stroke="#002D62" stroke-width="0.8" fill="none"/>
-            <circle cx="16" cy="11" r="0.8" fill="#002D62"/>
-          </svg>
-          <span data-i18n="btn_report_problem" style="font-weight:900; letter-spacing:0.3px;">+ Report a Problem</span>
+        <button type="button" class="btn-sidebar-report" onclick="openReportModal();" title="Report a Problem">
+          <span data-i18n="btn_report_problem">+ Report a Problem</span>
         </button>
       </div>
     </div>
@@ -1750,10 +1720,12 @@
        ============================================================ -->
   <main class="main-viewport">
 
-    <!-- Top Panorama Banner (Stable 174px) -->
+    <!-- Top Panorama Banner with Beautifully Aligned India Gate Sunset (176px) -->
     <header class="top-panorama-wrapper">
-      <div class="tricolor-brush-saffron"></div>
-      <div class="tricolor-brush-green"></div>
+      <div class="panorama-monument-layer">
+        <img src="/images/india-gate-sunset.jpg" class="panorama-monument-photo" alt="India Gate Sunset" onerror="this.src='images/india-gate-sunset.jpg'" />
+        <div class="panorama-monument-scrim"></div>
+      </div>
 
       <div class="panorama-top-row">
         <div class="gov-badge-tag">
@@ -2021,7 +1993,7 @@
               <!-- Dynamically rendered -->
             </div>
 
-            <button class="btn-contribute" style="margin-top: 14px; background: var(--navy);" onclick="openExploreModal()" data-i18n="btn_explore_all">
+            <button class="btn-explore-nearby" onclick="openExploreModal()" data-i18n="btn_explore_all">
               Explore All Nearby Issues →
             </button>
           </div>
