@@ -19,8 +19,13 @@ exports.getChallenges = async (req, res, next) => {
 
     // Role-based filtering
     if (req.user) {
-      if (req.user.role === 'citizen' && myOnly === 'true') {
-        query.submittedBy = req.user.id;
+      if (req.user.role === 'citizen') {
+        if (myOnly === 'true') {
+          query.submittedBy = req.user.id;
+        } else {
+          query.isPublic = true;
+          query.status = { $nin: ['draft', 'rejected'] };
+        }
       } else if (req.user.role === 'university_rep') {
         query.assignedUniversity = req.user.universityId;
       } else if (req.user.role === 'industry_rep') {
@@ -28,9 +33,9 @@ exports.getChallenges = async (req, res, next) => {
         query.status = { $ne: 'draft' };
       }
     } else {
-      // Public: only show validated+ public challenges
+      // Public: show all active public challenges including newly submitted citizen reports
       query.isPublic = true;
-      query.status = { $in: ['validated', 'assigned', 'in_progress', 'testing', 'resolved'] };
+      query.status = { $nin: ['draft', 'rejected'] };
     }
 
     // Filters

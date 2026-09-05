@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 
 const challengeSchema = new mongoose.Schema({
@@ -16,7 +16,7 @@ const challengeSchema = new mongoose.Schema({
   description: {
     type: String,
     required: [true, 'Description is required'],
-    minlength: [50, 'Description must be at least 50 characters']
+    minlength: [5, 'Description must be at least 5 characters']
   },
   category: {
     type: String,

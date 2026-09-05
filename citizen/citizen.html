@@ -1933,9 +1933,9 @@
           </button>
 
           <div class="profile-pill" onclick="openProfileModal()">
-            <div class="profile-avatar-circle" id="userAvatarCircle">A</div>
+            <div class="profile-avatar-circle" id="userAvatarCircle">C</div>
             <div class="profile-text-meta">
-              <span class="profile-name" id="userNameDisplay">Arjun</span>
+              <span class="profile-name" id="userNameDisplay">Citizen</span>
               <span class="profile-role-tag" data-i18n="role_tag">Citizen · Jharkhand</span>
             </div>
           </div>
@@ -2992,11 +2992,11 @@
     <div class="modal-body-scroll">
       <div class="form-group-field">
         <label class="form-label-text" data-i18n="label_full_name">Full Name</label>
-        <input type="text" class="form-input-control" id="profNameInput" value="Arjun Sharma" />
+        <input type="text" class="form-input-control" id="profNameInput" value="" placeholder="Full Name" />
       </div>
       <div class="form-group-field">
         <label class="form-label-text" data-i18n="label_email">Email</label>
-        <input type="email" class="form-input-control" id="profEmailInput" value="arjun@iit.ac.in" />
+        <input type="email" class="form-input-control" id="profEmailInput" value="" placeholder="Email Address" />
       </div>
       <div class="modal-footer-nav">
         <button type="button" class="btn-modal-secondary" style="color: #DC2626;" onclick="handleLogout()" data-i18n="btn_logout">Log Out</button>
@@ -3556,7 +3556,67 @@
   let speechRecognition = null;
   let currentlyInspectedId = null;
 
+  function getCurrentUser() {
+    if (typeof Auth !== 'undefined' && typeof Auth.getUser === 'function') {
+      const u = Auth.getUser();
+      if (u) return u;
+    }
+    try {
+      const raw = localStorage.getItem('is_user') || localStorage.getItem('user');
+      return raw ? JSON.parse(raw) : null;
+    } catch(e) {
+      return null;
+    }
+  }
+
+  function getUserStorageKey(prefix) {
+    const u = getCurrentUser();
+    const id = u ? (u.id || u._id || u.email || 'guest') : 'guest';
+    return prefix + '_' + id;
+  }
+
+  function applyUserProfile() {
+    const user = getCurrentUser();
+    if (!user) return;
+    const name = user.name || 'Citizen';
+    const email = user.email || '';
+    const firstName = name.split(' ')[0] || 'Citizen';
+    const initial = name.charAt(0).toUpperCase() || 'C';
+
+    const nameEl = document.getElementById('userNameDisplay');
+    if (nameEl) nameEl.textContent = firstName;
+
+    const avEl = document.getElementById('userAvatarCircle');
+    if (avEl) avEl.textContent = initial;
+
+    const roleTagEl = document.querySelector('.profile-role-tag');
+    if (roleTagEl) {
+      const roleStr = user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Citizen';
+      const locStr = user.address?.district || user.address?.city || 'Jharkhand';
+      roleTagEl.textContent = `${roleStr} · ${locStr}`;
+    }
+
+    const pfNameInput = document.getElementById('profNameInput');
+    if (pfNameInput) pfNameInput.value = name;
+
+    const pfEmailInput = document.getElementById('profEmailInput');
+    if (pfEmailInput) pfEmailInput.value = email;
+  }
+
+  function formatTimeAgo(dateStr) {
+    if (!dateStr) return currentLanguage === 'hi' ? 'हाल ही में' : 'Recently';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return currentLanguage === 'hi' ? 'हाल ही में' : 'Recently';
+    const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (diff < 60) return currentLanguage === 'hi' ? 'अभी' : 'Just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)} ${currentLanguage === 'hi' ? 'मिनट पहले' : 'mins ago'}`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} ${currentLanguage === 'hi' ? 'घंटे पहले' : 'hours ago'}`;
+    if (diff < 2592000) return `${Math.floor(diff / 86400)} ${currentLanguage === 'hi' ? 'दिन पहले' : 'days ago'}`;
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  }
+
   document.addEventListener('DOMContentLoaded', async () => {
+    applyUserProfile();
     loadPersistentState();
     setLanguage(currentLanguage);
     startQuoteRotator();
@@ -3565,18 +3625,9 @@
     window.addEventListener('online', updateNetworkStatus);
     window.addEventListener('offline', updateNetworkStatus);
 
-    if (typeof Auth !== 'undefined' && Auth.isLoggedIn()) {
-      const user = Auth.getUser();
-      if (user && user.name) {
-        document.getElementById('userNameDisplay').textContent = user.name.split(' ')[0];
-        document.getElementById('userAvatarCircle').textContent = user.name.charAt(0).toUpperCase();
-        document.getElementById('profNameInput').value = user.name;
-        if (user.email) document.getElementById('profEmailInput').value = user.email;
-      }
-    }
-
     renderAllViews();
     await fetchLiveChallenges();
+    applyUserProfile();
 
     // Setup backdrop dismiss for modals
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
@@ -3651,18 +3702,24 @@
   }
 
   function loadPersistentState() {
-    const storedReports = localStorage.getItem('jansetu_all_reports');
+    const user = getCurrentUser();
+    const reportsKey = getUserStorageKey('jansetu_reports');
+    const storedReports = localStorage.getItem(reportsKey);
+
     if (storedReports) {
       try { 
         allReportsList = JSON.parse(storedReports);
-        if (!Array.isArray(allReportsList) || allReportsList.length === 0) {
-          allReportsList = [...SEED_REPORTS];
-        }
+        if (!Array.isArray(allReportsList)) allReportsList = [];
       } catch(e) { 
-        allReportsList = [...SEED_REPORTS]; 
+        allReportsList = []; 
       }
     } else {
-      allReportsList = [...SEED_REPORTS];
+      // If user is Raza or guest demo, provide seed reports
+      if (!user || user.email === 'raza@gmail.com') {
+        allReportsList = [...SEED_REPORTS];
+      } else {
+        allReportsList = [];
+      }
       saveReportsState();
     }
 
@@ -3676,19 +3733,19 @@
       }
     });
 
-    // Ensure an unverified report is readily available so citizen can test grievance deletion
-    const hasUnverified = allReportsList.some(r => r.status === 'Submitted' || r.isVerified === false);
-    if (!hasUnverified) {
-      const rep4819 = allReportsList.find(r => r.id === 'JH-2026-4819');
-      if (rep4819) {
-        rep4819.status = 'Submitted';
-        rep4819.isVerified = false;
-        rep4819.assign = 'Verification in progress by JanSetu Authority';
+    // Ensure Raza or guest has an unverified report for testing grievance deletion
+    if (allReportsList.length > 0) {
+      const hasUnverified = allReportsList.some(r => r.status === 'Submitted' || r.isVerified === false);
+      if (!hasUnverified) {
+        allReportsList[0].status = 'Submitted';
+        allReportsList[0].isVerified = false;
+        allReportsList[0].assign = 'Verification in progress by JanSetu Authority';
         saveReportsState();
       }
     }
 
-    const storedExplore = localStorage.getItem('jansetu_explore_list');
+    const exploreKey = getUserStorageKey('jansetu_explore');
+    const storedExplore = localStorage.getItem(exploreKey);
     if (storedExplore) {
       try { 
         exploreList = JSON.parse(storedExplore); 
@@ -3703,35 +3760,64 @@
       saveExploreState();
     }
 
+    // Load shared community pool across all citizen users
+    let communityPool = [];
+    try {
+      communityPool = JSON.parse(localStorage.getItem('jansetu_community_pool') || '[]');
+      if (!Array.isArray(communityPool)) communityPool = [];
+    } catch(e) { communityPool = []; }
+
+    const userEmail = user && user.email ? user.email.toLowerCase().trim() : '';
+    const userId = user ? (user.id || user._id || '').toString() : '';
+
+    // Merge community pool into exploreList (excluding the current user's own reports)
+    communityPool.forEach(commItem => {
+      const itemSubEmail = commItem.submitterEmail ? commItem.submitterEmail.toLowerCase().trim() : '';
+      const itemSubId = commItem.submittedById ? commItem.submittedById.toString() : '';
+      const isMine = (userEmail && itemSubEmail === userEmail) || (userId && itemSubId === userId);
+      
+      if (!isMine) {
+        const existIdx = exploreList.findIndex(e => e.id === commItem.id || (commItem.mongoId && e.mongoId === commItem.mongoId));
+        if (existIdx !== -1) {
+          exploreList[existIdx] = { ...exploreList[existIdx], ...commItem };
+        } else {
+          exploreList.unshift(commItem);
+        }
+      }
+    });
+
     exploreList.forEach(c => {
       if (!c.image || c.image === '/images/water-tap.jpg') {
         c.image = getCategoryFallbackImage(c.category);
       }
     });
 
-    const storedSupports = localStorage.getItem('jansetu_supported_ids');
+    const supportsKey = getUserStorageKey('jansetu_supports');
+    const storedSupports = localStorage.getItem(supportsKey);
     if (storedSupports) {
       try { supportedIds = new Set(JSON.parse(storedSupports)); } catch(e) { supportedIds = new Set(); }
+    } else {
+      supportedIds = new Set();
     }
   }
 
   function saveReportsState() {
     try {
-      localStorage.setItem('jansetu_all_reports', JSON.stringify(allReportsList));
+      localStorage.setItem(getUserStorageKey('jansetu_reports'), JSON.stringify(allReportsList));
     } catch(e) {
       console.warn('LocalStorage save error (reports):', e);
     }
   }
   function saveExploreState() {
     try {
-      localStorage.setItem('jansetu_explore_list', JSON.stringify(exploreList));
+      localStorage.setItem(getUserStorageKey('jansetu_explore'), JSON.stringify(exploreList));
     } catch(e) {
       console.warn('LocalStorage save error (explore):', e);
     }
   }
   function saveSupportsState() {
     try {
-      localStorage.setItem('jansetu_supported_ids', JSON.stringify(Array.from(supportedIds)));
+      localStorage.setItem(getUserStorageKey('jansetu_supports'), JSON.stringify(Array.from(supportedIds)));
     } catch(e) {
       console.warn('LocalStorage save error (supports):', e);
     }
@@ -3765,15 +3851,19 @@
 
     for (let i = 0; i < drafts.length; i++) {
       try {
+        const token = (typeof Auth !== 'undefined' && Auth.getToken()) || localStorage.getItem('is_token') || localStorage.getItem('token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
         const res = await fetch('/api/challenges', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(drafts[i])
         });
         const data = await res.json();
         if (data.success) {
           allReportsList.unshift({
             id: data.data.challengeId || ('JH-2026-' + Math.floor(1000 + Math.random() * 9000)),
+            mongoId: data.data._id,
             title: drafts[i].title,
             location: drafts[i].location.village + ', ' + drafts[i].location.district,
             status: 'Submitted',
@@ -3795,33 +3885,119 @@
 
   async function fetchLiveChallenges() {
     try {
-      const res = await fetch('/api/challenges');
+      const user = getCurrentUser();
+      const currentUserId = user ? (user.id || user._id || '').toString() : '';
+      const currentUserEmail = user && user.email ? user.email.toLowerCase().trim() : '';
+
+      const token = (typeof Auth !== 'undefined' && Auth.getToken()) || localStorage.getItem('is_token') || localStorage.getItem('token');
+      const headers = {};
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+
+      const res = await fetch('/api/challenges?limit=100', { headers });
       const data = await res.json();
       if (data && data.success && Array.isArray(data.data) && data.data.length > 0) {
         const apiList = data.data;
+
+        const myApiChallenges = [];
+        const communityApiChallenges = [];
+
         apiList.forEach(c => {
-          const cid = c.challengeId || ('JH-2026-' + c._id.slice(-4).toUpperCase());
-          if (!allReportsList.some(r => r.id === cid)) {
-            const loc = c.location || {};
-            allReportsList.push({
-              id: cid,
-              title: c.title,
-              location: [loc.village, loc.block, loc.district, loc.state].filter(Boolean).join(', '),
-              status: c.status === 'resolved' ? 'Solved' : c.status === 'in_progress' ? 'Being Worked On' : 'Submitted',
-              category: c.category,
-              image: (c.attachments && c.attachments[0]?.url) || getCategoryFallbackImage(c.category),
-              desc: c.description,
-              assign: (c.assignedUniversity && c.assignedUniversity.name) ? c.assignedUniversity.name : 'JanSetu Taskforce',
-              timeAgo: 'Recently',
-              supports: c.supportCount || 5,
-              isResolved: c.status === 'resolved'
-            });
+          const subId = c.submittedBy ? (c.submittedBy._id || c.submittedBy.id || c.submittedBy).toString() : '';
+          const subEmail = (c.submittedBy && c.submittedBy.email) 
+            ? c.submittedBy.email.toLowerCase().trim() 
+            : (c.submitterContact && c.submitterContact.email ? c.submitterContact.email.toLowerCase().trim() : '');
+
+          const isMine = (currentUserId && subId === currentUserId) || (currentUserEmail && subEmail === currentUserEmail);
+
+          const cid = c.challengeId || ('JH-2026-' + (c._id ? c._id.slice(-4).toUpperCase() : Math.floor(1000 + Math.random() * 9000)));
+          const loc = c.location || {};
+          const locStr = [loc.village, loc.block, loc.district, loc.state].filter(Boolean).join(', ') || (loc.district ? loc.district + ', Jharkhand' : 'Jharkhand');
+
+          const statusMap = {
+            'submitted': 'Submitted',
+            'validated': 'Submitted',
+            'assigned': 'Being Worked On',
+            'in_progress': 'Being Worked On',
+            'testing': 'Being Worked On',
+            'resolved': 'Solved',
+            'action_required': 'Action Required'
+          };
+          const displayStatus = statusMap[c.status] || (c.status === 'resolved' ? 'Solved' : 'Submitted');
+          const isResolved = c.status === 'resolved';
+          const isVerified = c.status !== 'submitted' && c.status !== 'draft';
+
+          const item = {
+            id: cid,
+            mongoId: c._id,
+            title: c.title,
+            location: locStr,
+            status: displayStatus,
+            category: c.category,
+            image: (c.attachments && c.attachments[0]?.url) || getCategoryFallbackImage(c.category),
+            beforeImg: (c.attachments && c.attachments[0]?.url) || getCategoryFallbackImage(c.category),
+            afterImg: null,
+            desc: c.description,
+            assign: (c.assignedUniversity && c.assignedUniversity.name) ? c.assignedUniversity.name : 'JanSetu Taskforce',
+            timeAgo: formatTimeAgo(c.createdAt),
+            supports: c.supportCount || 1,
+            needsAction: c.status === 'action_required',
+            isResolved: isResolved,
+            isVerified: isVerified,
+            submitterName: c.submitterContact?.name || c.submittedBy?.name || (isMine ? (user?.name || 'You') : 'Citizen'),
+            submitterEmail: subEmail,
+            submittedById: subId
+          };
+
+          if (isMine) {
+            myApiChallenges.push(item);
+          } else {
+            communityApiChallenges.push(item);
           }
         });
+
+        // 1. Update allReportsList (Only MY challenges)
+        if (myApiChallenges.length > 0) {
+          myApiChallenges.forEach(myC => {
+            const existingIdx = allReportsList.findIndex(r => r.id === myC.id || (r.mongoId && r.mongoId === myC.mongoId));
+            if (existingIdx !== -1) {
+              allReportsList[existingIdx] = { ...allReportsList[existingIdx], ...myC };
+            } else {
+              allReportsList.push(myC);
+            }
+          });
+        }
+
+        // 2. Update exploreList (COMMUNITY challenges from other citizens)
+        if (communityApiChallenges.length > 0) {
+          communityApiChallenges.forEach(commC => {
+            const existingIdx = exploreList.findIndex(e => e.id === commC.id || (e.mongoId && e.mongoId === commC.mongoId));
+            if (existingIdx !== -1) {
+              exploreList[existingIdx] = { ...exploreList[existingIdx], ...commC };
+            } else {
+              exploreList.push(commC);
+            }
+          });
+
+          // Sync shared community pool in localStorage
+          try {
+            let pool = JSON.parse(localStorage.getItem('jansetu_community_pool') || '[]');
+            if (!Array.isArray(pool)) pool = [];
+            communityApiChallenges.forEach(commC => {
+              const pIdx = pool.findIndex(p => p.id === commC.id || (commC.mongoId && p.mongoId === commC.mongoId));
+              if (pIdx !== -1) pool[pIdx] = { ...pool[pIdx], ...commC };
+              else pool.push(commC);
+            });
+            localStorage.setItem('jansetu_community_pool', JSON.stringify(pool));
+          } catch(e) {}
+        }
+
         saveReportsState();
+        saveExploreState();
         renderAllViews();
       }
-    } catch(e) {}
+    } catch(e) {
+      console.warn('Live challenges sync error:', e);
+    }
   }
 
   let activeTrackerIndex = 0;
@@ -4381,10 +4557,49 @@
   }
 
   function renderActiveProblem() {
-    const incomplete = getIncompleteReports();
     const counterPill = document.getElementById('activeTrackerCounterPill');
     const navBtns = document.getElementById('trackerNavBtns');
 
+    if (allReportsList.length === 0) {
+      if (counterPill) {
+        counterPill.textContent = currentLanguage === 'hi' ? 'कोई रिपोर्ट नहीं' : '0 Reports';
+        counterPill.style.background = '#F1F5F9';
+        counterPill.style.color = '#64748B';
+        counterPill.style.borderColor = '#CBD5E1';
+        if (navBtns) navBtns.style.display = 'none';
+      }
+      if (document.getElementById('activeReportId')) document.getElementById('activeReportId').textContent = 'Report ID: —';
+      if (document.getElementById('activeReportTitle')) {
+        document.getElementById('activeReportTitle').textContent = currentLanguage === 'hi' 
+          ? '🌟 आपने अभी कोई समस्या दर्ज नहीं की है' 
+          : '🌟 No Grievances Reported Yet';
+      }
+      if (document.getElementById('activeReportLoc')) {
+        document.getElementById('activeReportLoc').innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          <span>${currentLanguage === 'hi' ? 'झारखंड नागरिक सेवा पोर्टल · अपनी पहली समस्या दर्ज करें' : 'Jharkhand Citizen Portal · Submit your first issue'}</span>
+        `;
+      }
+      const badge = document.getElementById('activeReportStatus');
+      const label = document.getElementById('activeStatusLabelText');
+      if (badge) {
+        badge.className = 'status-badge-in-progress';
+        badge.style.background = '#F1F5F9';
+        badge.style.color = '#475569';
+        badge.style.borderColor = '#CBD5E1';
+      }
+      if (label) label.textContent = currentLanguage === 'hi' ? 'सक्रिय खाता' : 'Active Account';
+      if (document.getElementById('solCheckBox')) document.getElementById('solCheckBox').classList.remove('show');
+      const delSlot = document.getElementById('activeTrackerDeleteAction');
+      if (delSlot) delSlot.innerHTML = '';
+      const reqBanner = document.getElementById('actionRequiredBanner');
+      if (reqBanner) reqBanner.style.display = 'none';
+
+      updateTrackerTimeline('none', false, false, null);
+      return;
+    }
+
+    const incomplete = getIncompleteReports();
     const active = getCurrentlyTrackedReport();
     if (!active) return;
 
@@ -4488,45 +4703,70 @@
     // Render Recent Reports Horizontal Scroll Track
     const recentCont = document.getElementById('recentReportsContainerList');
     if (recentCont) {
-      const getStatusClass = (status) => {
-        if (status === 'Solved') return 'status-solved';
-        if (status === 'Action Required') return 'status-action';
-        if (status === 'Being Worked On' || status === 'In Progress' || status === 'University Assigned') return 'status-progress';
-        return 'status-assigned';
-      };
-
-      recentCont.innerHTML = allReportsList.map(r => `
-        <div class="report-square-card" onclick="openDetailModal('${r.id}')" title="${r.title}">
-          <div class="square-thumb-wrapper">
-            <img src="${r.image || getCategoryFallbackImage(r.category)}" class="square-thumb-img" alt="${r.title}" onerror="this.src='/images/water-tap.jpg'" />
-            <span class="square-status-badge ${getStatusClass(r.status)}">${r.status}</span>
+      if (allReportsList.length === 0) {
+        recentCont.innerHTML = `
+          <div style="width:100%; padding:28px 16px; text-align:center; background:#F8FAFC; border:1.5px dashed #CBD5E1; border-radius:16px; color:#64748B;">
+            <div style="font-size:24px; margin-bottom:6px;">📋</div>
+            <div style="font-size:14px; font-weight:700; color:#1E293B; margin-bottom:4px;">
+              ${currentLanguage === 'hi' ? 'आपकी कोई दर्ज समस्या नहीं है' : 'You have not reported any issues yet'}
+            </div>
+            <div style="font-size:12px; margin-bottom:12px;">
+              ${currentLanguage === 'hi' ? 'अपने क्षेत्र की सड़क, पानी, या बिजली की समस्या दर्ज करें' : 'Submit an issue regarding roads, water, or electricity in your area'}
+            </div>
+            <button type="button" class="btn-sol-yes" style="padding:6px 16px; font-size:12px;" onclick="openReportModal()">
+              + ${currentLanguage === 'hi' ? 'समस्या दर्ज करें' : 'Report an Issue'}
+            </button>
           </div>
-          <div class="square-card-body">
-            <div class="square-card-title">${r.title}</div>
-            <div class="square-card-loc">📍 ${r.location || 'Jharkhand'}</div>
-            <div class="square-card-footer">
-              <span class="square-card-id">${r.id}</span>
-              <span class="square-card-time">${r.timeAgo || 'Recently'}</span>
+        `;
+      } else {
+        const getStatusClass = (status) => {
+          if (status === 'Solved') return 'status-solved';
+          if (status === 'Action Required') return 'status-action';
+          if (status === 'Being Worked On' || status === 'In Progress' || status === 'University Assigned') return 'status-progress';
+          return 'status-assigned';
+        };
+
+        recentCont.innerHTML = allReportsList.map(r => `
+          <div class="report-square-card" onclick="openDetailModal('${r.id}')" title="${r.title}">
+            <div class="square-thumb-wrapper">
+              <img src="${r.image || getCategoryFallbackImage(r.category)}" class="square-thumb-img" alt="${r.title}" onerror="this.src='/images/water-tap.jpg'" />
+              <span class="square-status-badge ${getStatusClass(r.status)}">${r.status}</span>
+            </div>
+            <div class="square-card-body">
+              <div class="square-card-title">${r.title}</div>
+              <div class="square-card-loc">📍 ${r.location || 'Jharkhand'}</div>
+              <div class="square-card-footer">
+                <span class="square-card-id">${r.id}</span>
+                <span class="square-card-time">${r.timeAgo || 'Recently'}</span>
+              </div>
             </div>
           </div>
-        </div>
-      `).join('');
+        `).join('');
+      }
     }
 
     const nearbyCont = document.getElementById('nearbyMiniContainer');
     if (nearbyCont) {
-      nearbyCont.innerHTML = exploreList.slice(0, 2).map(c => {
-        const isSupported = supportedIds.has(c.id);
-        return `
-          <div class="nearby-mini-item" onclick="openDetailModal('${c.id}')">
-            <div class="nearby-mini-title">${c.title}</div>
-            <div class="nearby-mini-loc">📍 ${c.location || 'Gumla, Jharkhand'} · <strong>${c.supports || 12} affected</strong></div>
-            <button class="btn-sol-yes" style="padding: 5px 10px; font-size: 11px; background:${isSupported ? 'var(--india-green)' : 'var(--navy)'};" onclick="event.stopPropagation(); toggleSupport('${c.id}')">
-              ${isSupported ? (currentLanguage === 'hi' ? '✓ समर्थित' : '✓ Supported') : (currentLanguage === 'hi' ? '👍 मैं भी प्रभावित हूँ' : '👍 I am also affected')}
-            </button>
-          </div>
-        `;
-      }).join('');
+      if (exploreList.length === 0) {
+        nearbyCont.innerHTML = `<div style="padding:16px;text-align:center;color:var(--gray-500);font-size:12px;">${currentLanguage === 'hi' ? 'कोई आस-पास की रिपोर्ट नहीं' : 'No nearby reports'}</div>`;
+      } else {
+        nearbyCont.innerHTML = exploreList.slice(0, 3).map(c => {
+          const isSupported = supportedIds.has(c.id);
+          return `
+            <div class="nearby-mini-item" onclick="openDetailModal('${c.id}')">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:10px;font-weight:800;color:var(--navy);background:#EFF6FF;padding:2px 6px;border-radius:8px;">${c.category}</span>
+                ${c.submitterName ? `<span style="font-size:10px;color:#64748B;font-weight:600;">👤 ${c.submitterName}</span>` : ''}
+              </div>
+              <div class="nearby-mini-title">${c.title}</div>
+              <div class="nearby-mini-loc">📍 ${c.location || 'Jharkhand'} · <strong>${c.supports || 1} ${currentLanguage === 'hi' ? 'प्रभावित' : 'affected'}</strong></div>
+              <button class="btn-sol-yes" style="padding: 5px 10px; font-size: 11px; background:${isSupported ? 'var(--india-green)' : 'var(--navy)'};" onclick="event.stopPropagation(); toggleSupport('${c.id}')">
+                ${isSupported ? (currentLanguage === 'hi' ? '✓ समर्थित' : '✓ Supported') : (currentLanguage === 'hi' ? '👍 मैं भी प्रभावित हूँ' : '👍 I am also affected')}
+              </button>
+            </div>
+          `;
+        }).join('');
+      }
     }
   }
 
@@ -5344,7 +5584,10 @@
     btn.disabled = true;
 
     const title = document.getElementById('reportTitle').value.trim() || 'Panchayat Problem';
-    const description = document.getElementById('reportDescription').value.trim() || title;
+    let description = document.getElementById('reportDescription').value.trim() || title;
+    if (description.length < 15) {
+      description = `${title} — ${description}. Immediate community attention and civic resolution required.`;
+    }
     const category = document.getElementById('reportCategory') ? document.getElementById('reportCategory').value : 'Water Management';
     const priority = document.querySelector('input[name="priorityChoice"]:checked')?.value || 'high';
     const state = document.getElementById('reportState').value;
@@ -5353,15 +5596,27 @@
     const panchayat = document.getElementById('reportPanchayat').value;
     const village = document.getElementById('reportVillage').value;
 
+    const user = getCurrentUser();
+    const userEmail = user && user.email ? user.email.toLowerCase().trim() : '';
+    const userId = user ? (user.id || user._id || '').toString() : '';
+    const userName = user && user.name ? user.name : 'Citizen';
+
     const payload = {
       title,
       description,
       category,
       priority,
-      location: { state, district, block, panchayat, village }
+      location: { state, district, block, panchayat, village },
+      submitterContact: {
+        name: userName,
+        email: userEmail || 'citizen@jansetu.in',
+        phone: user?.phone || '9876543210'
+      },
+      isPublic: true
     };
 
     let realId = 'JH-2026-' + Math.floor(1000 + Math.random() * 9000);
+    let realMongoId = null;
 
     if (!navigator.onLine) {
       const drafts = JSON.parse(localStorage.getItem('jansetu_offline_drafts') || '[]');
@@ -5370,16 +5625,22 @@
       updateNetworkStatus();
     } else {
       try {
+        const token = (typeof Auth !== 'undefined' && Auth.getToken()) || localStorage.getItem('is_token') || localStorage.getItem('token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
         const res = await fetch('/api/challenges', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(payload)
         });
         const json = await res.json();
         if (json.success && json.data) {
           realId = json.data.challengeId || ('JH-2026-' + json.data._id.slice(-4).toUpperCase());
+          realMongoId = json.data._id;
         }
-      } catch(e) {}
+      } catch(e) {
+        console.warn('API submission error:', e);
+      }
     }
 
     // Extract user uploaded image if provided, otherwise pick category fallback
@@ -5387,10 +5648,11 @@
     const userUploadedImage = photoMedia ? photoMedia.dataUrl : null;
     const finalImage = userUploadedImage || getCategoryFallbackImage(category);
 
-    allReportsList.unshift({
+    const newReport = {
       id: realId,
+      mongoId: realMongoId,
       title,
-      location: [village, block, district, state].filter(Boolean).join(', '),
+      location: [village, block, district, state].filter(Boolean).join(', ') || 'Jharkhand',
       coords: { lat: currentReportCoords.lat, lng: currentReportCoords.lng },
       submittedDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       status: 'Submitted',
@@ -5403,8 +5665,27 @@
       timeAgo: 'Just now',
       supports: 1,
       needsAction: false,
-      isResolved: false
-    });
+      isResolved: false,
+      isVerified: false,
+      submitterName: userName,
+      submitterEmail: userEmail,
+      submittedById: userId
+    };
+
+    allReportsList.unshift(newReport);
+
+    // Save to shared community pool so any other citizen sees it in their "Nearby"
+    try {
+      let pool = JSON.parse(localStorage.getItem('jansetu_community_pool') || '[]');
+      if (!Array.isArray(pool)) pool = [];
+      const pIdx = pool.findIndex(p => p.id === realId || (realMongoId && p.mongoId === realMongoId));
+      if (pIdx !== -1) {
+        pool[pIdx] = { ...pool[pIdx], ...newReport };
+      } else {
+        pool.unshift(newReport);
+      }
+      localStorage.setItem('jansetu_community_pool', JSON.stringify(pool));
+    } catch(e) {}
 
     // Reset media input files
     selectedMediaFiles = [];
@@ -5422,6 +5703,9 @@
     btn.textContent = TRANSLATIONS[currentLanguage].btn_submit_confirm;
     btn.disabled = false;
     alert((currentLanguage === 'hi' ? '✅ धन्यवाद! आपकी समस्या पोर्टल पर दर्ज हो गई है।\nReport ID: ' : '✅ Success! Your problem has been submitted.\nReport ID: ') + realId);
+
+    // Background sync with live challenges
+    fetchLiveChallenges().catch(() => {});
   }
 
   let allReportsFilter = 'all';
@@ -5492,14 +5776,21 @@
   function renderExploreModalList() {
     const cont = document.getElementById('exploreFullContainer');
     if (!cont) return;
+    if (exploreList.length === 0) {
+      cont.innerHTML = `<div style="text-align:center; padding:30px; color:var(--gray-500); font-size:13px;">${currentLanguage === 'hi' ? 'आस-पास कोई रिपोर्ट उपलब्ध नहीं है।' : 'No nearby reports found.'}</div>`;
+      return;
+    }
     cont.innerHTML = exploreList.map(c => {
       const isSupported = supportedIds.has(c.id);
       return `
         <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:14px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;" onclick="openDetailModal('${c.id}')">
           <div style="flex:1;">
-            <span style="font-size:11px;font-weight:800;color:var(--navy);background:#EFF6FF;padding:3px 9px;border-radius:12px;">${c.category}</span>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-size:11px;font-weight:800;color:var(--navy);background:#EFF6FF;padding:3px 9px;border-radius:12px;">${c.category}</span>
+              ${c.submitterName ? `<span style="font-size:11px;font-weight:700;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:10px;">👤 ${c.submitterName}</span>` : ''}
+            </div>
             <div style="font-size:14px;font-weight:800;color:var(--gray-900);margin:4px 0 2px;">${c.title}</div>
-            <div style="font-size:12px;color:var(--gray-500);">📍 ${c.location} · <strong>${c.supports} citizens affected</strong></div>
+            <div style="font-size:12px;color:var(--gray-500);">📍 ${c.location} · <strong>${c.supports} ${currentLanguage === 'hi' ? 'नागरिक प्रभावित' : 'citizens affected'}</strong></div>
           </div>
           <button class="btn-sol-yes" style="white-space:nowrap;padding:8px 14px;background:${isSupported ? 'var(--india-green)' : 'var(--navy)'};" onclick="event.stopPropagation(); toggleSupport('${c.id}')">
             ${isSupported ? (currentLanguage === 'hi' ? '✓ समर्थित' : '✓ Supported') + ' (' + c.supports + ')' : (currentLanguage === 'hi' ? '👍 मैं भी प्रभावित हूँ' : '👍 I am also affected')}
@@ -5512,6 +5803,55 @@
   function openExploreModal() {
     renderExploreModalList();
     openModal('exploreModal');
+  }
+
+  async function toggleSupport(challengeId) {
+    if (!challengeId) return;
+    const isSupported = supportedIds.has(challengeId);
+    if (isSupported) {
+      supportedIds.delete(challengeId);
+    } else {
+      supportedIds.add(challengeId);
+    }
+    saveSupportsState();
+
+    // Update supports count in exploreList
+    const target = exploreList.find(c => c.id === challengeId || (c.mongoId && c.mongoId === challengeId));
+    if (target) {
+      target.supports = (target.supports || 1) + (isSupported ? -1 : 1);
+      if (target.supports < 1) target.supports = 1;
+      saveExploreState();
+    }
+
+    // Update in shared community pool
+    try {
+      let pool = JSON.parse(localStorage.getItem('jansetu_community_pool') || '[]');
+      const pIdx = pool.findIndex(p => p.id === challengeId || (p.mongoId && p.mongoId === challengeId));
+      if (pIdx !== -1) {
+        pool[pIdx].supports = target ? target.supports : ((pool[pIdx].supports || 1) + (isSupported ? -1 : 1));
+        localStorage.setItem('jansetu_community_pool', JSON.stringify(pool));
+      }
+    } catch(e) {}
+
+    // Call backend API if authenticated
+    try {
+      const mongoId = target?.mongoId || challengeId;
+      const token = (typeof Auth !== 'undefined' && Auth.getToken()) || localStorage.getItem('is_token') || localStorage.getItem('token');
+      if (token && mongoId) {
+        await fetch(`/api/challenges/${mongoId}/support`, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+      }
+    } catch(e) {}
+
+    renderAllViews();
+    if (document.getElementById('exploreModal')?.classList.contains('active')) {
+      renderExploreModalList();
+    }
+    showToast(isSupported 
+      ? (currentLanguage === 'hi' ? 'समर्थन हटाया गया' : 'Support removed') 
+      : (currentLanguage === 'hi' ? '👍 आपका समर्थन दर्ज कर लिया गया है!' : '👍 Your support has been recorded!'));
   }
 
   let currentNeedInfoTargetId = null;
@@ -5659,7 +5999,7 @@
     }
   }
 
-  function executeReportDeletion() {
+  async function executeReportDeletion() {
     if (!pendingDeleteReportId) return;
 
     const repIndex = allReportsList.findIndex(r => r.id === pendingDeleteReportId);
@@ -5668,7 +6008,19 @@
       return;
     }
 
+    const rep = allReportsList[repIndex];
     const deletedId = pendingDeleteReportId;
+
+    if (rep && rep.mongoId) {
+      try {
+        const token = (typeof Auth !== 'undefined' && Auth.getToken()) || localStorage.getItem('is_token') || localStorage.getItem('token');
+        await fetch('/api/challenges/' + rep.mongoId, {
+          method: 'DELETE',
+          headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+        });
+      } catch(e) {}
+    }
+
     allReportsList.splice(repIndex, 1);
     saveReportsState();
 
@@ -5723,12 +6075,27 @@
     if (name) {
       document.getElementById('userNameDisplay').textContent = name.split(' ')[0];
       document.getElementById('userAvatarCircle').textContent = name.charAt(0).toUpperCase();
+      const user = getCurrentUser();
+      if (user) {
+        user.name = name;
+        if (typeof Auth !== 'undefined' && Auth.setAuth) {
+          Auth.setAuth(Auth.getToken(), user);
+        } else {
+          localStorage.setItem('is_user', JSON.stringify(user));
+          localStorage.setItem('user', JSON.stringify(user));
+        }
+      }
     }
     closeModal('profileModal');
+    showToast(currentLanguage === 'hi' ? 'प्रोफ़ाइल सहेज ली गई है' : 'Profile updated successfully');
   }
   function handleLogout() {
     if (typeof Auth !== 'undefined') Auth.clearAuth();
-    window.location.href = '/';
+    localStorage.removeItem('is_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('is_user');
+    localStorage.removeItem('user');
+    window.location.href = '/login.html';
   }
   function navTo(view) {
     if (view === 'dashboard') {
