@@ -183,7 +183,7 @@ const server = app.listen(PORT, () => {
   console.log(`👤 Citizen Dashboard: http://localhost:${PORT}/dashboard/citizen`);
   console.log(`\n📌 Demo Credentials:`);
   console.log(`   Admin:      admin@innovatesphere.in / admin123`);
-  console.log(`   Citizen:    priya@gmail.com / citizen123`);
+  console.log(`   Citizen:    raza@gmail.com / citizen123`);
   console.log(`   University: rajesh@iitjharkhand.ac.in / univ123`);
   console.log(`   Industry:   tata@steel.com / industry123\n`);
 });
