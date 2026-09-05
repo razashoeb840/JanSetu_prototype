@@ -354,7 +354,7 @@ const CHALLENGES_DATA = [
 
 const USERS_DATA = [
   { name: 'Dr. Admin Kumar', email: 'admin@innovatesphere.in', password: 'admin123', role: 'admin', phone: '9431100001', isVerified: true, isActive: true },
-  { name: 'Raza Kumari', email: 'raza@gmail.com', password: 'citizen123', role: 'citizen', phone: '9431100002', isVerified: true, isActive: true, address: { street: 'Doranda', city: 'Ranchi', district: 'Ranchi', pincode: '834002' } },
+  { name: 'Raza', email: 'raza@gmail.com', password: 'citizen123', role: 'citizen', phone: '9431100002', isVerified: true, isActive: true, address: { street: 'Doranda', city: 'Ranchi', district: 'Ranchi', pincode: '834002' } },
   { name: 'Rajesh Mahto', email: 'rajesh@gmail.com', password: 'citizen123', role: 'citizen', phone: '9431100003', isVerified: true, isActive: true, address: { city: 'Dhanbad', district: 'Dhanbad', pincode: '826001' } },
   { name: 'Sunita Oraon', email: 'sunita@gmail.com', password: 'citizen123', role: 'citizen', phone: '9431100004', isVerified: false, isActive: true, address: { village: 'Murhu', district: 'Khunti', pincode: '835210' } },
   { name: 'Prof. Rajesh Singh', email: 'rajesh@iitjharkhand.ac.in', password: 'univ123', role: 'university_rep', phone: '9431100005', isVerified: true, isActive: true, designation: 'Professor & Research Coordinator', department: 'Environmental Engineering' },
