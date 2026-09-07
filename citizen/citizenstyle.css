@@ -103,28 +103,28 @@
   margin-left: -255px;
 }
 
-/* Blurred Gateway of India Monument Background in Navbar */
+/* Blurred Gateway of India Monument Background in Navbar (Recognizable & Aesthetic) */
 .sidebar-monument-bg {
   position: absolute;
-  inset: -15px;
+  inset: -10px;
   background-image: url('/citizen/images/gateway-of-india.png'), url('images/gateway-of-india.png');
   background-size: cover;
   background-position: 25% center;
   background-repeat: no-repeat;
-  filter: blur(5px) saturate(1.2) brightness(0.6);
-  transform: scale(1.1);
+  filter: blur(1.5px) saturate(1.3) brightness(0.72);
+  transform: scale(1.05);
   pointer-events: none;
   z-index: 0;
 }
 
-/* Royal Purple-Navy Glass Overlay */
+/* Royal Purple-Navy Glass Overlay - Translucent so Gateway of India is clearly recognizable */
 .sidebar-navy-scrim {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg,
-    rgba(19, 17, 44, 0.85) 0%,
-    rgba(13, 18, 37, 0.90) 48%,
-    rgba(17, 21, 49, 0.94) 100%);
+    rgba(18, 15, 40, 0.68) 0%,
+    rgba(12, 17, 36, 0.72) 48%,
+    rgba(16, 20, 46, 0.78) 100%);
   pointer-events: none;
   z-index: 1;
 }
@@ -342,7 +342,7 @@
  }
 
  /* ============================================================
-      SIDEBAR CONTRIBUTE CARD: HERITAGE BACKGROUND
+      SIDEBAR CONTRIBUTE CARD: VIBRANT HIGH-CONTRAST FROSTED GLASS
       ============================================================ */
 .sidebar-contribute-card {
   margin: 10px 14px 14px;
@@ -350,36 +350,11 @@
   border-radius: 16px;
   padding: 16px 14px 16px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  background: rgba(19, 17, 44, 0.7);
-  backdrop-filter: blur(10px);
-}
-
-/* Crisp India Gate Sunset Heritage Background Image */
-.taj-mahal-card-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 40%;
-  filter: blur(2px) saturate(1.2) brightness(0.65);
-  transform: scale(1.08);
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* Soft Warm Light Overlay: Keeps monument visible while text is crisp */
-.taj-mahal-card-scrim {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg,
-      rgba(19, 17, 44, 0.45) 0%,
-      rgba(15, 23, 42, 0.62) 55%,
-      rgba(15, 23, 42, 0.82) 100%);
-  pointer-events: none;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   z-index: 2;
 }
 
@@ -389,11 +364,11 @@
 }
 
 .sidebar-card-title {
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 900;
-  color: #FFFFFF;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
-  margin-bottom: 4px;
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  margin-bottom: 5px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -401,47 +376,47 @@
 
 .sidebar-card-desc {
   font-size: 11.5px;
-  color: #e2e8f0;
+  color: #F1F5F9 !important;
   line-height: 1.45;
   margin-bottom: 14px;
   font-weight: 600;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
- /* ============================================================
-       VIBRANT ORANGE CTA BUTTON (साफ़ और सुंदर ऑरेंज बटन)
-       ============================================================ */
- .btn-sidebar-report {
-   display: flex;
-   align-items: center;
-   justify-content: center;
-   gap: 7px;
-   width: 100%;
-   background: linear-gradient(135deg, #FF9933 0%, #ea580c 100%);
-   color: #ffffff;
-   border: none;
-   border-radius: 12px;
-   padding: 11px 14px;
-   font-size: 13.5px;
-   font-weight: 800;
-   cursor: pointer;
-   box-shadow: 0 4px 14px rgba(255, 153, 51, 0.42);
-   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-   position: relative;
-   z-index: 3;
-   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
- }
+/* ============================================================
+      VIBRANT ORANGE CTA BUTTON (+ Report a Problem)
+      ============================================================ */
+.btn-sidebar-report {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  background: linear-gradient(135deg, #FF9933 0%, #ea580c 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(255, 153, 51, 0.55), 0 0 12px rgba(255, 153, 51, 0.3) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  z-index: 3;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
 
- .btn-sidebar-report:hover {
-   background: linear-gradient(135deg, #ff8c1a 0%, #d94e04 100%);
-   transform: translateY(-2px);
-   box-shadow: 0 7px 20px rgba(255, 153, 51, 0.55);
- }
+.btn-sidebar-report:hover {
+  background: linear-gradient(135deg, #FFA742 0%, #F97316 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 153, 51, 0.65), 0 0 16px rgba(255, 153, 51, 0.4) !important;
+}
 
- .btn-sidebar-report:active {
-   transform: translateY(0);
-   box-shadow: 0 3px 10px rgba(255, 153, 51, 0.35);
- }
+.btn-sidebar-report:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(255, 153, 51, 0.35) !important;
+}
 
  .sidebar-tricolor-footer-ribbon {
    height: 3px;
@@ -523,7 +498,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 75% 36%;
+  object-position: 70% 30%;
   filter: contrast(1.05) saturate(1.15) brightness(1.02);
   opacity: 0.96;
 }
