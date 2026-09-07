@@ -351,11 +351,37 @@
   border-radius: 16px;
   padding: 16px 14px 16px;
   overflow: hidden;
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
-  background: rgba(255, 255, 255, 0.10);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: #091a36;
+  z-index: 2;
+}
+
+/* Dedicated Crisp Taj Mahal Background Image */
+.taj-mahal-card-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  filter: blur(1.2px) saturate(1.2) brightness(0.95);
+  transform: scale(1.08);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Soft Dark Scrim: Preserves Taj Mahal dome & minarets while maintaining high text contrast */
+.taj-mahal-card-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, 
+    rgba(9, 26, 54, 0.45) 0%, 
+    rgba(7, 19, 40, 0.58) 50%, 
+    rgba(6, 17, 36, 0.76) 100%
+  );
+  pointer-events: none;
   z-index: 2;
 }
 
@@ -669,6 +695,35 @@
    stroke-width: 2;
    fill: none;
  }
+
+  .settings-top-btn {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+
+  .settings-top-btn:hover {
+    background: #FFF;
+    transform: rotate(35deg) scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 45, 98, 0.15);
+  }
+
+  .settings-top-btn svg {
+    width: 17px;
+    height: 17px;
+    stroke: var(--gray-700);
+    stroke-width: 2;
+    fill: none;
+  }
 
  .notif-pink-badge {
    position: absolute;
@@ -2788,3 +2843,165 @@
    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15) !important;
    transform: scale(1.04) !important;
  }
+
+/* ============================================================
+   SETTINGS & PREFERENCES MODAL SYSTEM
+   ============================================================ */
+.settings-modal-box {
+  max-width: 620px;
+  background: #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+}
+
+.settings-group-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.settings-group-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-group-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.settings-group-desc {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.settings-lang-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.settings-lang-card {
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 10px;
+  text-align: center;
+  cursor: pointer;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.settings-lang-card:hover {
+  border-color: #FF9933;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.15);
+}
+
+.settings-lang-card.active {
+  border-color: #002D62;
+  background: #EFF6FF;
+  box-shadow: 0 4px 14px rgba(0, 45, 98, 0.15);
+}
+
+.settings-lang-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-top: 4px;
+}
+
+.settings-lang-desc {
+  font-size: 10.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.settings-lang-check {
+  display: none;
+  font-size: 10px;
+  font-weight: 800;
+  color: #166534;
+  background: #DCFCE7;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-top: 6px;
+}
+
+.settings-lang-card.active .settings-lang-check {
+  display: inline-block;
+}
+
+/* JanSetu Toggle Switch */
+.jansetu-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.jansetu-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.jansetu-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #cbd5e1;
+  transition: .25s;
+  border-radius: 24px;
+}
+
+.jansetu-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .25s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.jansetu-switch input:checked + .slider {
+  background-color: #002D62;
+}
+
+.jansetu-switch input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.btn-settings-logout {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1.5px solid #fecaca;
+  border-radius: 12px;
+  padding: 11px;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-settings-logout:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #991b1b;
+}
