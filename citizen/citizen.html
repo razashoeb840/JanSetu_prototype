@@ -83,24 +83,36 @@
     <!-- ============================================================
        TRICOLOR THEMED SIDEBAR
        ============================================================ -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="citizenSidebar">
+      <!-- Blurred Gateway of India Monument Background in Navbar -->
+      <div class="sidebar-monument-bg"></div>
+      <!-- Royal Purple-Navy Glass Overlay -->
+      <div class="sidebar-navy-scrim"></div>
+
       <div class="sidebar-tricolor-ribbon"></div>
-      <a href="/" class="sidebar-brand">
-        <svg class="brand-icon-svg" viewBox="0 0 48 48" fill="none">
-          <circle cx="16" cy="14" r="6" fill="#FF9933" />
-          <path d="M7 32C7 25 12 21 17 21C22 21 27 25 27 32" stroke="#FF9933" stroke-width="4" stroke-linecap="round" />
-          <circle cx="24" cy="12" r="6" fill="#002D62" />
-          <path d="M15 30C15 23 20 19 25 19C30 19 35 23 35 30" stroke="#002D62" stroke-width="4"
-            stroke-linecap="round" />
-          <circle cx="32" cy="14" r="6" fill="#138808" />
-          <path d="M23 32C23 25 28 21 33 21C38 21 43 25 43 32" stroke="#138808" stroke-width="4"
-            stroke-linecap="round" />
-        </svg>
-        <div class="brand-text-block">
-          <span class="brand-title"><span class="brand-saffron">Jan</span><span class="brand-green">Setu</span></span>
-          <span class="brand-tagline" data-i18n="brand_tagline">Your Voice, Real Change.</span>
-        </div>
-      </a>
+      <div class="sidebar-brand-wrapper">
+        <a href="/" class="sidebar-brand">
+          <svg class="brand-icon-svg" viewBox="0 0 48 48" fill="none">
+            <circle cx="16" cy="14" r="6" fill="#FF9933" />
+            <path d="M7 32C7 25 12 21 17 21C22 21 27 25 27 32" stroke="#FF9933" stroke-width="4" stroke-linecap="round" />
+            <circle cx="24" cy="12" r="6" fill="#002D62" />
+            <path d="M15 30C15 23 20 19 25 19C30 19 35 23 35 30" stroke="#002D62" stroke-width="4"
+              stroke-linecap="round" />
+            <circle cx="32" cy="14" r="6" fill="#138808" />
+            <path d="M23 32C23 25 28 21 33 21C38 21 43 25 43 32" stroke="#138808" stroke-width="4"
+              stroke-linecap="round" />
+          </svg>
+          <div class="brand-text-block">
+            <span class="brand-title"><span class="brand-saffron">Jan</span><span class="brand-green">Setu</span></span>
+            <span class="brand-tagline" data-i18n="brand_tagline">Your Voice, Real Change.</span>
+          </div>
+        </a>
+        <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" onclick="toggleSidebarDrawer()" title="Collapse navigation drawer">
+          <svg viewBox="0 0 24 24">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+      </div>
 
       <!-- Clean Navigation List -->
       <nav class="sidebar-menu">
@@ -194,23 +206,29 @@
       </div>
     </aside>
 
-    <!-- ============================================================
-       MAIN CONTENT VIEWPORT & TOP PANORAMA
-       ============================================================ -->
     <main class="main-viewport">
 
-      <!-- Top Panorama Banner with Beautifully Aligned India Gate Sunset (176px) -->
+      <!-- Top Panorama Banner with Full India Gate Twilight Sunset (176px) -->
       <header class="top-panorama-wrapper">
         <div class="panorama-monument-layer">
-          <img src="/images/india-gate-sunset.jpg" class="panorama-monument-photo" alt="India Gate Sunset"
-            onerror="this.src='images/india-gate-sunset.jpg'" />
+          <img src="/citizen/images/india-gate-aesthetic.jpg" class="panorama-monument-photo" alt="Aesthetic India Gate Twilight"
+            onerror="this.src='images/india-gate-aesthetic.jpg'" />
           <div class="panorama-monument-scrim"></div>
         </div>
 
         <div class="panorama-top-row">
-          <div class="gov-badge-tag">
-            <span style="width: 7px; height: 7px; border-radius: 50%; background: #FF9933;"></span>
-            <span data-i18n="gov_tag">Government of Jharkhand · Societal Innovation Portal</span>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button type="button" class="drawer-open-btn" id="drawerOpenBtn" onclick="toggleSidebarDrawer()" title="Toggle Navigation Drawer">
+              <svg viewBox="0 0 24 24">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+            <div class="gov-badge-tag">
+              <span style="width: 7px; height: 7px; border-radius: 50%; background: #FF9933;"></span>
+              <span data-i18n="gov_tag">Government of Jharkhand · Societal Innovation Portal</span>
+            </div>
           </div>
 
           <div class="panorama-actions-right">
@@ -2165,10 +2183,8 @@
     </div>
   </div>
 
-  <!-- Global JanSetu Toast Notification -->
-  <div id="jansetuToast"
-    style="display:none; position:fixed; bottom:28px; left:50%; transform:translateX(-50%); background:#0f172a; color:#fff; padding:10px 22px; border-radius:30px; font-size:13px; font-weight:700; z-index:99999; box-shadow:0 10px 30px rgba(0,0,0,0.35); align-items:center; gap:8px; border:1px solid rgba(255,255,255,0.2); pointer-events:none;">
-  </div>
+  <!-- Global JanSetu Toast Notification (Smooth Popover) -->
+  <div id="jansetuToast"></div>
 
   <!-- ============================================================
      I18N TRANSLATION SYSTEM & DYNAMIC QUOTE ROTATOR
@@ -2410,8 +2426,8 @@
         }
       });
 
-      // Auto-refresh live challenges periodically every 8 seconds for real-time visibility
-      setInterval(fetchLiveChallenges, 8000);
+      // Auto-refresh live challenges periodically every 15 seconds with intelligent dirty-checking (silky smooth)
+      setInterval(fetchLiveChallenges, 15000);
 
       // Track user modified state on report district select
       const repDistEl = document.getElementById('reportDistrict');
@@ -2705,7 +2721,10 @@
       renderAllViews();
     }
 
-    async function fetchLiveChallenges() {
+    let lastChallengesSyncSignature = '';
+
+    async function fetchLiveChallenges(force = false) {
+      if (!force && document.hidden) return; // Prevent background tab CPU thrashing
       try {
         const user = getCurrentUser();
         const currentUserId = user ? (user.id || user._id || '').toString() : '';
@@ -2718,6 +2737,13 @@
         const res = await fetch('/api/challenges?limit=100', { headers });
         const data = await res.json();
         if (data && data.success && Array.isArray(data.data) && data.data.length > 0) {
+          // Intelligent dirty-check: verify if anything actually changed before re-rendering views or saving to disk
+          const currentSignature = data.data.map(c => `${c._id}_${c.status}_${c.supportCount || 0}_${c.updatedAt || c.createdAt || ''}`).join(';');
+          if (!force && currentSignature === lastChallengesSyncSignature && (allReportsList.length > 0 || exploreList.length > 0)) {
+            return; // Pure no-op! Eliminates 100% of periodic dashboard lag & stutter!
+          }
+          lastChallengesSyncSignature = currentSignature;
+
           const apiList = data.data;
 
           const myApiChallenges = [];
@@ -6584,11 +6610,22 @@
       if (view === 'dashboard') {
         document.querySelectorAll('.modal-overlay').forEach(m => {
           m.classList.remove('active');
-          m.style.zIndex = '';
+          setTimeout(() => {
+            if (!m.classList.contains('active')) {
+              m.style.visibility = 'hidden';
+              m.style.zIndex = '';
+            }
+          }, 230);
         });
         openModalsStack.length = 0;
         highestModalZ = 1000;
       }
+    }
+
+    function toggleSidebarDrawer() {
+      const sidebar = document.getElementById('citizenSidebar');
+      if (!sidebar) return;
+      sidebar.classList.toggle('collapsed');
     }
 
     let highestModalZ = 1000;
@@ -6601,12 +6638,18 @@
       // Dynamically stack in front of all open dialogs
       highestModalZ += 20;
       el.style.zIndex = highestModalZ;
-      el.style.display = 'flex';
-      el.classList.add('active');
+      el.style.visibility = 'visible';
 
       // Always reset scroll to top so top banner/hero is visible
       const scrollEl = el.querySelector('.modal-body-scroll') || el.querySelector('.modal-card-box');
       if (scrollEl) scrollEl.scrollTop = 0;
+
+      // Double rAF ensures CSS transition triggers reliably and smoothly without jank
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          el.classList.add('active');
+        });
+      });
 
       if (!openModalsStack.includes(id)) {
         openModalsStack.push(id);
@@ -6617,8 +6660,13 @@
       const el = document.getElementById(id);
       if (!el) return;
       el.classList.remove('active');
-      el.style.display = 'none';
-      el.style.zIndex = '';
+
+      setTimeout(() => {
+        if (!el.classList.contains('active')) {
+          el.style.visibility = 'hidden';
+          el.style.zIndex = '';
+        }
+      }, 230);
 
       const idx = openModalsStack.indexOf(id);
       if (idx !== -1) openModalsStack.splice(idx, 1);
@@ -6633,10 +6681,10 @@
       const toast = document.getElementById('jansetuToast');
       if (!toast) return;
       toast.textContent = message;
-      toast.style.display = 'flex';
+      toast.classList.add('show');
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => {
-        toast.style.display = 'none';
+        toast.classList.remove('show');
       }, 2400);
     }
 
