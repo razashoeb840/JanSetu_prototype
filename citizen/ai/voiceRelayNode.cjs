@@ -11,6 +11,7 @@ const { WebSocketServer } = require('ws');
 const Challenge = require(path.resolve(__dirname, '../../others/models/Challenge'));
 const User = require(path.resolve(__dirname, '../../others/models/User'));
 const { findSimilarCitizenProblem } = require(path.resolve(__dirname, '../../others/services/similarityEngine'));
+const { callGeminiConversationalLLM, isGeminiConfigured } = require('./geminiVoiceRelay.cjs');
 
 /**
  * Format user spoken text into clean, formal Hindi/English civic complaint
@@ -406,51 +407,35 @@ function setupVoiceAgentRoutes(app) {
     }
   });
 
-  // 5. Sarvam AI Conversational Chat Endpoint
+  // 5. Conversational Chat Endpoint (Sarvam preferred, Gemini fallback)
   app.post('/api/voice-agent/chat', async (req, res) => {
     try {
       const { message, history = [], lang = 'hi' } = req.body;
-      const apiKey = process.env.SARVAM_API_KEY;
-      if (!apiKey) {
-        return res.status(400).json({ error: 'SARVAM_API_KEY not configured' });
+      const sarvamKey = (process.env.SARVAM_API_KEY || '').trim();
+      const geminiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '').trim();
+
+      if (!sarvamKey && !geminiKey) {
+        return res.status(400).json({ error: 'Neither SARVAM_API_KEY nor GEMINI_API_KEY configured in environment' });
       }
 
-      const systemPrompt = `Tum JanSetu ke voice assistant ho jo citizens ko civic problems report karne aur unka status batane me madad karte ho. Hamesha Hindi ya Hinglish me baat karo.
-STRICT TOPIC GUARDRAIL: Tum SIRF civic problems (sadak, paani, bijli, kachra, health, education, agriculture) report karne aur unka status batane me madad karte ho. Agar citizen kisi aur topic pe baat kare — movie, cricket, politics, gossip, general chit-chat — to politely mana karo aur wapas topic pe le aao. Kabhi bhi off-topic sawal ka seedha jawab mat do.
-Responses ko 1-2 short sentences me rakho.`;
+      const tempSession = {
+        id: 'chat_' + Date.now(),
+        lang: lang,
+        history: history.map(h => ({ role: h.role, content: h.content || h.message }))
+      };
 
-      const messages = [
-        { role: 'system', content: systemPrompt },
-        ...history.slice(-4),
-        { role: 'user', content: message }
-      ];
-
-      const sarvamRes = await fetch('https://api.sarvam.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-          'api-subscription-key': apiKey
-        },
-        body: JSON.stringify({
-          model: 'sarvam-105b-conversations',
-          messages,
-          temperature: 0.2,
-          max_tokens: 120
-        })
-      });
-
-      const data = await sarvamRes.json();
-      if (data.choices && data.choices[0] && data.choices[0].message) {
+      const result = await callConversationalLLM(tempSession, message);
+      if (result && result.choices && result.choices[0] && result.choices[0].message) {
         return res.json({
           success: true,
-          reply: data.choices[0].message.content.trim()
+          reply: (result.choices[0].message.content || '').trim(),
+          provider: result.provider || (sarvamKey ? 'sarvam' : 'gemini')
         });
       }
 
-      return res.status(500).json({ error: 'LLM failed', details: data });
+      return res.status(500).json({ error: 'LLM failed', details: result });
     } catch (err) {
-      console.error('[VoiceAgent] Sarvam Chat error:', err.message);
+      console.error('[VoiceAgent] Chat error:', err.message);
       return res.status(500).json({ error: err.message });
     }
   });
@@ -821,6 +806,51 @@ async function callSarvamConversationalLLM(session, userText) {
 }
 
 /**
+ * Dispatch conversational LLM request with provider prioritization:
+ * - If SARVAM_API_KEY is present, Sarvam AI gets priority.
+ * - If Sarvam encounters an error or is unconfigured, fallback to Google Gemini.
+ * - If only GEMINI_API_KEY / GOOGLE_API_KEY is present, Google Gemini is used.
+ */
+async function callConversationalLLM(session, userText) {
+  const sarvamKey = (process.env.SARVAM_API_KEY || '').trim();
+  const geminiConfigured = isGeminiConfigured();
+
+  // 1. First priority: Sarvam AI
+  if (sarvamKey) {
+    try {
+      console.log(`[VoiceAgent][${session.id}] Prioritizing Sarvam Conversational LLM...`);
+      const sarvamResult = await callSarvamConversationalLLM(session, userText);
+      if (sarvamResult && !sarvamResult.error && Array.isArray(sarvamResult.choices) && sarvamResult.choices.length > 0) {
+        sarvamResult.provider = 'sarvam';
+        return sarvamResult;
+      }
+      console.warn('[VoiceAgent] Sarvam returned error or empty choices:', sarvamResult?.error || 'no choices');
+      // If Sarvam failed and Gemini is configured, fallback to Gemini
+      if (geminiConfigured) {
+        console.log(`[VoiceAgent][${session.id}] Falling back to Google Gemini Conversational LLM...`);
+        return await callGeminiConversationalLLM(session, userText);
+      }
+      return sarvamResult;
+    } catch (e) {
+      console.error('[VoiceAgent] Sarvam call exception:', e.message);
+      if (geminiConfigured) {
+        console.log(`[VoiceAgent][${session.id}] Falling back to Google Gemini after exception...`);
+        return await callGeminiConversationalLLM(session, userText);
+      }
+      return { error: e.message };
+    }
+  }
+
+  // 2. Second priority / Direct Gemini
+  if (geminiConfigured) {
+    console.log(`[VoiceAgent][${session.id}] Using Google Gemini Conversational LLM...`);
+    return await callGeminiConversationalLLM(session, userText);
+  }
+
+  return { error: 'Neither SARVAM_API_KEY nor GEMINI_API_KEY is configured in .env' };
+}
+
+/**
  * ─────────────────────────────────────────────────────────────
  * 8. WEBSOCKET REAL-TIME SERVICE
  * ─────────────────────────────────────────────────────────────
@@ -854,11 +884,17 @@ function setupVoiceAgentWebSocket(server) {
       trackingId: null
     };
 
-    // Ready signal
+    // Ready signal with active provider detection
+    const hasSarvam = Boolean((process.env.SARVAM_API_KEY || '').trim());
+    const hasGemini = isGeminiConfigured();
+    const activeProvider = hasSarvam ? 'sarvam' : (hasGemini ? 'gemini' : 'none');
+
     ws.send(JSON.stringify({
       type: 'session_ready',
-      message: 'JanSetu Voice AI Connected (Sarvam LLM Tool-Calling Active)',
-      sarvamEnabled: Boolean(process.env.SARVAM_API_KEY)
+      message: `JanSetu Voice AI Connected (${activeProvider.toUpperCase()} LLM Tool-Calling Active)`,
+      sarvamEnabled: hasSarvam,
+      geminiEnabled: hasGemini,
+      activeProvider: activeProvider
     }));
 
     // Helper to safely send JSON to client
@@ -1109,8 +1145,8 @@ function setupVoiceAgentWebSocket(server) {
 
           console.log(`[VoiceAgent][${session.id}] User said: "${userText}"`);
 
-          // Call Sarvam LLM with Tool Calling
-          const llmResult = await callSarvamConversationalLLM(session, userText);
+          // Call Active Conversational LLM (Sarvam prioritized over Gemini)
+          const llmResult = await callConversationalLLM(session, userText);
 
           if (llmResult && llmResult.choices && llmResult.choices[0]) {
             const choice = llmResult.choices[0];

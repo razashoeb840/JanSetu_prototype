@@ -80,6 +80,7 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
   const isCallActiveRef = useRef(false);
   const lastInteractionTimeRef = useRef(Date.now());
   const silencePromptCountRef = useRef(0);
+  const hasAcknowledgedMediaRef = useRef(false);
 
   // Auto-scroll transcript when new message arrives
   useEffect(() => {
@@ -132,6 +133,40 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
     }, 800);
 
     return () => clearInterval(interval);
+  }, [isCallActive, lang]);
+
+  // Real-time Photo Evidence Watcher: As soon as user selects/captures a photo, acknowledge and move to Step 5
+  useEffect(() => {
+    if (!isCallActive) {
+      hasAcknowledgedMediaRef.current = false;
+      return;
+    }
+
+    const mediaInterval = setInterval(() => {
+      if (phaseRef.current !== 'driving_photo' && phaseRef.current !== 'driving_video') {
+        return;
+      }
+      if (hasAcknowledgedMediaRef.current) {
+        return;
+      }
+
+      const hasMedia = (typeof window !== 'undefined' && Array.isArray(window.selectedMediaFiles) && window.selectedMediaFiles.some(m => (m.type === 'photo' || m.type === 'video') && (m.dataUrl || m.file))) ||
+        Boolean(document.querySelector('#mediaPreviewContainer .media-preview-item')) ||
+        Boolean(document.querySelector('#mediaPreviewContainer img'));
+
+      if (hasMedia) {
+        hasAcknowledgedMediaRef.current = true;
+        console.log('[VoiceAgent] Photo/Video evidence detected in DOM!');
+        speak((lang === 'hi' || lang === 'hinglish')
+          ? 'Bahut badhiya! Photo proof jud gaya hai. Ab main AI check aur duplicate verification chalu kar raha hoon.'
+          : 'Great! Photo proof attached successfully. Now running AI duplicate check and verification.');
+        setTimeout(() => {
+          proceedToStep5AICheck();
+        }, 900);
+      }
+    }, 600);
+
+    return () => clearInterval(mediaInterval);
   }, [isCallActive, lang]);
 
   // Live Audio-Waveform Sync:
@@ -534,8 +569,33 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
     if (onComplete) setTimeout(onComplete, 220);
   };
 
+  // Helper to reliably check if mandatory media evidence (photo/video) is uploaded
+  const hasUploadedMedia = () => {
+    if (typeof window !== 'undefined' && Array.isArray(window.selectedMediaFiles) && window.selectedMediaFiles.some(m => (m.type === 'photo' || m.type === 'video') && (m.dataUrl || m.file))) {
+      return true;
+    }
+    const preview = document.getElementById('mediaPreviewContainer');
+    if (preview && (preview.querySelector('img') || preview.querySelector('.media-preview-item') || (preview.children && preview.children.length > 0))) {
+      return true;
+    }
+    return false;
+  };
+
   // Helper to transition to Step 5 (AI Verification & Duplicate Check)
   const proceedToStep5AICheck = () => {
+    // STRICT MANDATORY PHOTO PROOF GUARD
+    if (!hasUploadedMedia()) {
+      console.warn('[VoiceAgent] Cannot proceed to Step 5: photo proof is strictly mandatory');
+      setPhase('driving_photo');
+      const photoTile = document.querySelector('label.media-btn-tile') || document.getElementById('stepSection4');
+      animateCursorToAndClick(photoTile, () => {
+        speak((lang === 'hi' || lang === 'hinglish')
+          ? 'Satyapan ke liye samasya ka photo proof anivarya (mandatory) hai! Kripya aage badhne se pehle sthal ki photo upload karein ya camera se photo lein.'
+          : 'Photo evidence is mandatory before proceeding to AI check! Please upload or capture a photo of the problem spot first.');
+      }, 300);
+      return;
+    }
+
     setTimeout(() => {
       animateCursorToAndClick('#stepSection4 .btn-modal-primary', () => {
         setPhase('driving_check');
@@ -547,12 +607,13 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
             const dupTitleEl = document.getElementById('dupItemTitle');
             const dupTitle = dupTitleEl ? dupTitleEl.textContent.trim() : 'Pehle se darj shikayat';
             speak(lang === 'en'
-              ? `A similar issue is already reported: "${dupTitle}". Would you like to link with it, submit anyway, or cancel?`
-              : `Ye samasya pehle se darj mili hai — "${dupTitle}". Kya aap isko pehle wale ke sath jodna chahenge, ya nayi report submit karein, ya cancel karein?`);
+              ? `A similar issue is already reported nearby: "${dupTitle}". Would you like to link with it, submit anyway, or cancel?`
+              : `Aapke ilaqe me milti-julti shikayat pehle se darj mili hai — "${dupTitle}". Kya aap isko pehle wale ke sath jodna chahenge, ya nayi report submit karein?`);
           } else {
-            speak(lang === 'en'
-              ? 'All details are filled. Everything looks good. Should I submit this report?'
-              : 'Saari jaankari darj ho gayi hai. Sab sahi hai? Submit kar doon?');
+            const titleVal = document.getElementById('reportTitle')?.value || '';
+            speak((lang === 'hi' || lang === 'hinglish')
+              ? `AI jaanch poori ho gayi hai. Aapki samasya aur photo proof dono darj ho chuke hain. Sab sahi hai? Kya main ye shikayat abhi submit kar doon?`
+              : `AI verification complete. Grievance details and photo proof are ready. Everything looks good. Should I submit this report now?`);
           }
         }, 900);
       }, 350);
@@ -947,88 +1008,211 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
       return;
     }
 
+    // ─── CIVIC TOPIC GUARDRAIL: "problem and report ke related hi" ───
+    const isOffTopic = /cricket|match|cinema|film|movie|actor|hero|weather|mausam|modi|election|politics|song|gana|shayari/i.test(t) &&
+      !/sadak|bijli|paani|kachra|hospital|school|kisan|ration|samasya|shikayat|problem|report/i.test(t);
+    if (isOffTopic) {
+      speak(isHindi
+        ? 'Main JanSetu AI hoon. Main sirf aapke ilaqe ki nagrik samasyaayein (jaise sadak, bijli, paani, kachra) darj aur track karne me madad karta hoon. Batayiye aapke ilaqe me koi samasya hai kya?'
+        : 'I am JanSetu AI. I only assist with reporting and tracking civic problems such as roads, electricity, water, and sanitation. Please let me know if you have any civic issue to report.');
+      return;
+    }
+
+    // ─── CATEGORY DEFINITIONS FOR ALL 8 OFFICIAL SECTORS ───
+    const CATEGORY_PROFILES = [
+      {
+        key: 'Urban Infrastructure',
+        topicHi: 'सड़क व गड्ढे',
+        topicEn: 'Roads & Infrastructure',
+        labelHi: 'सड़क व पुल (Roads & Infra)',
+        labelEn: 'Roads & Infrastructure',
+        keywords: [
+          'sadak', 'road', 'gaddha', 'gaddhe', 'gaddhon', 'pothole', 'potholes', 'pul', 'bridge',
+          'footpath', 'rasta', 'culvert', 'flyover', 'divider', 'khadda', 'asphalt', 'highway',
+          'speed breaker', 'gali', 'naali cross', 'tuti sadak', 'damaged road', 'cement road',
+          'tar road', 'street', 'crater', 'ditch', 'accident', 'traffic jam', 'गड्ढा', 'गड्ढे', 'सड़क', 'पुल'
+        ],
+        defaultTitleHi: 'सड़क की जर्जर स्थिति एवं गड्ढों की मरम्मत',
+        defaultTitleEn: 'Damaged Road & Potholes Repair'
+      },
+      {
+        key: 'Energy & Technology',
+        topicHi: 'बिजली व ट्रांसफॉर्मर',
+        topicEn: 'Electricity & Lighting',
+        labelHi: 'बिजली आपूर्ति (Electricity)',
+        labelEn: 'Electricity',
+        keywords: [
+          'bijli', 'light', 'power', 'current', 'transformer', 'wire', 'taar', 'pole', 'khamba',
+          'street light', 'streetlight', 'bulb', 'andhera', 'darkness', 'blackout', 'fuse',
+          'high voltage', 'low voltage', 'trip', 'phase', 'meter', 'electricity', 'electric',
+          'supply band', 'power cut', 'spark', 'short circuit', 'power outage', 'ट्रांसफार्मर', 'बिजली'
+        ],
+        defaultTitleHi: 'बिजली ट्रांसफॉर्मर खराबी एवं विद्युत आपूर्ति बाधित',
+        defaultTitleEn: 'Power Outage & Transformer Breakdown'
+      },
+      {
+        key: 'Water Management',
+        topicHi: 'पेयजल व पानी सप्लाई',
+        topicEn: 'Water Supply & Drinking Water',
+        labelHi: 'जल आपूर्ति (Water Supply)',
+        labelEn: 'Water Supply',
+        keywords: [
+          'paani', 'pani', 'drinking water', 'peene ka paani', 'tap', 'nal', 'boring', 'handpump',
+          'chapakal', 'chaapaakal', 'tanki', 'water tank', 'pipeline', 'water leak', 'pipe leak',
+          'water supply', 'motar', 'dirty water', 'ganda pani', 'contaminated water', 'jal nigam',
+          'jal vibhag', 'submerssible', 'चापाकल', 'पानी', 'हैंडपंप', 'पाइप'
+        ],
+        defaultTitleHi: 'पेयजल आपूर्ति एवं पाइपलाइन लीकेज की समस्या',
+        defaultTitleEn: 'Drinking Water Supply & Pipeline Leakage'
+      },
+      {
+        key: 'Sanitation & Environment',
+        topicHi: 'कचरा व नाली सफाई',
+        topicEn: 'Sanitation & Cleanliness',
+        labelHi: 'सफाई व कचरा (Cleanliness)',
+        labelEn: 'Cleanliness & Waste',
+        keywords: [
+          'kachra', 'kooda', 'kuda', 'garbage', 'safai', 'cleanliness', 'dustbin', 'trash',
+          'dumping', 'waste', 'durgandh', 'badbu', 'smell', 'unhygienic', 'naala', 'naali',
+          'sewer', 'drainage', 'stagnant water', 'jalbhavar', 'waterlogging', 'kichad', 'mud',
+          'gutter', 'safaikarmi', 'sweep', 'open waste', 'कचरा', 'सफाई', 'नाला', 'नाली', 'दुर्गंध'
+        ],
+        defaultTitleHi: 'कचरा जमाव एवं नियमित सफाई की आवश्यकता',
+        defaultTitleEn: 'Garbage Accumulation & Cleanliness'
+      },
+      {
+        key: 'Healthcare',
+        topicHi: 'अस्पताल व स्वास्थ्य सेवा',
+        topicEn: 'Healthcare & Hospital',
+        labelHi: 'स्वास्थ्य सेवा (Healthcare)',
+        labelEn: 'Healthcare',
+        keywords: [
+          'hospital', 'aspatal', 'clinic', 'doctor', 'dawa', 'dawai', 'nurse', 'ilaaj', 'ilaj',
+          'swasthya', 'health', 'medical', 'medicine', 'ambulance', 'primary health center',
+          'phc', 'chc', 'bimari', 'immunization', 'tika', 'patient', 'mareez', 'अस्पताल', 'दवा', 'स्वास्थ्य'
+        ],
+        defaultTitleHi: 'स्वास्थ्य केंद्र एवं चिकित्सा सुविधा की आवश्यकता',
+        defaultTitleEn: 'Healthcare Facility & Medical Support'
+      },
+      {
+        key: 'Education',
+        topicHi: 'स्कूल व शिक्षा',
+        topicEn: 'School & Education',
+        labelHi: 'शिक्षा व स्कूल (School)',
+        labelEn: 'Education',
+        keywords: [
+          'school', 'vidyalaya', 'college', 'padhai', 'shiksha', 'teacher', 'master', 'mastar',
+          'shikshak', 'education', 'books', 'kitab', 'bench', 'classroom', 'student', 'vidyarthi',
+          'mid day meal', 'mdma', 'midday meal', 'toilet school', 'स्कूल', 'विद्यालय', 'शिक्षक', 'पढ़ाई'
+        ],
+        defaultTitleHi: 'विद्यालय में मूलभूत सुविधाएं एवं शिक्षक व्यवस्था',
+        defaultTitleEn: 'School Infrastructure & Facilities'
+      },
+      {
+        key: 'Agriculture',
+        topicHi: 'खेती व सिंचाई',
+        topicEn: 'Agriculture & Farming',
+        labelHi: 'कृषि व सिंचाई (Farming)',
+        labelEn: 'Farming',
+        keywords: [
+          'kisan', 'kheti', 'farm', 'farming', 'crop', 'fasal', 'sinchai', 'irrigation',
+          'khad', 'fertilizer', 'beej', 'seeds', 'krishi', 'drought', 'sookha', 'baadh',
+          'pest', 'keeda', 'mandi', 'किसान', 'खेती', 'फसल', 'सिंचाई', 'खाद'
+        ],
+        defaultTitleHi: 'कृषि सिंचाई एवं फसल संबंधी सहायता',
+        defaultTitleEn: 'Agricultural Irrigation & Crop Support'
+      },
+      {
+        key: 'Public Administration',
+        topicHi: 'प्रशासनिक व अन्य समस्या',
+        topicEn: 'Public Administration',
+        labelHi: 'अन्य समस्याएं (Other Issues)',
+        labelEn: 'Other Issues',
+        keywords: [
+          'ration', 'rashan', 'quota', 'dealer', 'pension', 'vridha pension', 'vidhwa pension',
+          'zameen', 'land', 'patta', 'police', 'bhrashtachar', 'corruption', 'rishwat',
+          'block office', 'prashasan', 'pradhan', 'mukhiya', 'ward commissioner', 'aadhar',
+          'राशन', 'पेंशन', 'भ्रष्टाचार', 'प्रशासन'
+        ],
+        defaultTitleHi: 'सार्वजनिक प्रशासनिक समस्या एवं निवारण',
+        defaultTitleEn: 'Public Administrative Grievance'
+      }
+    ];
+
+    // Helper: Checks if utterance is just a greeting or generic intent to report without problem specifics
+    const isPureGreetingOrIntent = (raw, maxScore = 0) => {
+      const trimmed = raw.trim().toLowerCase();
+      // Multi-word greetings
+      if (/^(hello|hi|namaste|namaskar|pranam|suno|suniye|hey)(\s+(bhai|bhaiya|sir|madam|ji|friend))?$/i.test(trimmed)) return true;
+      if (/^(bhai|bhaiya|sir|madam|ji)\s+(suno|suniye|hello|namaste)$/i.test(trimmed)) return true;
+      if (/^(kya aap sun rahe hain|aap meri madad kar sakte hain|madad chahiye|help chahiye)$/i.test(trimmed)) return true;
+
+      // If citizen has zero category keywords and expresses generic intent to report
+      if (maxScore === 0) {
+        if (/report|problem|samasya|shikayat|complaint|madad|help|dikkat|pareshani/i.test(trimmed) &&
+            /karni|karna|likh|darj|batana|hai|chahiye/i.test(trimmed)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
     // 3. Step 1: Problem / Category Selection Phase (Click category chip & Next)
     const isModalStep1Visible = typeof document !== 'undefined' && 
                                 document.getElementById('reportModal')?.style?.display !== 'none' &&
                                 document.getElementById('stepSection1')?.style?.display !== 'none';
 
     if (current === 'driving_category' || (isModalStep1Visible && current !== 'tracking_input' && !isDescCorrection && !isBackCommand && !isCancelCommand)) {
-      setAgentActivity(lang === 'en' ? '🤖 Selecting category & saving problem...' : '🤖 Category aur samasya darj kar raha hoon...');
+      setAgentActivity(lang === 'en' ? '🤖 Selecting matching category...' : '🤖 Category aur samasya darj kar raha hoon...');
 
-      let matchedKey = 'Water Management';
-      let cleanTitle = 'पेयजल एवं जलभराव की समस्या';
-      let cleanDesc = `${text} - क्षेत्र में पानी की समस्या है, कृपया शीघ्र समाधान कराया जाए।`;
+      // Dynamic Keyword-Scoring across all 8 Official JanSetu Categories
+      let bestProfile = null;
+      let highestScore = 0;
 
-      if (/sadak|road|gaddha|gadda|pothole|pul|bridge|divider|cross|asphalt|tar|rasta|khadda|highway|gali|footpath|jam/i.test(t)) {
-        matchedKey = 'Urban Infrastructure';
-        cleanTitle = 'सड़क की जर्जर स्थिति एवं गड्ढों की मरम्मत';
-        cleanDesc = `${text} - मुख्य मार्ग पर गड्ढे होने से आवागमन में भारी असुविधा हो रही है। कृपया मरम्मत कराई जाए।`;
-      } else if (/kooda|kuda|kachra|safai|garbage|dustbin|waste|smell|durgandh|gandagi|badbu|swachh|cleaning/i.test(t)) {
-        matchedKey = 'Sanitation & Environment';
-        cleanTitle = 'कचरा जमाव एवं नियमित सफाई की आवश्यकता';
-        cleanDesc = `${text} - सार्वजनिक स्थल पर कचरा पड़ा होने से दुर्गंध फैल रही है। कृपया तत्काल सफाई कराई जाए।`;
-      } else if (/bijli|light|power|current|transformer|wire|pole|street ?light|taar|fuse|volt|andhera|cutoff|blackout|meter/i.test(t)) {
-        matchedKey = 'Energy & Technology';
-        cleanTitle = 'बिजली ट्रांसफॉर्मर खराबी एवं विद्युत आपूर्ति बाधित';
-        cleanDesc = `${text} - विद्युत आपूर्ति बाधित होने से क्षेत्र में भारी परेशानी हो रही है। कृपया शीघ्र दुरुस्त किया जाए।`;
-      } else if (/hospital|dawa|doctor|swasthya|ilaj|nurse|clinic|health|aspatal|bimari|dawai|chikitsa/i.test(t)) {
-        matchedKey = 'Healthcare';
-        cleanTitle = 'स्वास्थ्य केंद्र एवं चिकित्सा सुविधा की आवश्यकता';
-        cleanDesc = `${text} - क्षेत्र में प्राथमिक स्वास्थ्य सेवा व दवाइयों की अनुपलब्धता से परेशानी हो रही है।`;
-      } else if (/school|padhai|shikshak|teacher|kitab|college|vidyalaya|shiksha|class|student|vidyarthi|mastar/i.test(t)) {
-        matchedKey = 'Education';
-        cleanTitle = 'विद्यालय में मूलभूत सुविधाएं एवं शिक्षक व्यवस्था';
-        cleanDesc = `${text} - विद्यालय में अध्ययन व्यवस्था एवं मूलभूत सुविधाओं की कमी है।`;
-      } else if (/khet|kisan|crop|fasal|farming|krishi|agriculture|sinchai|khad|beej|paat|kheti/i.test(t)) {
-        matchedKey = 'Agriculture';
-        cleanTitle = 'कृषि सिंचाई एवं फसल संबंधी सहायता';
-        cleanDesc = `${text} - क्षेत्र में किसानों को सिंचाई एवं कृषि संबंधी सहायता की आवश्यकता है।`;
-      } else if (/naala|naali|drain|water|paani|pani|leak|sewer|sewage|pipe|jal|boring|handpump|nal|tanki|peyejal|drinking water/i.test(t)) {
-        matchedKey = 'Water Management';
-        cleanTitle = 'नाली की रुकावट एवं पेयजल आपूर्ति की समस्या';
-        cleanDesc = `${text} - क्षेत्र में पेयजल आपूर्ति एवं जलभराव की समस्या है। कृपया शीघ्र जांच की जाए।`;
-      } else if (/other|anya|police|bhrashtachar|ration|pension|prashasan|land|zameen/i.test(t)) {
-        matchedKey = 'Public Administration';
-        cleanTitle = 'सार्वजनिक प्रशासनिक समस्या एवं निवारण';
-        cleanDesc = `${text} - जनसुविधा एवं प्रशासनिक स्तर पर शीघ्र समाधान की आवश्यकता है।`;
-      }
-
-      if (lang === 'en') {
-        if (matchedKey === 'Urban Infrastructure') {
-          cleanTitle = 'Damaged Road & Potholes Repair';
-          cleanDesc = `${text} - Road has severe potholes affecting daily transit. Repair needed urgently.`;
-        } else if (matchedKey === 'Sanitation & Environment') {
-          cleanTitle = 'Garbage Accumulation & Cleanliness';
-          cleanDesc = `${text} - Waste accumulated in public area causing unhygienic conditions.`;
-        } else if (matchedKey === 'Energy & Technology') {
-          cleanTitle = 'Power Outage & Transformer Breakdown';
-          cleanDesc = `${text} - Power supply disrupted in the locality. Urgent restoration needed.`;
-        } else if (matchedKey === 'Healthcare') {
-          cleanTitle = 'Healthcare Facility & Medical Support';
-          cleanDesc = `${text} - Local clinic requires medical supplies and healthcare staff.`;
-        } else if (matchedKey === 'Education') {
-          cleanTitle = 'School Infrastructure & Facilities';
-          cleanDesc = `${text} - School requires basic amenities and educational resources.`;
-        } else if (matchedKey === 'Agriculture') {
-          cleanTitle = 'Agricultural Irrigation & Crop Support';
-          cleanDesc = `${text} - Farmers need urgent assistance with irrigation and crop supplies.`;
-        } else if (matchedKey === 'Water Management') {
-          cleanTitle = 'Water Supply & Pipeline Leakage';
-          cleanDesc = `${text} - Drinking water supply disrupted or contaminated.`;
-        } else {
-          cleanTitle = 'Public Administrative Grievance';
-          cleanDesc = `${text} - General civic grievance requiring official intervention.`;
+      CATEGORY_PROFILES.forEach(prof => {
+        let score = 0;
+        prof.keywords.forEach(kw => {
+          if (t.includes(kw.toLowerCase())) {
+            score += 1;
+            const re = new RegExp('\\b' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+            if (re.test(t)) score += 2;
+          }
+        });
+        if (score > highestScore) {
+          highestScore = score;
+          bestProfile = prof;
         }
+      });
+
+      // If user merely greeted or expressed generic intent to report without problem keywords, talk like a person
+      if (isPureGreetingOrIntent(t, highestScore)) {
+        speak(isHindi
+          ? 'Ji namaste! Batayiye aapke ilaqe me kis cheez ki samasya hai — jaise sadak, bijli, paani, kachra, ya swasthya? Main sun raha hoon.'
+          : 'Hello! Please tell me what issue you are facing in your area — such as roads, electricity, water, sanitation, or health? I am listening.');
+        return;
       }
 
-      // Find the corresponding category chip button
+      // If no category keywords matched at all, use Public Administration instead of defaulting to Water
+      if (!bestProfile) {
+        bestProfile = CATEGORY_PROFILES.find(p => p.key === 'Public Administration') || CATEGORY_PROFILES[0];
+      }
+
+      const matchedKey = bestProfile.key;
+      const cleanTitle = lang === 'en' ? bestProfile.defaultTitleEn : bestProfile.defaultTitleHi;
+      const cleanDesc = lang === 'en'
+        ? `${text} - Problem regarding ${bestProfile.topicEn}. Prompt official inspection and resolution requested.`
+        : `${text} - क्षेत्र में ${bestProfile.topicHi} की समस्या है। कृपया शीघ्र जांच कर समाधान कराया जाए।`;
+
+      // Find the corresponding category chip button in the DOM
       const catButtons = Array.from(document.querySelectorAll('#categoryChipsContainer .category-chip-btn'));
       const targetBtn = catButtons.find(b => {
         const oc = (b.getAttribute('onclick') || '').toLowerCase();
         return oc.includes(matchedKey.toLowerCase());
       }) || catButtons.find(b => {
         const textLower = b.textContent.toLowerCase();
-        return textLower.includes(matchedKey.toLowerCase());
+        return textLower.includes(matchedKey.toLowerCase()) ||
+               textLower.includes(bestProfile.topicEn.toLowerCase()) ||
+               textLower.includes(bestProfile.labelEn.toLowerCase());
       }) || catButtons[0];
 
       // Pre-fill Step 2 form fields so citizen never has to re-enter
@@ -1045,6 +1229,7 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
         if (targetBtn) {
           catButtons.forEach(b => b.classList.remove('selected'));
           targetBtn.classList.add('selected');
+          try { targetBtn.click(); } catch (e) {}
         }
         if (typeof window.selectFormCategory === 'function' && targetBtn) {
           try { window.selectFormCategory(targetBtn, matchedKey); } catch (e) {}
@@ -1055,23 +1240,12 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
           const nextBtn = document.querySelector('#stepSection1 .btn-modal-primary');
           animateCursorToAndClick(nextBtn || '#stepSection1 .modal-footer-nav button', () => {
             jumpToStep(2, () => {
-              // Check if citizen already gave problem details (at least 3 words)
-              const words = text.trim().split(/\s+/).filter(Boolean);
-              if (words.length >= 3) {
-                setPhase('driving_priority');
-                setTimeout(() => {
-                  speak((lang === 'hi' || lang === 'hinglish')
-                    ? 'Theek hai, maine category chun li hai aur aapki samasya note kar li hai. Ye kitni zaroori hai — Urgent, High, ya Normal?'
-                    : 'Alright, category selected and your issue is recorded. What is the urgency — Urgent, High, or Normal?');
-                }, 350);
-              } else {
-                setPhase('driving_desc');
-                setTimeout(() => {
-                  speak((lang === 'hi' || lang === 'hinglish')
-                    ? 'Theek hai, category chun li hai. Kripya apni samasya vistaar se batayein ki kya dikkat aa rahi hai?'
-                    : 'Category selected. Please describe your problem in detail — what is happening?');
-                }, 350);
-              }
+              setPhase('driving_priority');
+              setTimeout(() => {
+                speak(isHindi
+                  ? `Maine samajh liya — aapke ilaqe me ${bestProfile.topicHi} ki samasya hai. Maine isko '${bestProfile.labelHi}' category me select kar diya hai. Batayiye iski priority kya rakhein — Urgent, High ya Normal?`
+                  : `Understood — there is an issue with ${bestProfile.topicEn} in your area. I have selected the '${bestProfile.labelEn}' category. What should be the priority — Urgent, High, or Normal?`);
+              }, 350);
             });
           }, 320);
         }, 350);
@@ -1085,44 +1259,38 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
       setAgentActivity(lang === 'en' ? '🤖 Writing description...' : '🤖 Description likh raha hoon...');
       const descEl = document.getElementById('reportDescription');
       const titleEl = document.getElementById('reportTitle');
+      const catEl = document.getElementById('reportCategory');
 
-      let cleanTitle = text.length > 40 ? text.slice(0, 40) + '...' : text;
-      let cleanDesc = text;
+      // Re-classify based on new description
+      let bestProfile = null;
+      let highestScore = 0;
+      CATEGORY_PROFILES.forEach(prof => {
+        let score = 0;
+        prof.keywords.forEach(kw => {
+          if (t.includes(kw.toLowerCase())) {
+            score += 1;
+            const re = new RegExp('\\b' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+            if (re.test(t)) score += 2;
+          }
+        });
+        if (score > highestScore) {
+          highestScore = score;
+          bestProfile = prof;
+        }
+      });
 
-      if (/naala|water|paani|leak|sewer/i.test(t)) {
-        cleanTitle = 'नाली की रुकावट एवं जलभराव की समस्या';
-        cleanDesc = `${text} - क्षेत्र में नाली जाम होने से जलजमाव की समस्या है। कृपया शीघ्र सफाई कराई जाए।`;
-      } else if (/sadak|road|gaddha|pothole/i.test(t)) {
-        cleanTitle = 'सड़क की जर्जर स्थिति एवं गड्ढों की मरम्मत';
-        cleanDesc = `${text} - मुख्य मार्ग पर गड्ढे होने से आवागमन में भारी असुविधा हो रही है।`;
-      } else if (/kooda|kachra|safai/i.test(t)) {
-        cleanTitle = 'कचरा जमाव एवं नियमित सफाई की आवश्यकता';
-        cleanDesc = `${text} - सार्वजनिक स्थल पर कचरा पड़ा होने से दुर्गंध फैल रही है।`;
-      } else if (/bijli|light|transformer/i.test(t)) {
-        cleanTitle = 'बिजली ट्रांसफॉर्मर खराबी एवं स्ट्रीटलाइट बंद';
-        cleanDesc = `${text} - विद्युत आपूर्ति बाधित होने से क्षेत्र में समस्या हो रही है।`;
+      if (bestProfile) {
+        if (catEl) catEl.value = bestProfile.key;
+        if (titleEl) titleEl.value = lang === 'en' ? bestProfile.defaultTitleEn : bestProfile.defaultTitleHi;
       }
+      if (descEl) descEl.value = text;
 
-      if (descEl) {
-        animateCursorToAndClick(descEl, () => {
-          descEl.value = cleanDesc;
-          if (titleEl) titleEl.value = cleanTitle;
-
-          setPhase('driving_priority');
-          setTimeout(() => {
-            speak(lang === 'en'
-              ? 'What is the urgency of this problem — Urgent, High, or Normal?'
-              : 'Maine aapki samasya likh li hai. Iski priority kya hai — Urgent, High ya Normal?');
-          }, 400);
-        }, 250);
-      } else {
-        setPhase('driving_priority');
-        setTimeout(() => {
-          speak(lang === 'en'
-            ? 'What is the urgency of this problem — Urgent, High, or Normal?'
-            : 'Is samasya ki priority kya hai — Urgent, High ya Normal?');
-        }, 400);
-      }
+      setPhase('driving_priority');
+      setTimeout(() => {
+        speak(isHindi
+          ? 'Maine aapki samasya vistaar se note kar li hai. Is samasya ki priority kya rakhein — Urgent, High ya Normal?'
+          : 'I have recorded your problem description. What should be the priority — Urgent, High, or Normal?');
+      }, 350);
       return;
     }
 
@@ -1130,43 +1298,60 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
     if (current === 'driving_priority') {
       setAgentActivity(lang === 'en' ? '🤖 Setting priority & detecting location...' : '🤖 Priority set kar raha hoon...');
       let prioValue = 'high';
-      if (/urgent|turant|emergency|bahut zaroori|jaldi/i.test(t)) prioValue = 'urgent';
-      else if (/high|bada|zyada|gambhir/i.test(t)) prioValue = 'high';
-      else if (/normal|sadharan|theek|medium|kam/i.test(t)) prioValue = 'medium';
+      let prioLabelHi = 'High (उच्च)';
+      let prioLabelEn = 'High';
+
+      if (/urgent|turant|emergency|bahut zaroori|jaldi|gambhir|critical/i.test(t)) {
+        prioValue = 'urgent';
+        prioLabelHi = 'Urgent (तत्काल)';
+        prioLabelEn = 'Urgent';
+      } else if (/high|bada|zyada|badi dikkat/i.test(t)) {
+        prioValue = 'high';
+        prioLabelHi = 'High (उच्च)';
+        prioLabelEn = 'High';
+      } else if (/normal|sadharan|theek|medium|kam/i.test(t)) {
+        prioValue = 'medium';
+        prioLabelHi = 'Normal (सामान्य)';
+        prioLabelEn = 'Normal';
+      }
 
       const prioRadio = document.querySelector(`input[name="priorityChoice"][value="${prioValue}"]`) ||
-                        (prioValue === 'normal' ? document.querySelector('input[name="priorityChoice"][value="medium"]') : null) ||
+                        (prioValue === 'medium' ? document.querySelector('input[name="priorityChoice"][value="normal"]') : null) ||
                         document.querySelector('input[name="priorityChoice"][value="high"]');
       const prioTarget = prioRadio ? (prioRadio.parentElement || prioRadio) : null;
 
       if (prioTarget) {
         animateCursorToAndClick(prioTarget, () => {
-          if (prioRadio) prioRadio.checked = true;
-          speak(lang === 'en' ? 'Priority set. Now verifying location.' : 'Priority darj ho gayi hai. Ab location verify karte hain.');
+          if (prioRadio) {
+            prioRadio.checked = true;
+            try { prioRadio.click(); } catch (e) {}
+          }
+          speak(isHindi
+            ? `Theek hai, priority ko '${prioLabelHi}' mark kar diya hai. Ab sthal ki jaanch ke liye live GPS location detect kar raha hoon...`
+            : `Priority marked as '${prioLabelEn}'. Now detecting live GPS location for site verification...`);
 
           setTimeout(() => {
             animateCursorToAndClick('#stepSection2 .btn-modal-primary', () => {
               setPhase('driving_loc');
               setTimeout(() => {
-                speak(lang === 'en' ? 'Detecting your GPS location...' : 'Aapki GPS location detect kar rahe hain...');
-                setTimeout(() => {
-                  animateCursorToAndClick('.btn-gps-autodetect', () => {
+                animateCursorToAndClick('.btn-gps-autodetect', () => {
+                  setTimeout(() => {
+                    sendLocationCaptured();
+                    speak(isHindi
+                      ? 'Haan, location darj ho gayi hai. Ab agla kadam sabse zaroori hai — prashasan dwara satyapan ke liye sthal ka photo proof anivarya hai. Kripya samasya ki photo upload karein.'
+                      : 'GPS location captured. Now the most important step — photo proof is mandatory for administrative verification. Please upload a photo of the problem spot.');
                     setTimeout(() => {
-                      sendLocationCaptured();
-                      speak(lang === 'en' ? 'Location captured.' : 'Theek hai, location mil gayi hai.');
-                      setTimeout(() => {
-                        animateCursorToAndClick('#stepSection3 .btn-modal-primary', () => {
-                          setPhase('driving_photo');
-                          setTimeout(() => {
-                            speak(lang === 'en'
-                              ? 'Do you have a photo of the problem?'
-                              : 'Kya aapke paas is samasya ki photo hai?');
-                          }, 350);
-                        }, 300);
-                      }, 600);
-                    }, 1000);
-                  }, 350);
-                }, 400);
+                      animateCursorToAndClick('#stepSection3 .btn-modal-primary', () => {
+                        setPhase('driving_photo');
+                        // Animate cursor to photo tile to guide citizen visually
+                        setTimeout(() => {
+                          const photoTile = document.querySelector('label.media-btn-tile');
+                          if (photoTile) animateCursorToAndClick(photoTile, () => {});
+                        }, 400);
+                      }, 300);
+                    }, 800);
+                  }, 900);
+                }, 350);
               }, 300);
             }, 300);
           }, 500);
@@ -1184,7 +1369,9 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
           animateCursorToAndClick('#stepSection3 .btn-modal-primary', () => {
             setPhase('driving_photo');
             setTimeout(() => {
-              speak(lang === 'en' ? 'Do you have a photo of the problem?' : 'Kya aapke paas photo hai?');
+              speak(isHindi
+                ? 'Location darj ho gayi hai. Prashasan dwara jaanch ke liye photo proof anivarya hai. Kya aapke paas photo hai?'
+                : 'Location captured. Photo proof is mandatory for verification. Do you have a photo of the problem?');
             }, 300);
           }, 300);
         }, 500);
@@ -1192,40 +1379,71 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
       return;
     }
 
-    // 7. Step 4: Photo Phase (Click photo tile if haan, or advance to video)
+    // 7. Step 4: Photo Phase (STRICTLY ENFORCE MANDATORY EVIDENCE)
     if (current === 'driving_photo') {
-      if (/haan|yes|photo|hai|upload|dikhao|lelo|khicho/i.test(t)) {
-        const photoTile = document.querySelector('label.media-btn-tile');
-        animateCursorToAndClick(photoTile || '#stepSection4', () => {
-          speak(lang === 'en'
-            ? 'Please choose or take the photo.'
-            : 'Kripya samasya ki photo chunein.');
-          setTimeout(() => {
-            setPhase('driving_video');
-            speak(lang === 'en'
-              ? 'Photo attached. Do you also have a short video clip?'
-              : 'Photo jud gayi hai. Kya koi chhota video bhi hai?');
-          }, 1500);
-        }, 350);
-      } else {
+      const mediaReady = hasUploadedMedia();
+
+      if (mediaReady) {
         setPhase('driving_video');
-        speak(lang === 'en'
-          ? 'No problem. Do you have a short video clip?'
-          : 'Theek hai. Kya koi chhota video hai?');
+        speak(isHindi
+          ? 'Photo proof jud gaya hai. Kya koi chhota video clip bhi jodna chahenge, ya seedha AI jaanch par chalein?'
+          : 'Photo proof attached. Would you also like to add a video clip, or proceed directly to AI check?');
+        return;
       }
+
+      // If user says haan / yes / photo hai / upload / camera / lelo / khicho
+      if (/haan|yes|photo|hai|upload|dikhao|lelo|khicho|camera|attach/i.test(t) && !/nahi|no|mat|cancel|skip/i.test(t)) {
+        const photoInput = document.getElementById('mediaPhotoInput');
+        const photoTile = document.querySelector('label.media-btn-tile') || document.getElementById('stepSection4');
+        animateCursorToAndClick(photoTile, () => {
+          if (photoInput) {
+            try { photoInput.click(); } catch (e) {}
+          }
+          speak(isHindi
+            ? 'Theek hai, photo chunein ya camera se photo lein. Photo judte hi hum turant agle kadam par chalenge.'
+            : 'Please select or capture the photo. As soon as it is attached, we will proceed immediately.');
+        }, 300);
+        return;
+      }
+
+      // If user says nahi / no / skip / baad me / submit kar do / aage badho WITHOUT uploading photo:
+      // STRICTLY REFUSE TO BYPASS! PHOTO PROOF IS MANDATORY!
+      const photoTile = document.querySelector('label.media-btn-tile') || document.getElementById('stepSection4');
+      animateCursorToAndClick(photoTile, () => {
+        speak(isHindi
+          ? 'Prashasan dwara satyapan ke liye samasya ki photo lagana anivarya (mandatory) hai. Photo ke bina report aage nahi badh sakti. Kripya "Add Photos" par click karke sthal ki photo upload karein ya camera se photo lein.'
+          : 'Photo evidence is strictly mandatory for administrative verification. The grievance cannot proceed without photo proof. Please click "Add Photos" to upload or capture a photo from the location.');
+      }, 350);
       return;
     }
 
-    // 8. Step 4: Video Phase (Click video tile if haan, or advance to AI check)
+    // 8. Step 4: Video Phase
     if (current === 'driving_video') {
-      if (/haan|yes|video|hai|upload|clip/i.test(t)) {
+      const mediaReady = hasUploadedMedia();
+
+      if (!mediaReady) {
+        // Fallback to photo step if media was removed
+        setPhase('driving_photo');
+        speak(isHindi
+          ? 'Satyapan ke liye kam se kam ek photo proof anivarya hai. Kripya photo upload karein.'
+          : 'At least one photo evidence is mandatory. Please upload a photo.');
+        return;
+      }
+
+      if (/video|clip|recording/i.test(t) && /haan|yes|upload|add|karna/i.test(t)) {
+        const videoInput = document.getElementById('mediaVideoInput');
         const videoTile = Array.from(document.querySelectorAll('label.media-btn-tile'))[1] || document.querySelector('label.media-btn-tile');
         animateCursorToAndClick(videoTile, () => {
-          speak(lang === 'en' ? 'Proofs attached. Moving to AI check.' : 'Theek hai, saare proof mil gaye. Ab AI jaanch karte hain.');
-          proceedToStep5AICheck();
-        }, 350);
+          if (videoInput) {
+            try { videoInput.click(); } catch (e) {}
+          }
+          speak(isHindi ? 'Theek hai, video upload karein. Uske baad hum AI jaanch karenge.' : 'Please choose your video file.');
+        }, 300);
       } else {
-        speak(lang === 'en' ? 'Alright, moving to AI verification.' : 'Theek hai, ab aage AI jaanch karte hain.');
+        // Citizen says no video or ready for AI check
+        speak(isHindi
+          ? 'Bahut badiya! Saare proof mil gaye hain. Ab hum AI duplicate check aur verification shuru kar rahe hain.'
+          : 'Great! Proofs verified. Moving to JanSetu AI duplicate check.');
         proceedToStep5AICheck();
       }
       return;
@@ -1233,22 +1451,22 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
 
     // 9. Step 5: Duplicate Check & Final Submit Phase
     if (current === 'driving_check') {
-      setAgentActivity(lang === 'en' ? '🤖 Verifying & checking duplicates...' : '🤖 Jaanch kar raha hoon...');
+      setAgentActivity(lang === 'en' ? '🤖 Verifying & checking duplicates...' : '🤖 AI duplicate jaanch kar raha hoon...');
       const dupBox = document.getElementById('duplicateNoticeBox');
       const isDuplicateVisible = dupBox && dupBox.style.display !== 'none';
 
       if (isDuplicateVisible) {
         if (/link|jod|haan|yes|support|sath|twinned/i.test(t)) {
           animateCursorToAndClick('button[data-i18n="btn_support_existing"]', () => {
-            speak(lang === 'en'
-              ? 'Problem registered and linked with existing grievance. You can track it in My Reports. Thank you!'
-              : 'Problem pehle se darj shikayat ke sath safaltapoorvak link ho gayi hai. Aap ise My Reports me track kar sakte hain. Dhanyawad!');
+            speak(isHindi
+              ? 'Aapki shikayat pehle se darj shikayat ke sath safaltapoorvak link ho gayi hai. Aap ise My Reports me track kar sakte hain. Dhanyawad!'
+              : 'Grievance linked with existing report successfully. You can track it in My Reports. Thank you!');
             finishCallGracefully();
           }, 350);
         } else if (/cancel|drop|hata|mat karo|band|rehne do|nahi/i.test(t) && !/report|submit|naya|alag/i.test(t)) {
-          speak(lang === 'en'
-            ? 'Okay, I have cancelled this report.'
-            : 'Theek hai, maine ye report cancel kar di hai. Kabhi bhi dubara report kar sakte hain.');
+          speak(isHindi
+            ? 'Theek hai, maine ye report cancel kar di hai. Kabhi bhi phir se report kar sakte hain.'
+            : 'Okay, I have cancelled this report. You can report again anytime.');
           const modal = document.getElementById('reportModal');
           if (modal) {
             modal.style.display = 'none';
@@ -1259,30 +1477,30 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
           animateCursorToAndClick('button[data-i18n="btn_report_anyway"]', () => {
             setTimeout(() => {
               animateCursorToAndClick('#finalSubmitBtn', () => {
-                speak(lang === 'en'
-                  ? 'Your new report has been submitted successfully! You can track it in My Reports. Thank you!'
-                  : 'Aapki nayi shikayat safaltapoorvak darj ho gayi hai! Aap ise My Reports me track kar sakte hain. Dhanyawad!');
+                speak(isHindi
+                  ? 'Aapki nayi shikayat safaltapoorvak darj ho gayi hai! Aap ise My Reports me track kar sakte hain. Dhanyawad!'
+                  : 'Your new grievance has been submitted successfully! You can track it in My Reports. Thank you!');
                 finishCallGracefully();
               }, 350);
             }, 350);
           }, 350);
         }
       } else {
-        if (/haan|yes|submit|kar do|kar doon|theek|sahi|bilkul|kardo/i.test(t)) {
+        if (/haan|yes|submit|kar do|kar doon|theek|sahi|bilkul|kardo|karo/i.test(t)) {
           animateCursorToAndClick('#finalSubmitBtn', () => {
-            speak(lang === 'en'
-              ? 'Your problem has been submitted successfully! You can check its status in My Reports. Thank you for reporting!'
-              : 'Aapki samasya safaltapoorvak darj ho gayi hai! Aap iski sthiti My Reports me dekh sakte hain. JanSetu par report karne ke liye dhanyawad!');
+            speak(isHindi
+              ? 'Aapki samasya safaltapoorvak darj ho gayi hai! Aap iski sthiti My Reports me dekh sakte hain. JanSetu par report karne ke liye bahut-bahut dhanyawad!'
+              : 'Your grievance has been submitted successfully! You can track its status in My Reports. Thank you for reporting with JanSetu!');
             finishCallGracefully();
           }, 350);
-        } else if (/nahi|cancel|mat|ruko/i.test(t)) {
-          speak(lang === 'en'
-            ? 'Submission paused. You can edit details or end the call.'
-            : 'Theek hai, abhi submit nahi kiya hai. Aap details edit kar sakte hain.');
+        } else if (/nahi|cancel|mat|ruko|edit/i.test(t)) {
+          speak(isHindi
+            ? 'Submission rok diya hai. Aap details badal sakte hain ya call end kar sakte hain.'
+            : 'Submission paused. You can edit details or end the call.');
         } else {
-          speak(lang === 'en'
-            ? 'Should I submit this report now? Please say yes or submit.'
-            : 'Kya main ye shikayat submit kar doon? Kripya haan ya submit bolein.');
+          speak(isHindi
+            ? 'Kya main ye shikayat abhi prashasan ko submit kar doon? Kripya haan ya submit bolein.'
+            : 'Should I submit this grievance to the authorities now? Please say yes or submit.');
         }
       }
       return;
@@ -2028,6 +2246,7 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
   const handleReportProblemAction = () => {
     setIsInitialCardOpen(false);
     setPhase('driving_category');
+    hasAcknowledgedMediaRef.current = false;
 
     setCursorPos({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
     setCursorVisible(true);
@@ -2037,8 +2256,8 @@ export default function AIReportAgent({ isOpen, onClose, onReportSubmitted }) {
       animateCursorToAndClick('.btn-report-hero, .btn-sidebar-report', () => {
         setTimeout(() => {
           const prompt = lang === 'en'
-            ? 'Please describe your problem in detail. What is happening and where?'
-            : 'Aapko kya samasya aa rahi hai? Batayiye, main sun raha hoon.';
+            ? 'I am ready to help you report. Please describe what problem you are facing in your area?'
+            : 'Ji batayiye, aapke ilaqe me kya samasya aa rahi hai? Main sun raha hoon.';
           speak(prompt);
         }, 300);
       }, 300);

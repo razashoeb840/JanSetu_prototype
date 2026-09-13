@@ -4083,6 +4083,7 @@
       btn.classList.add('selected');
       if (document.getElementById('reportCategory')) document.getElementById('reportCategory').value = cat;
     }
+    window.selectFormCategory = selectFormCategory;
 
     function applyVoiceSample(sampleText, sampleTitle, sampleCategory) {
       const descEl = document.getElementById('reportDescription');
@@ -4374,6 +4375,7 @@
     window.handleMediaSelect = handleMediaSelect;
 
     function renderMediaPreviews() {
+      window.selectedMediaFiles = selectedMediaFiles;
       const container = document.getElementById('mediaPreviewContainer');
       if (!container) return;
       if (selectedMediaFiles.length === 0) {
