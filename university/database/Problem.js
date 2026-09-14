@@ -7,6 +7,12 @@ const problemSchema = new mongoose.Schema({
   location: String,
   impact: { type: String, default: 'Medium' },
   status: { type: String, enum: ['Open', 'Assigned', 'In Progress', 'Deployed', 'Rejected'], default: 'Open' },
+  universityAssigned: { type: String, default: null, trim: true },
+  industryAssigned: { type: String, default: null, trim: true },
+  assignedUniversityUid: { type: String, default: null, trim: true },
+  assignedIndustryIid: { type: String, default: null, trim: true },
+  assignedUniversity: { type: mongoose.Schema.Types.ObjectId, ref: 'University', default: null },
+  assignedIndustry: { type: mongoose.Schema.Types.ObjectId, ref: 'IndustryPartner', default: null },
   sourceCitizenProblemId: { type: mongoose.Schema.Types.ObjectId, ref: 'Challenge' },
   submitterContact: {
     name: String,

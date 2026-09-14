@@ -396,7 +396,11 @@ app.use('/api/*', (req, res) => {
 
 // Page 404
 app.use((req, res) => {
-  res.status(404).sendFile(path.join(__dirname, 'others/public', '404.html'));
+  const p404 = path.join(__dirname, 'others/public', '404.html');
+  if (fs.existsSync(p404)) {
+    return res.status(404).sendFile(p404);
+  }
+  res.status(404).json({ success: false, message: 'Resource not found' });
 });
 
 // Error Handler

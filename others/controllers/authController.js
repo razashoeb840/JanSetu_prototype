@@ -10,6 +10,7 @@ const DEMO_PRESETS = {
     name: 'JanSetu Admin',
     email: 'admin@jansetu.in',
     role: 'admin',
+    uniqueId: 'ADM-001',
     passwords: ['admin123'],
     department: 'Municipal Administration'
   },
@@ -18,6 +19,7 @@ const DEMO_PRESETS = {
     name: 'JanSetu Admin',
     email: 'admin@innovatesphere.in',
     role: 'admin',
+    uniqueId: 'ADM-001',
     passwords: ['admin123'],
     department: 'Municipal Administration'
   },
@@ -26,8 +28,9 @@ const DEMO_PRESETS = {
     name: 'Rajesh Mahto',
     email: 'rajesh@gmail.com',
     role: 'citizen',
-    passwords: ['citizen123'],
+    uniqueId: 'C4819',
     citizenId: 'C4819',
+    passwords: ['citizen123'],
     phone: '9431100003',
     aadhaar: '8492-3840-4819'
   },
@@ -36,8 +39,9 @@ const DEMO_PRESETS = {
     name: 'Kavya Sharma',
     email: 'kavya@gmail.com',
     role: 'citizen',
-    passwords: ['citizen123'],
+    uniqueId: 'C1002',
     citizenId: 'C1002',
+    passwords: ['citizen123'],
     phone: '9431100002'
   },
   'rajesh@iitjharkhand.ac.in': {
@@ -45,8 +49,9 @@ const DEMO_PRESETS = {
     name: 'Dr. Rajesh Sharma',
     email: 'rajesh@iitjharkhand.ac.in',
     role: 'university_rep',
-    passwords: ['univ123'],
+    uniqueId: 'U4819',
     universityIdString: 'U4819',
+    passwords: ['univ123'],
     institution: 'IIT Delhi',
     department: 'Department of Computer Science & Engineering'
   },
@@ -55,6 +60,8 @@ const DEMO_PRESETS = {
     name: 'Tata Steel CSR',
     email: 'tata@steel.com',
     role: 'industry_rep',
+    uniqueId: 'I1001',
+    industryIdString: 'I1001',
     passwords: ['industry123'],
     organization: 'Tata Steel'
   }
@@ -68,19 +75,48 @@ const sendTokenResponse = (user, statusCode, res) => {
         process.env.JWT_SECRET || 'your_strong_jwt_secret_key_here',
         { expiresIn: process.env.JWT_EXPIRE || '7d' }
       );
-  const citizenId = user.citizenId || (user.role === 'citizen' ? ('C' + (user.aadhaar ? user.aadhaar.replace(/[^0-9]/g, '').slice(-4) : (user._id ? user._id.toString().slice(-4) : '4819'))) : null);
-  const universityIdString = user.universityIdString || (user.role === 'university_rep' ? ('U' + (user._id ? user._id.toString().slice(-4) : '1001')) : null);
+  let uniqueId = user.uniqueId;
+  if (!uniqueId) {
+    if (user.role === 'citizen') uniqueId = user.citizenId || ('C' + (user._id ? user._id.toString().slice(-4) : '4819'));
+    else if (user.role === 'university_rep') uniqueId = user.universityIdString || ('U' + (user._id ? user._id.toString().slice(-4) : '1001'));
+    else if (user.role === 'industry_rep') uniqueId = user.industryIdString || ('I' + (user._id ? user._id.toString().slice(-4) : '1001'));
+    else if (user.role === 'admin') uniqueId = 'ADM-001';
+  }
+  uniqueId = String(uniqueId || '').toUpperCase().trim();
+
+  // Role routing based on ID first letter (C -> citizen, U -> university, I -> industry, ADM -> admin)
+  let redirectUrl = '/citizen';
+  if (user.role === 'admin' || uniqueId.startsWith('ADM') || user.email === 'admin@innovatesphere.in' || user.email === 'admin@jansetu.in') {
+    redirectUrl = '/admin';
+  } else if (uniqueId.startsWith('C')) {
+    redirectUrl = '/citizen';
+  } else if (uniqueId.startsWith('U')) {
+    redirectUrl = '/university';
+  } else if (uniqueId.startsWith('I')) {
+    redirectUrl = '/industries';
+  } else if (user.role === 'university_rep' || user.role === 'university') {
+    redirectUrl = '/university';
+  } else if (user.role === 'industry_rep' || user.role === 'industry') {
+    redirectUrl = '/industries';
+  }
+
+  const citizenId = uniqueId.startsWith('C') ? uniqueId : (user.citizenId || null);
+  const universityIdString = uniqueId.startsWith('U') ? uniqueId : (user.universityIdString || null);
+  const industryIdString = uniqueId.startsWith('I') ? uniqueId : (user.industryIdString || null);
+
   res.status(statusCode).json({
     success: true,
     token,
+    redirectUrl,
     user: {
       id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
+      uniqueId: uniqueId,
       citizenId: citizenId,
       universityIdString: universityIdString,
-      uniqueId: universityIdString || citizenId,
+      industryIdString: industryIdString,
       facultyId: universityIdString,
       phone: user.phone || '9431100003',
       aadhaar: user.aadhaar || '8492-3840-4819',
@@ -92,6 +128,8 @@ const sendTokenResponse = (user, statusCode, res) => {
       isVerified: user.isVerified !== false,
       designation: user.designation,
       department: user.department,
+      institution: user.institution,
+      organization: user.organization,
       universityId: user.universityId,
       industryPartnerId: user.industryPartnerId
     }
@@ -116,25 +154,70 @@ exports.register = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
-    // Generate clean Citizen ID (starts with C) or University ID (starts with U)
+    // Generate single unified uniqueId:
+    // C... for citizen, U... for university, I... for industry
     let citizenId = req.body.citizenId;
     let universityIdString = req.body.universityIdString;
+    let industryIdString = req.body.industryIdString;
+    let uniqueId = req.body.uniqueId;
 
-    if (!citizenId && (!role || role === 'citizen')) {
-      citizenId = 'C' + Math.floor(1000 + Math.random() * 9000);
-    }
-    if (!universityIdString && role === 'university_rep') {
-      universityIdString = 'U' + Math.floor(1000 + Math.random() * 9000);
+    if (!uniqueId) {
+      if (!role || role === 'citizen') {
+        uniqueId = citizenId || ('C' + Math.floor(1000 + Math.random() * 9000));
+        citizenId = uniqueId;
+      } else if (role === 'university_rep') {
+        uniqueId = universityIdString || ('U' + Math.floor(1000 + Math.random() * 9000));
+        universityIdString = uniqueId;
+      } else if (role === 'industry_rep') {
+        uniqueId = industryIdString || ('I' + Math.floor(1000 + Math.random() * 9000));
+        industryIdString = uniqueId;
+      }
     }
 
-    const orgName = req.body.organization || req.body.institution || '';
+    let orgName = req.body.organization || req.body.institution || '';
+    let targetUnivId = req.body.universityId;
+    let customCity = req.body.city || '';
+
+    // Handle "+ Add University" with name & city
+    if (role === 'university_rep' && (req.body.isNewUniversity || req.body.institution === '__ADD_NEW__' || req.body.customUniversityName)) {
+      const customName = (req.body.customUniversityName || req.body.institution || '').replace(/^__ADD_NEW__$/, '').trim();
+      if (customName) {
+        orgName = customName;
+        try {
+          const University = require('../models/University');
+          let uDoc = await University.findOne({ name: new RegExp('^' + customName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') });
+          if (!uDoc) {
+            const newUid = 'U' + Math.floor(1000 + Math.random() * 9000);
+            uDoc = await University.create({
+              name: customName,
+              shortName: customName.split(' ').map(w => w[0]).join('').slice(0, 6).toUpperCase(),
+              uid: newUid,
+              type: 'other',
+              location: { city: customCity || 'Ranchi', district: customCity || 'Ranchi', state: 'Jharkhand' }
+            });
+            uniqueId = newUid;
+            universityIdString = newUid;
+          }
+          targetUnivId = uDoc._id;
+          if (uDoc.uid) {
+            uniqueId = uDoc.uid;
+            universityIdString = uDoc.uid;
+          }
+        } catch(uErr) {
+          console.error('Error creating custom university:', uErr.message);
+        }
+      }
+    }
+
     const userData = {
       name,
       email,
       password,
       role: role || 'citizen',
+      uniqueId: String(uniqueId).toUpperCase().trim(),
       citizenId,
       universityIdString,
+      industryIdString,
       phone: phone || '9431100003',
       aadhaar: aadhaar || '8492-3840-4819',
       aadhaarVerified: true,
@@ -146,7 +229,7 @@ exports.register = async (req, res, next) => {
       organization: orgName,
       institution: orgName
     };
-    if (role === 'university_rep' && universityId) userData.universityId = universityId;
+    if (role === 'university_rep' && targetUnivId) userData.universityId = targetUnivId;
     if (role === 'industry_rep' && industryPartnerId) userData.industryPartnerId = industryPartnerId;
 
     const user = await User.create(userData);
@@ -156,8 +239,8 @@ exports.register = async (req, res, next) => {
       try {
         const { UniversityProfile } = require('../../university/database');
         const University = require('../models/University');
-        let institutionName = orgName || 'Indian Institute of Technology Delhi';
-        let univLocation = 'New Delhi, India';
+        let institutionName = orgName || 'Birla Institute of Technology (BIT) Mesra, Ranchi';
+        let univLocation = customCity ? `${customCity}, Jharkhand` : 'Jharkhand';
 
         if (universityId) {
           const uDoc = await University.findById(universityId);
@@ -268,8 +351,10 @@ exports.login = async (req, res, next) => {
     const queryConditions = [
       { email: cleanLower },
       { phone: cleanId },
+      { uniqueId: cleanId.toUpperCase() },
       { citizenId: cleanId.toUpperCase() },
       { universityIdString: cleanId.toUpperCase() },
+      { industryIdString: cleanId.toUpperCase() },
       { aadhaar: cleanId },
       { aadhaar: cleanId.replace(/[^0-9]/g, '') }
     ];

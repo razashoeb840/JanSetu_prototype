@@ -7,11 +7,19 @@ const universitySchema = new mongoose.Schema({
     trim: true,
     unique: true
   },
+  uid: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true,
+    uppercase: true,
+    index: true
+  },
   shortName: String,
   type: {
     type: String,
     enum: ['central', 'state', 'deemed', 'private', 'iit', 'nit', 'iiit', 'other'],
-    required: true
+    default: 'other'
   },
   location: {
     city: String,
@@ -83,9 +91,21 @@ const universitySchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
+universitySchema.pre('validate', function(next) {
+  if (!this.uid) {
+    this.uid = 'U' + Math.floor(1000 + Math.random() * 9000);
+  } else {
+    this.uid = String(this.uid).trim().toUpperCase();
+    if (!this.uid.startsWith('U')) {
+      this.uid = 'U' + this.uid.replace(/^[^0-9]+/, '');
+    }
+  }
+  next();
+});
+
 universitySchema.virtual('resolutionRate').get(function() {
-  if (this.stats.totalAssigned === 0) return 0;
-  return Math.round((this.stats.totalResolved / this.stats.totalAssigned) * 100);
+  if (this.stats && this.stats.totalAssigned === 0) return 0;
+  return this.stats ? Math.round((this.stats.totalResolved / this.stats.totalAssigned) * 100) : 0;
 });
 
 module.exports = mongoose.model('University', universitySchema);

@@ -109,6 +109,7 @@ exports.getAdminAnalytics = async (req, res, next) => {
       totalIndustryPartners,
       pendingChallenges,
       activeChallenges,
+      assignedChallenges,
       resolvedChallenges,
       thisMonthChallenges,
       byStatus,
@@ -169,6 +170,8 @@ exports.getAdminAnalytics = async (req, res, next) => {
           totalUniversities,
           totalIndustryPartners,
           pendingChallenges,
+          activeChallenges,
+          assignedChallenges,
           resolvedChallenges,
           resolutionRate
         }

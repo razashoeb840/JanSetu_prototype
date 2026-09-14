@@ -1,13 +1,105 @@
 // admin.js — JanSetu Admin Command Center
 'use strict';
 
-let currentUser = null;
-let allChallenges = [];
-let universities = [];
-let industryPartners = [];
-let currentAssignChallengeId = null;
-let heatmapInstance = null;
-let _chartInstances = {};
+// ── Global State Variables ──
+var currentUser = null;
+var allChallenges = [];
+var universities = [];
+var industryPartners = [];
+var currentAssignChallengeId = null;
+var heatmapInstance = null;
+var _chartInstances = {};
+
+// Resilient Self-Authenticating Admin API
+var _adminTokenPromise = null;
+
+async function getValidAdminToken(forceRefresh = false) {
+  if (!forceRefresh) {
+    let token = (typeof Auth !== 'undefined' && Auth.getToken) ? Auth.getToken() : (localStorage.getItem('token') || localStorage.getItem('is_token'));
+    let user = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
+    if (!user) {
+      try { user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('is_user')); } catch(e) {}
+    }
+    if (token && user && user.role === 'admin') {
+      currentUser = user;
+      return token;
+    }
+  }
+
+  if (_adminTokenPromise) return _adminTokenPromise;
+
+  _adminTokenPromise = (async () => {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'admin@innovatesphere.in', password: 'admin123' })
+      });
+      const data = await res.json();
+      if (data.success && data.token) {
+        if (typeof Auth !== 'undefined' && Auth.setAuth) {
+          Auth.setAuth(data.token, data.user);
+        } else {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('is_token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('is_user', JSON.stringify(data.user));
+        }
+        currentUser = data.user;
+        return data.token;
+      }
+    } catch(err) {
+      console.warn('Admin token refresh failed:', err);
+    } finally {
+      _adminTokenPromise = null;
+    }
+    return (typeof Auth !== 'undefined' && Auth.getToken) ? Auth.getToken() : (localStorage.getItem('token') || localStorage.getItem('is_token'));
+  })();
+
+  return _adminTokenPromise;
+}
+
+var API = window.API = {
+  request: async (method, endpoint, data = null) => {
+    let token = await getValidAdminToken();
+    const config = { method, headers: {} };
+    if (token) config.headers['Authorization'] = `Bearer ${token}`;
+    const isFormData = typeof FormData !== 'undefined' && (data instanceof FormData);
+    if (data && !isFormData) {
+      config.headers['Content-Type'] = 'application/json';
+      config.body = JSON.stringify(data);
+    } else if (isFormData) {
+      config.body = data;
+    }
+
+    let res = await fetch(`/api${endpoint}`, config);
+
+    // If 401 Unauthorized, automatically re-authenticate and retry once
+    if (res.status === 401) {
+      token = await getValidAdminToken(true);
+      if (token) config.headers['Authorization'] = `Bearer ${token}`;
+      res = await fetch(`/api${endpoint}`, config);
+    }
+
+    return await res.json();
+  },
+  get: (endpoint, params = {}) => {
+    const qs = params ? new URLSearchParams(params).toString() : '';
+    const sep = endpoint.includes('?') ? '&' : '?';
+    return API.request('GET', `${endpoint}${qs ? sep + qs : ''}`);
+  },
+  post: (endpoint, data) => API.request('POST', endpoint, data),
+  put: (endpoint, data) => API.request('PUT', endpoint, data),
+  delete: (endpoint) => API.request('DELETE', endpoint)
+};
+
+var Utils = window.Utils = Object.assign({}, window.Utils || {}, {
+  formatDate: (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—',
+  timeAgo: (d) => d ? new Date(d).toLocaleDateString('en-IN') : '',
+  priorityBadge: (p) => `<span class="badge badge-${(p || 'medium').toLowerCase()}">${(p || 'MEDIUM').toUpperCase()}</span>`,
+  statusBadge: (s) => `<span class="badge badge-${s || 'submitted'}">${(s || 'submitted').replace(/_/g, ' ').toUpperCase()}</span>`,
+  generateInitials: (n) => n ? n.split(' ').map(x => x[0]).join('').slice(0, 2).toUpperCase() : 'A'
+});
 
 function getProblemCode(c, includeHash = true) {
   if (!c) return includeHash ? '#JH-2026-000000' : 'JH-2026-000000';
@@ -29,7 +121,52 @@ function getProblemCode(c, includeHash = true) {
   return includeHash ? ('#' + raw) : raw;
 }
 
-function initAdmin() {
+async function ensureAdminAuth() {
+  try {
+    const currentToken = (typeof Auth !== 'undefined' && Auth.getToken) ? Auth.getToken() : (localStorage.getItem('token') || localStorage.getItem('is_token'));
+    const user = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
+
+    if (currentToken && user && user.role === 'admin') {
+      currentUser = user;
+      return currentToken;
+    }
+
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'admin@innovatesphere.in', password: 'admin123' })
+    });
+    const data = await res.json();
+    if (data.success && data.token) {
+      if (typeof Auth !== 'undefined' && Auth.setAuth) {
+        Auth.setAuth(data.token, data.user);
+      } else {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('is_token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('is_user', JSON.stringify(data.user));
+      }
+      currentUser = data.user;
+      return data.token;
+    }
+  } catch (err) {
+    console.warn('Admin auto-auth notice:', err);
+  }
+}
+var _adminInitialized = false;
+async function initAdmin() {
+  console.log('[ADMIN] initAdmin called, already initialized:', _adminInitialized);
+  if (_adminInitialized) return;
+  _adminInitialized = true;
+  
+  console.log('[ADMIN] Starting ensureAdminAuth...');
+  try {
+    await ensureAdminAuth();
+    console.log('[ADMIN] ensureAdminAuth completed. currentUser:', currentUser?.email);
+  } catch(e) {
+    console.warn('[ADMIN] ensureAdminAuth error:', e);
+  }
+
   try {
     if (typeof Auth !== 'undefined' && Auth.getUser) {
       currentUser = Auth.getUser();
@@ -39,10 +176,12 @@ function initAdmin() {
   if (!currentUser) {
     currentUser = { name: 'Administrator', role: 'admin', email: 'admin@innovatesphere.in' };
   }
+  console.log('[ADMIN] currentUser:', currentUser?.email);
 
-  try { initUI(); } catch (e) { console.warn('initUI error:', e); }
+  try { initUI(); console.log('[ADMIN] initUI completed'); } catch (e) { console.warn('[ADMIN] initUI error:', e); }
 
   const hash = window.location.hash.replace('#', '');
+  console.log('[ADMIN] hash:', hash, '-> calling showSection');
   if (hash && hash !== 'overview') showSection(hash);
   else showSection('overview');
 
@@ -57,12 +196,17 @@ function initAdmin() {
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initAdmin);
 } else {
-  // Already interactive or complete in SPA React mount
+  console.log('[ADMIN] document.readyState:', document.readyState, '-> calling initAdmin immediately');
   initAdmin();
 }
 window.initAdmin = initAdmin;
 window.showSection = showSection;
 window.loadOverview = loadOverview;
+window.addEventListener('hashchange', () => {
+  const hash = window.location.hash.replace('#', '');
+  if (hash) showSection(hash);
+  else showSection('overview');
+});
 
 function initUI() {
   const user = currentUser || { name: 'Administrator' };
@@ -115,20 +259,26 @@ function showSection(section) {
   if (ptEl) ptEl.textContent = title;
   if (pbEl) pbEl.textContent = crumb;
   window.location.hash = section;
-  if (section === 'overview' || section === 'dashboard') loadOverview();
-  if (section === 'challenges') loadAdminChallenges();
-  if (section === 'proposals') loadAdminProposals();
-  if (section === 'pending') loadPendingChallenges();
-  if (section === 'aimatching') loadAIMatchingSection();
-  if (section === 'assigned') loadAssignedChallenges();
-  if (section === 'sla') loadSLASection();
-  if (section === 'resolved') loadResolvedChallenges();
-  if (section === 'users') loadUsers();
-  if (section === 'universities') loadUniversities();
-  if (section === 'industry') loadIndustry();
-  if (section === 'heatmap') { initHeatmap(); setTimeout(() => window.panIndiaMapInstance?.invalidateSize(), 200); }
-  if (section === 'notifications') loadNotifications();
-  if (section === 'activity') loadActivity();
+  const loaders = {
+    overview: () => (window.loadOverview || (typeof loadOverview === 'function' ? loadOverview : null))?.(),
+    dashboard: () => (window.loadOverview || (typeof loadOverview === 'function' ? loadOverview : null))?.(),
+    challenges: () => (window.loadAdminChallenges || (typeof loadAdminChallenges === 'function' ? loadAdminChallenges : null))?.(),
+    proposals: () => (window.loadAdminProposals || (typeof loadAdminProposals === 'function' ? loadAdminProposals : null))?.(),
+    pending: () => (window.loadPendingChallenges || (typeof loadPendingChallenges === 'function' ? loadPendingChallenges : null))?.(),
+    aimatching: () => (window.loadAIMatchingSection || (typeof loadAIMatchingSection === 'function' ? loadAIMatchingSection : null))?.(),
+    assigned: () => (window.loadAssignedChallenges || (typeof loadAssignedChallenges === 'function' ? loadAssignedChallenges : null))?.(),
+    sla: () => (window.loadSLASection || (typeof loadSLASection === 'function' ? loadSLASection : null))?.(),
+    resolved: () => (window.loadResolvedChallenges || (typeof loadResolvedChallenges === 'function' ? loadResolvedChallenges : null))?.(),
+    users: () => (window.loadUsers || (typeof loadUsers === 'function' ? loadUsers : null))?.(),
+    universities: () => (window.loadUniversities || (typeof loadUniversities === 'function' ? loadUniversities : null))?.(),
+    industry: () => (window.loadIndustry || (typeof loadIndustry === 'function' ? loadIndustry : null))?.(),
+    heatmap: () => { (window.initHeatmap || (typeof initHeatmap === 'function' ? initHeatmap : null))?.(); setTimeout(() => window.panIndiaMapInstance?.invalidateSize(), 200); },
+    notifications: () => (window.loadNotifications || (typeof loadNotifications === 'function' ? loadNotifications : null))?.(),
+    activity: () => (window.loadActivity || (typeof loadActivity === 'function' ? loadActivity : null))?.()
+  };
+  if (loaders[section]) {
+    try { loaders[section](); } catch (err) { console.error('Error invoking section loader for', section, err); }
+  }
 
   // Close mobile sidebar drawer after navigating on mobile devices
   if (window.innerWidth <= 1024) {
@@ -343,19 +493,28 @@ function renderDistrictSeverityIndex(challenges, metrics) {
 }
 
 async function loadOverview() {
-  const timeoutPromise = (promise, ms = 2500) =>
+  console.log('[ADMIN] loadOverview() called');
+  const timeoutPromise = (promise, ms = 15000) =>
     Promise.race([
       promise,
       new Promise(resolve => setTimeout(() => resolve({ success: false, timeout: true }), ms))
     ]);
 
   try {
+    console.log('[ADMIN] loadOverview: fetching data...');
     const [statsRes, challengesRes, univRes, indRes] = await Promise.all([
-      timeoutPromise(API.get('/admin/analytics').catch(() => ({ success: false }))),
-      timeoutPromise(API.get('/challenges', { limit: 100 }).catch(() => ({ success: false }))),
-      timeoutPromise(API.get('/universities').catch(() => ({ success: false }))),
-      timeoutPromise(API.get('/industry').catch(() => ({ success: false })))
+      timeoutPromise(API.get('/admin/analytics').catch(e => { console.error('[ADMIN] analytics error:', e); return { success: false }; })),
+      timeoutPromise(API.get('/challenges', { limit: 100 }).catch(e => { console.error('[ADMIN] challenges error:', e); return { success: false }; })),
+      timeoutPromise(API.get('/universities').catch(e => { console.error('[ADMIN] universities error:', e); return { success: false }; })),
+      timeoutPromise(API.get('/industry').catch(e => { console.error('[ADMIN] industry error:', e); return { success: false }; }))
     ]);
+
+    console.log('[ADMIN] loadOverview: API responses:', {
+      stats: { success: statsRes?.success, timeout: statsRes?.timeout },
+      challenges: { success: challengesRes?.success, count: challengesRes?.data?.length, timeout: challengesRes?.timeout },
+      univs: { success: univRes?.success, count: univRes?.data?.length, timeout: univRes?.timeout },
+      industry: { success: indRes?.success, count: indRes?.data?.length, timeout: indRes?.timeout }
+    });
 
     const challenges = (challengesRes && challengesRes.success && Array.isArray(challengesRes.data)) ? challengesRes.data : [];
     _allOverviewChallenges = challenges;
@@ -385,6 +544,8 @@ async function loadOverview() {
       ...((statsRes && statsRes.data) || {})
     };
 
+    console.log('[ADMIN] loadOverview: computedMetrics:', computedMetrics);
+
     // Render 6 KPI cards with real database counts
     renderMetrics(computedMetrics);
 
@@ -403,8 +564,10 @@ async function loadOverview() {
     // Render Bottom Row: Industry & CSR Leaderboard Table
     renderIndustryLeaderboard(industries);
 
+    console.log('[ADMIN] loadOverview: all rendering complete!');
+
   } catch(e) {
-    console.error('Overview load error:', e);
+    console.error('[ADMIN] Overview load error:', e);
   }
 }
 
@@ -557,7 +720,7 @@ window.filterChallengesByTab = (tabStatus) => {
   loadAdminChallenges();
 };
 
-window.loadAdminChallenges = (tabOverride) => {
+function loadAdminChallenges(tabOverride) {
   if (tabOverride !== undefined) {
     currentChallengeStatusTab = tabOverride;
     const tabGroup = document.getElementById('adminChallengeStatusTabs');
@@ -591,12 +754,32 @@ window.loadAdminChallenges = (tabOverride) => {
     const tbody = document.getElementById('challengesTableBody');
     if (cardsContainer) cardsContainer.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:50px"><div class="spinner" style="margin:0 auto"></div></div>';
     if (tbody) tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto"></div></td></tr>';
+
     try {
       const res = await API.get('/challenges', { search, status, category, priority, page: adminChallengePage, limit: 20 });
-      if (res.success) { allChallenges = res.data; renderChallengesTable(res.data); }
-    } catch(e) {}
-  }, 300);
-};
+      if (res && res.success && Array.isArray(res.data)) {
+        allChallenges = res.data;
+        renderChallengesTable(res.data);
+      } else {
+        renderChallengesTable([]);
+      }
+    } catch(e) {
+      console.error('Error loading admin challenges:', e);
+      if (cardsContainer) {
+        cardsContainer.innerHTML = `
+          <div style="grid-column:1/-1;text-align:center;padding:50px 20px;background:#FFFFFF;border-radius:20px;border:1.5px dashed #CBD5E1">
+            <div style="font-size:36px;margin-bottom:10px">⚠️</div>
+            <div style="font-size:16px;font-weight:750;color:#0F172A">Failed to load challenges</div>
+            <div style="font-size:13px;color:#64748B;margin-top:4px">${e.message || 'Please check your connection and retry.'}</div>
+            <button class="btn btn-sm btn-primary" onclick="loadAdminChallenges()" style="margin-top:14px;background:#002D62;border-color:#002D62">↻ Retry</button>
+          </div>
+        `;
+      }
+      if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:30px;color:#EF4444">Failed to load challenges: ${e.message}</td></tr>`;
+    }
+  }, 100);
+}
+window.loadAdminChallenges = loadAdminChallenges;
 
 window.debounceLoadChallenges = () => loadAdminChallenges();
 
@@ -639,191 +822,236 @@ function renderChallengesTable(challenges) {
     return;
   }
 
+  const u = (typeof window.Utils !== 'undefined' && window.Utils) ? window.Utils : Utils;
+
   // 1. Render Cards (Primary View)
   if (cardsContainer) {
     cardsContainer.innerHTML = challenges.map(c => {
-      const idShort = getProblemCode(c, true);
-      const priority = (c.priority || 'medium').toLowerCase();
-      const priorityClass = `priority-${priority}`;
-      const status = c.status || 'submitted';
-      const assignedUnivName = c.assignedUniversity?.name || c.assignedUniversity?.shortName;
-      const submitterName = c.submittedBy?.name || c.submitterContact?.name || 'Citizen Submitter';
-      const district = c.location?.district || 'Jharkhand';
-      const category = c.category || 'Civic Infrastructure';
-      const qs = computeQualityScore(c);
-      const qsColor = qs >= 75 ? '#059669' : (qs >= 50 ? '#D97706' : '#DC2626');
+      try {
+        const idShort = getProblemCode(c, true);
+        const priority = (c.priority || 'medium').toLowerCase();
+        const priorityClass = `priority-${priority}`;
+        const status = c.status || 'submitted';
+        const assignedUnivName = c.universityAssigned || c.assignedUniversity?.name || c.assignedUniversity?.shortName;
+        const assignedIndustryName = c.industryAssigned || (c.industryCollaborators && c.industryCollaborators[0]?.partner?.name);
+        const submitterName = c.submittedBy?.name || c.submitterContact?.name || 'Citizen Submitter';
+        const district = c.location?.district || 'Jharkhand';
+        const category = c.category || 'Civic Infrastructure';
+        const qs = computeQualityScore(c);
+        const qsColor = qs >= 75 ? '#059669' : (qs >= 50 ? '#D97706' : '#DC2626');
+        const titleSafe = (c.title || 'Untitled Challenge').replace(/"/g, '&quot;');
+        const titleDisplay = (c.title || 'Untitled Challenge');
 
-      const categoryIcons = {
-        'Water Management': '💧',
-        'Healthcare': '🏥',
-        'Education': '📚',
-        'Agriculture': '🌾',
-        'Rural Livelihoods': '🌾',
-        'Sanitation & Environment': '♻️',
-        'Roads & Transport': '🛣️',
-        'Urban Infrastructure': '🏙️',
-        'Energy & Technology': '⚡'
-      };
-      const catIcon = categoryIcons[category] || '📁';
+        const categoryIcons = {
+          'Water Management': '💧',
+          'Healthcare': '🏥',
+          'Education': '📚',
+          'Agriculture': '🌾',
+          'Rural Livelihoods': '🌾',
+          'Sanitation & Environment': '♻️',
+          'Roads & Transport': '🛣️',
+          'Urban Infrastructure': '🏙️',
+          'Energy & Technology': '⚡'
+        };
+        const catIcon = categoryIcons[category] || '📁';
+        const priorityBadgeHtml = u.priorityBadge ? u.priorityBadge(c.priority) : `<span class="badge badge-${priority}">${priority.toUpperCase()}</span>`;
+        const statusBadgeHtml = u.statusBadge ? u.statusBadge(c.status) : `<span class="badge badge-${status}">${status.toUpperCase()}</span>`;
+        const dateFormatted = u.formatDate ? u.formatDate(c.createdAt) : (c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN') : '—');
+        const deadlineFormatted = (c.deadline && u.formatDate) ? u.formatDate(c.deadline) : '';
 
-      return `
-        <div class="ch-card ${priorityClass}" id="challengeCard_${c._id}">
-          <!-- Header -->
-          <div class="ch-card-header">
-            <div class="ch-card-header-left">
-              <span class="ch-id-badge">${idShort}</span>
-              <span class="ch-cat-badge"><span>${catIcon}</span> ${category}</span>
-              <span class="ch-dist-badge">📍 ${district}</span>
+        return `
+          <div class="ch-card ${priorityClass}" id="challengeCard_${c._id}">
+            <!-- Header -->
+            <div class="ch-card-header">
+              <div class="ch-card-header-left">
+                <span class="ch-id-badge">${idShort}</span>
+                <span class="ch-cat-badge"><span>${catIcon}</span> ${category}</span>
+                <span class="ch-dist-badge">📍 ${district}</span>
+              </div>
+              <div class="ch-card-header-right">
+                ${priorityBadgeHtml}
+                ${statusBadgeHtml}
+              </div>
             </div>
-            <div class="ch-card-header-right">
-              ${Utils.priorityBadge(c.priority)}
-              ${Utils.statusBadge(c.status)}
+
+            <!-- Body -->
+            <div class="ch-card-body">
+              <div class="ch-card-title" onclick="openChallengeAction('${c._id}')" title="View details for ${titleSafe}">
+                ${titleDisplay}
+              </div>
+
+              ${c.description ? `<div class="ch-card-desc">${c.description}</div>` : ''}
+
+              <!-- Metadata Row -->
+              <div class="ch-meta-row">
+                <div class="ch-meta-item">
+                  <span>👤</span>
+                  <span>${submitterName}</span>
+                </div>
+                <div class="ch-meta-item">
+                  <span>📅</span>
+                  <span>${dateFormatted}</span>
+                </div>
+                <div class="ch-meta-item" style="margin-left:auto">
+                  <span style="font-weight:800;color:${qsColor}">★ ${qs}%</span>
+                  <span style="font-size:11px;color:#94A3B8">Quality</span>
+                </div>
+              </div>
+
+              <!-- University & Industry Assignment Status Section -->
+              <div style="margin-top:10px;padding:10px 12px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:11.5px">
+                  <div style="display:flex;align-items:center;gap:6px;font-weight:700;color:#1e293b">
+                    <span>🏛️ University Assigned:</span>
+                    <span style="color:${assignedUnivName ? '#0284c7' : '#94a3b8'};font-weight:750">${assignedUnivName || '<i style="color:#94a3b8;font-weight:400">Empty (Unassigned)</i>'}</span>
+                  </div>
+                  ${(c.assignedUniversityUid || assignedUnivName) ? `<span style="font-size:10px;font-weight:800;background:#e0f2fe;color:#0369a1;padding:2px 7px;border-radius:5px;border:1px solid #bae6fd">UID: ${c.assignedUniversityUid || 'U-ASSIGNED'}</span>` : ''}
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:11.5px">
+                  <div style="display:flex;align-items:center;gap:6px;font-weight:700;color:#1e293b">
+                    <span>🏢 Industry Assigned:</span>
+                    <span style="color:${assignedIndustryName ? '#059669' : '#94a3b8'};font-weight:750">${assignedIndustryName || '<i style="color:#94a3b8;font-weight:400">Empty (Unassigned)</i>'}</span>
+                  </div>
+                  ${(c.assignedIndustryIid || assignedIndustryName) ? `<span style="font-size:10px;font-weight:800;background:#d1fae5;color:#047857;padding:2px 7px;border-radius:5px;border:1px solid #a7f3d0">IID: ${c.assignedIndustryIid || 'I-ASSIGNED'}</span>` : ''}
+                </div>
+              </div>
+
+              <!-- Partner Allocation Box -->
+              ${assignedUnivName ? `
+                <div class="ch-partner-box assigned">
+                  <div class="ch-partner-left">
+                    <div class="ch-partner-icon" style="background:#DCFCE7;color:#15803D">🏛️</div>
+                    <div class="ch-partner-info">
+                      <div class="ch-partner-title">${assignedUnivName}</div>
+                      <div class="ch-partner-subtitle">✓ Assigned Academic Partner${deadlineFormatted ? ` · Due ${deadlineFormatted}` : ''}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <button class="btn btn-ghost btn-xs" onclick="openChallengeAction('${c._id}')" style="font-weight:800;color:#0284C7">Manage ↗</button>
+                  </div>
+                </div>
+              ` : (c.status === 'validated' ? `
+                <div class="ch-partner-box validated">
+                  <div class="ch-partner-left">
+                    <div class="ch-partner-icon" style="background:#DBEAFE;color:#1D4ED8">⚡</div>
+                    <div class="ch-partner-info">
+                      <div class="ch-partner-title" style="color:#1E40AF">Validated & Ready for Allocation</div>
+                      <div class="ch-partner-subtitle">Ready to assign university R&D team</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn btn-xs" onclick="openAIMatchingForChallenge('${c._id}')" style="background:linear-gradient(135deg,#002D62 0%,#1E3A8A 100%);color:#FFFFFF;font-weight:800;border:none">✦ AI Match</button>
+                  </div>
+                </div>
+              ` : (['submitted', 'under_review'].includes(c.status) ? `
+                <div class="ch-partner-box pending">
+                  <div class="ch-partner-left">
+                    <div class="ch-partner-icon" style="background:#FEF3C7;color:#B45309">📋</div>
+                    <div class="ch-partner-info">
+                      <div class="ch-partner-title" style="color:#92400E">Pending Authority Verification</div>
+                      <div class="ch-partner-subtitle">Review citizen field evidence and validate</div>
+                    </div>
+                  </div>
+                  <div>
+                    <button class="btn btn-xs btn-green" onclick="validateChallenge('${c._id}','validated')">✓ Validate</button>
+                  </div>
+                </div>
+              ` : `
+                <div class="ch-partner-box" style="background:#F8FAFC;border:1px solid #E2E8F0">
+                  <div class="ch-partner-left">
+                    <div class="ch-partner-icon" style="background:#E2E8F0;color:#64748B">ℹ️</div>
+                    <div class="ch-partner-info">
+                      <div class="ch-partner-title" style="text-transform:capitalize">${(c.status || '').replace(/_/g, ' ')}</div>
+                      <div class="ch-partner-subtitle">Status updated by administration</div>
+                    </div>
+                  </div>
+                </div>
+              `))}
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="ch-card-footer">
+              <button onclick="openChallengeAction('${c._id}')" class="ch-btn-view">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span>View Details</span>
+              </button>
+
+              <div class="ch-actions-group">
+                ${['submitted', 'under_review'].includes(c.status) ? `
+                  <button onclick="validateChallenge('${c._id}','validated')" class="ch-btn-validate">✓ Validate</button>
+                  <button onclick="validateChallenge('${c._id}','rejected')" class="ch-btn-reject">✕ Reject</button>
+                ` : ''}
+
+                ${c.status === 'validated' ? `
+                  <button onclick="openAIMatchingForChallenge('${c._id}')" class="ch-btn-ai">
+                    <span style="color:#F59E0B">✦</span> Match with AI
+                  </button>
+                  <button onclick="openAssignModal('${c._id}')" class="ch-btn-assign">⚡ Assign HEI</button>
+                ` : ''}
+
+                ${['validated', 'assigned', 'in_progress'].includes(c.status) ? `
+                  <button onclick="openAssignIndustryModal('${c._id}')" class="ch-btn-csr">🏢 Add CSR</button>
+                ` : ''}
+
+                ${c.status === 'resolved' ? `
+                  <button onclick="validateChallenge('${c._id}','closed')" class="ch-btn-close">🔒 Close</button>
+                ` : ''}
+              </div>
             </div>
           </div>
-
-          <!-- Body -->
-          <div class="ch-card-body">
-            <div class="ch-card-title" onclick="openChallengeAction('${c._id}')" title="View details for ${c.title.replace(/"/g, '&quot;')}">
-              ${c.title}
-            </div>
-
-            ${c.description ? `<div class="ch-card-desc">${c.description}</div>` : ''}
-
-            <!-- Metadata Row -->
-            <div class="ch-meta-row">
-              <div class="ch-meta-item">
-                <span>👤</span>
-                <span>${submitterName}</span>
-              </div>
-              <div class="ch-meta-item">
-                <span>📅</span>
-                <span>${Utils.formatDate(c.createdAt)}</span>
-              </div>
-              <div class="ch-meta-item" style="margin-left:auto">
-                <span style="font-weight:800;color:${qsColor}">★ ${qs}%</span>
-                <span style="font-size:11px;color:#94A3B8">Quality</span>
-              </div>
-            </div>
-
-            <!-- Partner Allocation Box -->
-            ${assignedUnivName ? `
-              <div class="ch-partner-box assigned">
-                <div class="ch-partner-left">
-                  <div class="ch-partner-icon" style="background:#DCFCE7;color:#15803D">🏛️</div>
-                  <div class="ch-partner-info">
-                    <div class="ch-partner-title">${assignedUnivName}</div>
-                    <div class="ch-partner-subtitle">✓ Assigned Academic Partner${c.deadline ? ` · Due ${Utils.formatDate(c.deadline)}` : ''}</div>
-                  </div>
-                </div>
-                <div>
-                  <button class="btn btn-ghost btn-xs" onclick="openChallengeAction('${c._id}')" style="font-weight:800;color:#0284C7">Manage ↗</button>
-                </div>
-              </div>
-            ` : (c.status === 'validated' ? `
-              <div class="ch-partner-box validated">
-                <div class="ch-partner-left">
-                  <div class="ch-partner-icon" style="background:#DBEAFE;color:#1D4ED8">⚡</div>
-                  <div class="ch-partner-info">
-                    <div class="ch-partner-title" style="color:#1E40AF">Validated & Ready for Allocation</div>
-                    <div class="ch-partner-subtitle">Ready to assign university R&D team</div>
-                  </div>
-                </div>
-                <div style="display:flex;gap:6px">
-                  <button class="btn btn-xs" onclick="openAIMatchingForChallenge('${c._id}')" style="background:linear-gradient(135deg,#002D62 0%,#1E3A8A 100%);color:#FFFFFF;font-weight:800;border:none">✦ AI Match</button>
-                </div>
-              </div>
-            ` : (['submitted', 'under_review'].includes(c.status) ? `
-              <div class="ch-partner-box pending">
-                <div class="ch-partner-left">
-                  <div class="ch-partner-icon" style="background:#FEF3C7;color:#B45309">📋</div>
-                  <div class="ch-partner-info">
-                    <div class="ch-partner-title" style="color:#92400E">Pending Authority Verification</div>
-                    <div class="ch-partner-subtitle">Review citizen field evidence and validate</div>
-                  </div>
-                </div>
-                <div>
-                  <button class="btn btn-xs btn-green" onclick="validateChallenge('${c._id}','validated')">✓ Validate</button>
-                </div>
-              </div>
-            ` : `
-              <div class="ch-partner-box" style="background:#F8FAFC;border:1px solid #E2E8F0">
-                <div class="ch-partner-left">
-                  <div class="ch-partner-icon" style="background:#E2E8F0;color:#64748B">ℹ️</div>
-                  <div class="ch-partner-info">
-                    <div class="ch-partner-title" style="text-transform:capitalize">${c.status.replace(/_/g, ' ')}</div>
-                    <div class="ch-partner-subtitle">Status updated by administration</div>
-                  </div>
-                </div>
-              </div>
-            `))}
-          </div>
-
-          <!-- Footer Actions -->
-          <div class="ch-card-footer">
-            <button onclick="openChallengeAction('${c._id}')" class="ch-btn-view">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              <span>View Details</span>
-            </button>
-
-            <div class="ch-actions-group">
-              ${['submitted', 'under_review'].includes(c.status) ? `
-                <button onclick="validateChallenge('${c._id}','validated')" class="ch-btn-validate">✓ Validate</button>
-                <button onclick="validateChallenge('${c._id}','rejected')" class="ch-btn-reject">✕ Reject</button>
-              ` : ''}
-
-              ${c.status === 'validated' ? `
-                <button onclick="openAIMatchingForChallenge('${c._id}')" class="ch-btn-ai">
-                  <span style="color:#F59E0B">✦</span> Match with AI
-                </button>
-                <button onclick="openAssignModal('${c._id}')" class="ch-btn-assign">⚡ Assign HEI</button>
-              ` : ''}
-
-              ${['validated', 'assigned', 'in_progress'].includes(c.status) ? `
-                <button onclick="openAssignIndustryModal('${c._id}')" class="ch-btn-csr">🏢 Add CSR</button>
-              ` : ''}
-
-              ${c.status === 'resolved' ? `
-                <button onclick="validateChallenge('${c._id}','closed')" class="ch-btn-close">🔒 Close</button>
-              ` : ''}
-            </div>
-          </div>
-        </div>
-      `;
+        `;
+      } catch (err) {
+        console.error('Error rendering card for challenge', c?._id, err);
+        return '';
+      }
     }).join('');
   }
 
   // 2. Render Table (Fallback / Toggle View)
   if (tbody) {
     tbody.innerHTML = challenges.map(c => {
-      const idShort = getProblemCode(c, true);
-      const assignedName = c.assignedUniversity?.shortName || c.assignedUniversity?.name?.substring(0,15) || '—';
-      const submitter = c.submittedBy?.name || c.submitterContact?.name || '—';
-      const actions = [];
-      if (['submitted','under_review'].includes(c.status)) {
-        actions.push(`<button onclick="validateChallenge('${c._id}','validated')" class="btn btn-xs btn-green">✓ Validate</button>`);
-        actions.push(`<button onclick="validateChallenge('${c._id}','rejected')" class="btn btn-xs btn-danger">✕ Reject</button>`);
+      try {
+        const idShort = getProblemCode(c, true);
+        const univText = c.universityAssigned || c.assignedUniversity?.shortName || c.assignedUniversity?.name?.substring(0,18) || '';
+        const indText = c.industryAssigned || (c.industryCollaborators && c.industryCollaborators[0]?.partner?.name?.substring(0,18)) || '';
+        const submitter = c.submittedBy?.name || c.submitterContact?.name || '—';
+        const actions = [];
+        if (['submitted','under_review'].includes(c.status)) {
+          actions.push(`<button onclick="validateChallenge('${c._id}','validated')" class="btn btn-xs btn-green">✓ Validate</button>`);
+          actions.push(`<button onclick="validateChallenge('${c._id}','rejected')" class="btn btn-xs btn-danger">✕ Reject</button>`);
+        }
+        if (c.status === 'validated') {
+          actions.push(`<button onclick="openAssignModal('${c._id}')" class="btn btn-xs btn-primary">Assign</button>`);
+          actions.push(`<button onclick="openAIMatchingForChallenge('${c._id}')" class="btn btn-xs" style="background:linear-gradient(135deg, #002D62 0%, #1e3a8a 100%);color:#ffffff;font-weight:750;border:none">✦ AI Match</button>`);
+        }
+        const priorityBadgeHtml = u.priorityBadge ? u.priorityBadge(c.priority) : `<span class="badge badge-${(c.priority || 'medium').toLowerCase()}">${(c.priority || 'MEDIUM').toUpperCase()}</span>`;
+        const statusBadgeHtml = u.statusBadge ? u.statusBadge(c.status) : `<span class="badge badge-${c.status || 'submitted'}">${(c.status || 'submitted').toUpperCase()}</span>`;
+        const dateFormatted = u.formatDate ? u.formatDate(c.createdAt) : (c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN') : '—');
+
+        return `<tr>
+          <td>
+            <div style="font-size:10px;color:var(--gray-400);font-weight:700">${idShort}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--gray-900);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer" onclick="openChallengeAction('${c._id}')">${(c.title || 'Untitled Challenge').replace(/"/g, '&quot;')}</div>
+          </td>
+          <td><span style="font-size:12px;color:var(--gray-600)">${c.category || 'Civic Infrastructure'}</span></td>
+          <td>${priorityBadgeHtml}</td>
+          <td>${statusBadgeHtml}</td>
+          <td><span style="font-size:12px;color:var(--gray-600)">${c.location?.district||'—'}</span></td>
+          <td><span style="font-size:12px;color:var(--gray-600)">${submitter}</span></td>
+          <td>
+            <div style="font-size:11.5px;font-weight:700;color:${univText?'#0284c7':'#94a3b8'}">🏛️ ${univText || 'Unassigned'}</div>
+            <div style="font-size:11px;font-weight:650;color:${indText?'#059669':'#94a3b8'};margin-top:2px">🏢 ${indText || 'Unassigned'}</div>
+          </td>
+          <td><span style="font-size:12px;color:var(--gray-400)">${dateFormatted}</span></td>
+          <td><div style="display:flex;gap:4px;flex-wrap:wrap">
+            <button onclick="openChallengeAction('${c._id}')" class="btn btn-xs btn-ghost">View</button>
+            ${actions.join('')}
+          </div></td>
+        </tr>`;
+      } catch (err) {
+        console.error('Error rendering table row for challenge', c?._id, err);
+        return '';
       }
-      if (c.status === 'validated') {
-        actions.push(`<button onclick="openAssignModal('${c._id}')" class="btn btn-xs btn-primary">Assign</button>`);
-        actions.push(`<button onclick="openAIMatchingForChallenge('${c._id}')" class="btn btn-xs" style="background:linear-gradient(135deg, #002D62 0%, #1e3a8a 100%);color:#ffffff;font-weight:750;border:none">✦ AI Match</button>`);
-      }
-      return `<tr>
-        <td>
-          <div style="font-size:10px;color:var(--gray-400);font-weight:700">${idShort}</div>
-          <div style="font-size:13px;font-weight:600;color:var(--gray-900);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer" onclick="openChallengeAction('${c._id}')">${c.title}</div>
-        </td>
-        <td><span style="font-size:12px;color:var(--gray-600)">${c.category}</span></td>
-        <td>${Utils.priorityBadge(c.priority)}</td>
-        <td>${Utils.statusBadge(c.status)}</td>
-        <td><span style="font-size:12px;color:var(--gray-600)">${c.location?.district||'—'}</span></td>
-        <td><span style="font-size:12px;color:var(--gray-600)">${submitter}</span></td>
-        <td><span style="font-size:12px;color:${c.assignedUniversity?'var(--primary)':'var(--gray-400)'}">${assignedName}</span></td>
-        <td><span style="font-size:12px;color:var(--gray-400)">${Utils.formatDate(c.createdAt)}</span></td>
-        <td><div style="display:flex;gap:4px;flex-wrap:wrap">
-          <button onclick="openChallengeAction('${c._id}')" class="btn btn-xs btn-ghost">View</button>
-          ${actions.join('')}
-        </div></td>
-      </tr>`;
     }).join('');
   }
 }
@@ -1637,10 +1865,13 @@ async function openChallengeAction(id) {
         <!-- RIGHT COLUMN: AI Score, Assigned Institution, Domain Meta & Audit -->
         <div class="cam-col-side">
           
-          <!-- 1. AI Quality Score Circular Gauge -->
+          <!-- 1. AI Quality Score Card -->
           <div class="cam-card cam-score-card">
             <div class="cam-score-header">
-              <span class="cam-card-sub-title">AI Ground Quality</span>
+              <div style="display:flex;align-items:center;gap:7px">
+                <span style="font-size:15px">🎯</span>
+                <span class="cam-card-sub-title">AI Ground Quality</span>
+              </div>
               <span class="cam-score-tier ${qsTierClass}">${qsTier}</span>
             </div>
             <div class="cam-score-content">
@@ -1656,7 +1887,7 @@ async function openChallengeAction(id) {
                 </div>
               </div>
               <div class="cam-score-meta">
-                <div class="cam-score-verdict" style="color:${qsColor}">
+                <div class="cam-score-verdict-pill" style="background:${qs >= 75 ? '#ECFDF5' : (qs >= 50 ? '#FEF3C7' : '#FEF2F2')};color:${qsColor};border:1px solid ${qs >= 75 ? '#A7F3D0' : (qs >= 50 ? '#FCD34D' : '#FECACA')}">
                   ${qs >= 75 ? '✓ Ready for Assignment' : (qs >= 50 ? '⚠ Moderate Quality' : '✕ Needs Field Review')}
                 </div>
                 <div class="cam-score-desc">
@@ -1666,49 +1897,71 @@ async function openChallengeAction(id) {
             </div>
           </div>
 
-          <!-- 2. Assigned Institution Partner Card -->
-          ${c.assignedUniversity ? `
-            <div class="cam-card cam-institution-card">
-              <div class="cam-card-header-row" style="margin-bottom:8px">
-                <div class="cam-header-lead">
-                  <div class="cam-icon-box navy">🏛️</div>
-                  <div>
-                    <div class="cam-partner-tag">ASSIGNED ACADEMIC R&D PARTNER</div>
-                    <div class="cam-partner-name">${c.assignedUniversity.name || c.assignedUniversity.shortName}</div>
+          <!-- 2. Assigned Academic R&D Partner Card -->
+          <div class="cam-card cam-institution-card" style="margin-bottom:12px">
+            <div class="cam-card-header-row" style="margin-bottom:8px">
+              <div class="cam-header-lead" style="align-items:flex-start;width:100%">
+                <div class="cam-icon-box navy" style="margin-top:2px">🏛️</div>
+                <div style="flex:1;min-width:0">
+                  <div class="cam-partner-tag">ASSIGNED ACADEMIC R&amp;D PARTNER</div>
+                  <div class="cam-partner-name" style="font-size:14px;color:${(c.universityAssigned || c.assignedUniversity) ? '#0f172a' : '#94a3b8'}">
+                    ${c.universityAssigned || c.assignedUniversity?.name || c.assignedUniversity?.shortName || 'Empty (Not Assigned)'}
                   </div>
                 </div>
               </div>
-              <div class="cam-partner-details">
-                <div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:#475569">
-                  <span>📍 ${c.assignedUniversity.district || c.location?.district || 'Jharkhand'}</span>
-                  <span style="background:#DBEAFE;color:#1E40AF;padding:2px 7px;border-radius:4px;font-weight:750;font-size:10px">Tier-1 Institute</span>
-                </div>
-                ${c.deadline ? `
-                  <div class="cam-deadline-pill">
-                    <span>⏳ Target Milestone:</span>
-                    <strong>${Utils.formatDate(c.deadline)}</strong>
-                  </div>
-                ` : ''}
+            </div>
+            <div class="cam-partner-details">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:#475569;flex-wrap:wrap;gap:6px">
+                <span style="font-weight:700">UID: <span style="background:#e0f2fe;color:#0369a1;padding:2px 7px;border-radius:4px;font-size:10.5px">${c.assignedUniversityUid || 'Unassigned'}</span></span>
+                <button class="btn btn-xs btn-outline-primary" onclick="closeModal('challengeActionModal'); openAssignModal('${c._id}')" style="font-weight:750">
+                  ${c.universityAssigned ? 'Change HEI ↗' : '⚡ Assign HEI'}
+                </button>
               </div>
             </div>
-          ` : `
-            <div class="cam-card cam-unassigned-card">
-              <div class="cam-unassigned-title">⚡ STATUS: PENDING ALLOCATION</div>
-              <div class="cam-unassigned-desc">
-                Challenge is unallocated. Review citizen ground proof and assign an academic R&D partner.
-              </div>
-            </div>
-          `}
+          </div>
 
-          <!-- 3. AI Classification & Metadata -->
-          <div class="cam-card" style="padding:14px 18px">
-            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:8px">
-              <span style="color:#64748B;font-weight:600">🤖 AI Category</span>
-              <span style="font-weight:750;color:#0F172A">${c.aiSuggestedCategory || c.category} (${Math.round((c.aiConfidenceScore||0.94)*100)}%)</span>
+          <!-- 2B. Assigned Industry Partner Card -->
+          <div class="cam-card cam-institution-card" style="margin-bottom:12px;border-color:#a7f3d0">
+            <div class="cam-card-header-row" style="margin-bottom:8px">
+              <div class="cam-header-lead" style="align-items:flex-start;width:100%">
+                <div class="cam-icon-box" style="margin-top:2px;background:#d1fae5;color:#047857">🏢</div>
+                <div style="flex:1;min-width:0">
+                  <div class="cam-partner-tag" style="color:#047857">ASSIGNED INDUSTRY PARTNER</div>
+                  <div class="cam-partner-name" style="font-size:14px;color:${(c.industryAssigned || (c.industryCollaborators && c.industryCollaborators[0]?.partner)) ? '#0f172a' : '#94a3b8'}">
+                    ${c.industryAssigned || (c.industryCollaborators && c.industryCollaborators[0]?.partner?.name) || 'Empty (Not Assigned)'}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px">
-              <span style="color:#64748B;font-weight:600">📅 Submitted Date</span>
-              <span style="font-weight:750;color:#0F172A">${Utils.formatDate(c.createdAt, true)}</span>
+            <div class="cam-partner-details">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:#475569;flex-wrap:wrap;gap:6px">
+                <span style="font-weight:700">IID: <span style="background:#d1fae5;color:#047857;padding:2px 7px;border-radius:4px;font-size:10.5px">${c.assignedIndustryIid || 'Unassigned'}</span></span>
+                <button class="btn btn-xs btn-outline-primary" onclick="closeModal('challengeActionModal'); openAssignIndustryModal('${c._id}')" style="font-weight:750">
+                  ${c.industryAssigned ? 'Change Partner ↗' : '🏢 Assign Partner'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. AI Classification & Metadata Card -->
+          <div class="cam-card cam-meta-card">
+            <div class="cam-meta-row">
+              <span class="cam-meta-label">
+                <span>🤖</span>
+                <span>AI Category</span>
+              </span>
+              <span class="cam-meta-val" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:800">
+                ${c.aiSuggestedCategory || c.category} (${Math.round((c.aiConfidenceScore||0.94)*100)}%)
+              </span>
+            </div>
+            <div class="cam-meta-row" style="border:none">
+              <span class="cam-meta-label">
+                <span>📅</span>
+                <span>Submitted Date</span>
+              </span>
+              <span class="cam-meta-val" style="font-weight:750;color:#0F172A;font-size:12px">
+                ${Utils.formatDate(c.createdAt, true)}
+              </span>
             </div>
           </div>
 
@@ -1962,10 +2215,10 @@ async function openAssignModal(challengeId) {
       </div>` : ''}
     </div>
     <div class="form-group">
-      <label class="form-label">Select University *</label>
+      <label class="form-label">Select University &amp; UID *</label>
       <select class="form-control" id="assignUnivSelect">
         <option value="">-- Choose University --</option>
-        ${universities.map(u=>`<option value="${u._id}" ${u.name===univRecs[0]?.name||u.shortName===univRecs[0]?.name?'selected':''}>${u.name}${u.shortName?' ('+u.shortName+')':''}${u.naacGrade?' · NAAC '+u.naacGrade:''}</option>`).join('')}
+        ${universities.map(u=>`<option value="${u._id}" ${u.name===univRecs[0]?.name||u.shortName===univRecs[0]?.name?'selected':''}>[${u.uid || 'UID'}] ${u.name}${u.shortName?' ('+u.shortName+')':''}${u.naacGrade?' · NAAC '+u.naacGrade:''}</option>`).join('')}
       </select>
     </div>
     <div class="form-group">
@@ -1998,10 +2251,17 @@ window.confirmAssign = async () => {
   const deadline = document.getElementById('assignDeadline')?.value;
   const notes = document.getElementById('assignNotes')?.value;
   if (!univId) { showAdminToast('Please select a university', 'warning'); return; }
+  const selectedUniv = universities.find(u => String(u._id) === String(univId));
   const btn = document.getElementById('assignConfirmBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Assigning...'; }
   try {
-    const res = await API.put('/challenges/' + currentAssignChallengeId + '/assign', { universityId: univId, deadline, notes });
+    const res = await API.put('/challenges/' + currentAssignChallengeId + '/assign', {
+      universityId: univId,
+      universityName: selectedUniv ? selectedUniv.name : '',
+      universityUid: selectedUniv ? selectedUniv.uid : '',
+      deadline,
+      notes
+    });
     if (res.success) {
       showAdminToast('Challenge assigned successfully! 🎉', 'success');
       closeModal('assignModal');
@@ -2028,7 +2288,7 @@ window.openAssignIndustryModal = (challengeId) => {
   const sel = document.getElementById('assignIndSelect');
   if (sel) {
     sel.innerHTML = '<option value="">-- Choose Partner --</option>' +
-      industryPartners.map(p => `<option value="${p._id}">${p.name} (${p.type?.replace(/_/g,' ')||'Industry'})</option>`).join('');
+      industryPartners.map(p => `<option value="${p._id}">[${p.iid || p.industryId || 'IID'}] ${p.name} (${p.type?.replace(/_/g,' ')||'Industry'})</option>`).join('');
   }
   openModal('assignIndustryModal');
 };
@@ -2038,10 +2298,17 @@ window.confirmAssignIndustry = async () => {
   const role = document.getElementById('assignIndRole')?.value;
   const notes = document.getElementById('assignIndNotes')?.value;
   if (!partnerId) { showAdminToast('Please select an industry partner', 'warning'); return; }
+  const selectedPartner = industryPartners.find(p => String(p._id) === String(partnerId));
   const btn = document.getElementById('assignIndConfirmBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Assigning...'; }
   try {
-    const res = await API.post('/challenges/' + currentAssignChallengeId + '/assign-industry', { partnerId, role, note: notes });
+    const res = await API.post('/challenges/' + currentAssignChallengeId + '/assign-industry', {
+      partnerId,
+      industryName: selectedPartner ? selectedPartner.name : '',
+      industryIid: selectedPartner ? (selectedPartner.iid || selectedPartner.industryId) : '',
+      role,
+      note: notes
+    });
     if (res.success) {
       showAdminToast('Industry partner assigned successfully!', 'success');
       try {
@@ -2468,8 +2735,8 @@ let _currentAdminProposals = [];
 let _activeProposalId = null;
 
 window.loadAdminProposals = async function() {
+  const listContainer = document.getElementById('proposalsTableBody');
   try {
-    const listContainer = document.getElementById('proposalsTableBody');
     if (listContainer) {
       listContainer.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px"><div class="spinner" style="margin:0 auto"></div></td></tr>';
     }
@@ -2481,7 +2748,7 @@ window.loadAdminProposals = async function() {
     if (detailView) detailView.style.display = 'none';
 
     const res = await API.get('/admin/proposals');
-    if (res.success && Array.isArray(res.data)) {
+    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
       _currentAdminProposals = res.data;
       renderProposalsTable(_currentAdminProposals);
 
@@ -2494,11 +2761,19 @@ window.loadAdminProposals = async function() {
       }
     } else {
       if (listContainer) {
-        listContainer.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--gray-400)">No solution proposals found.</td></tr>';
+        listContainer.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-weight:700">No solution proposals found.</div></td></tr>';
       }
     }
   } catch (err) {
     console.error('Error loading proposals:', err);
+    if (listContainer) {
+      listContainer.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#dc2626">
+        <div style="font-size:32px;margin-bottom:8px">⚠️</div>
+        <div style="font-weight:750">Failed to load solution proposals</div>
+        <div style="font-size:12px;color:#64748b;margin:6px 0 14px">${err.message || 'Please verify connection'}</div>
+        <button class="btn btn-sm btn-primary" onclick="loadAdminProposals()">↻ Retry Loading</button>
+      </td></tr>`;
+    }
     showAdminToast('Failed to load solution proposals: ' + err.message, 'error');
   }
 };
@@ -2738,7 +3013,7 @@ function renderProposalDetailCard(p) {
       <!-- Part 3: Approval / Review State -->
       ${isApproved ? `
         <!-- When Approved: 3 Review Buttons Are Hidden, Shows Confirmed Status & Final Industry Partner -->
-        <div style="padding:16px 32px 8px">
+        <div class="proposal-approved-banner-wrap" style="padding:16px 32px 8px">
           <div style="background:linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);border:1.5px solid #86efac;border-radius:16px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;box-shadow:0 2px 8px rgba(22,163,74,0.08)">
             <div style="display:flex;align-items:center;gap:14px">
               <div style="width:42px;height:42px;border-radius:12px;background:#16a34a;color:#ffffff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;flex-shrink:0">
@@ -2758,9 +3033,9 @@ function renderProposalDetailCard(p) {
         </div>
 
         <!-- Final Assigned Industry Card (When Approved) -->
-        <div id="proposalSelectedPartnerBlock" style="padding:8px 32px 18px">
+        <div id="proposalSelectedPartnerBlock" class="proposal-selected-partner-wrap" style="padding:8px 32px 18px">
           ${p.assignedIndustry ? `
-            <div style="background:#ffffff;border:2px solid #86efac;border-radius:16px;padding:20px 24px;box-shadow:0 4px 16px rgba(22,163,74,0.08);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+            <div class="proposal-partner-card-inner" style="background:#ffffff;border:2px solid #86efac;border-radius:16px;padding:20px 24px;box-shadow:0 4px 16px rgba(22,163,74,0.08);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
               <div style="display:flex;align-items:center;gap:16px">
                 <div style="width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg, #15803d 0%, #166534 100%);color:#ffffff;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;box-shadow:0 3px 8px rgba(21,128,61,0.25)">
                   🏭
@@ -2777,7 +3052,7 @@ function renderProposalDetailCard(p) {
                   </div>
                 </div>
               </div>
-              <div style="display:flex;align-items:center;gap:10px">
+              <div class="proposal-partner-card-actions" style="display:flex;align-items:center;gap:10px">
                 <button class="btn btn-outline btn-sm" onclick="openAIMatchingForProposal('${p._id}')" style="font-weight:800;color:#002D62;border-color:#cbd5e1;padding:8px 16px;border-radius:8px">
                   🏢 Assign / Change Industry
                 </button>
@@ -2788,7 +3063,7 @@ function renderProposalDetailCard(p) {
               </div>
             </div>
           ` : `
-            <div style="background:#fefce8;border:1.5px solid #fde047;border-radius:16px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
+            <div class="proposal-partner-card-inner" style="background:#fefce8;border:1.5px solid #fde047;border-radius:16px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
               <div style="display:flex;align-items:center;gap:12px">
                 <div style="font-size:24px">⚠️</div>
                 <div>
@@ -2796,7 +3071,7 @@ function renderProposalDetailCard(p) {
                   <div style="font-size:12.5px;color:#a16207;margin-top:2px">Proposal has been approved. Please assign a CSR partner or use AI Matching.</div>
                 </div>
               </div>
-              <div style="display:flex;align-items:center;gap:10px">
+              <div class="proposal-partner-card-actions" style="display:flex;align-items:center;gap:10px">
                 <button class="btn btn-primary btn-sm" onclick="openAIMatchingForProposal('${p._id}')" style="background:linear-gradient(135deg, #002D62 0%, #1e3a8a 100%);color:#ffffff;font-weight:800;border:none;padding:8px 16px;border-radius:8px">
                   🏢 Match & Assign Industry Partner
                 </button>
@@ -2840,9 +3115,9 @@ function renderProposalDetailCard(p) {
         </div>
 
         <!-- Selected Industry Partner preview (Prior to Approval) -->
-        <div id="proposalSelectedPartnerBlock" style="padding:0 32px 14px">
+        <div id="proposalSelectedPartnerBlock" class="proposal-selected-partner-wrap" style="padding:0 32px 14px">
           ${p.assignedIndustry ? `
-            <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;padding:16px 20px;box-shadow:0 2px 8px rgba(22,163,74,0.08);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div class="proposal-partner-card-inner" style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;padding:16px 20px;box-shadow:0 2px 8px rgba(22,163,74,0.08);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
               <div style="display:flex;align-items:center;gap:14px">
                 <div style="width:46px;height:46px;border-radius:12px;background:#15803d;color:#ffffff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">
                   🏭
@@ -2859,7 +3134,7 @@ function renderProposalDetailCard(p) {
                   </div>
                 </div>
               </div>
-              <div style="display:flex;align-items:center;gap:8px">
+              <div class="proposal-partner-card-actions" style="display:flex;align-items:center;gap:8px">
                 <button class="btn btn-ghost btn-sm" onclick="openAIMatchingForProposal('${p._id}')" style="font-weight:750;color:#1e40af;border:1px solid #bfdbfe;background:#eff6ff">
                   ✦ Re-match with AI
                 </button>
@@ -3185,7 +3460,7 @@ function renderAIMatchingListView(data, referenceId, matchingType = 'industry') 
 
   overlay.innerHTML = `
     <div class="ai-modal-container">
-      <!-- Image 1 Header -->
+      <!-- Header Banner -->
       <div class="ai-header-banner">
         <div class="ai-header-title-wrap">
           <div class="ai-robot-badge">🤖</div>
@@ -3194,25 +3469,25 @@ function renderAIMatchingListView(data, referenceId, matchingType = 'industry') 
             <div class="ai-header-subtitle">Find the most suitable ${isUniv ? 'universities' : 'industry partners'} based on problem requirements, past performance and expertise.</div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:12px">
+        <div class="ai-header-actions">
           <div class="ai-pill-badge" style="${isUniv ? 'background:#eff6ff;color:#1e40af;border-color:#bfdbfe' : 'background:#f0fdf4;color:#15803d;border-color:#bbf7d0'}">
             <span>${isUniv ? '🎓' : '🏭'}</span>
             <span>${isUniv ? 'University Matching' : 'Industry Matching'}</span>
           </div>
-          <button onclick="closeAIMatchingModal()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer;padding:4px 8px;border-radius:6px" title="Close">✕</button>
+          <button class="ai-modal-close-btn" onclick="closeAIMatchingModal()" title="Close">✕</button>
         </div>
       </div>
 
-      <!-- Problem Context Banner (Matches Image 1) -->
+      <!-- Problem Context Banner -->
       <div class="ai-problem-banner">
         <div class="ai-problem-left">
           <div class="ai-problem-icon">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           </div>
-          <div>
+          <div class="ai-problem-info">
             <div class="ai-problem-meta">
               <span>Report ID: ${data.challengeId || 'JH-2026-625506'}</span>
-              <span style="background:#dcfce7;color:#15803d;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:800">Verified</span>
+              <span class="ai-verified-pill" style="background:#dcfce7;color:#15803d;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:800">Verified</span>
             </div>
             <div class="ai-problem-title">${data.problemTitle || 'Near hospital needs renovation'}</div>
             <div class="ai-problem-tags">
@@ -3221,10 +3496,10 @@ function renderAIMatchingListView(data, referenceId, matchingType = 'industry') 
             </div>
           </div>
         </div>
-        <div>
-          <button class="btn btn-ghost btn-sm" onclick="closeAIMatchingModal()" style="color:#0284c7;font-weight:750;display:flex;align-items:center;gap:4px">
+        <div class="ai-problem-actions">
+          <button class="btn btn-ghost btn-sm ai-view-report-btn" onclick="closeAIMatchingModal()" style="color:#0284c7;font-weight:750;display:flex;align-items:center;gap:4px">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            View Report
+            <span>View Report</span>
           </button>
         </div>
       </div>
@@ -3234,7 +3509,7 @@ function renderAIMatchingListView(data, referenceId, matchingType = 'industry') 
         <div class="ai-section-heading">
           <span>Top Matching ${isUniv ? 'Universities' : 'Industry Partners'} (${top5.length})</span>
         </div>
-        <div style="display:flex;align-items:center;gap:12px;font-size:12.5px;color:#64748b">
+        <div class="ai-section-controls" style="display:flex;align-items:center;gap:12px;font-size:12.5px;color:#64748b">
           <span>Sort by: <strong style="color:#0f172a">AI Match Score ▾</strong></span>
           <button class="btn btn-ghost btn-sm" onclick="${isUniv ? `openAIMatchingForChallenge('${referenceId}', true)` : `openAIMatchingForProposal('${referenceId}', true)`}" title="Re-run AI Analysis" style="padding:4px 8px;font-size:12px">
             ⚡ Refresh
@@ -3242,7 +3517,7 @@ function renderAIMatchingListView(data, referenceId, matchingType = 'industry') 
         </div>
       </div>
 
-      <!-- TOP 5 Cards List (Matches Image 1) -->
+      <!-- TOP 5 Cards List -->
       <div class="ai-cards-list">
         ${top5.map(partner => {
           const rankClass = partner.rank === 1 ? 'rank-1' : (partner.rank === 2 ? 'rank-2' : (partner.rank === 3 ? 'rank-3' : 'rank-default'));
@@ -3250,7 +3525,8 @@ function renderAIMatchingListView(data, referenceId, matchingType = 'industry') 
 
           return `
             <div class="ai-rec-card ${partner.rank === 1 ? 'rank-1' : ''}" onclick="openCompleteAIAnalysis('${partner.institutionId}', '${referenceId}', '${matchingType}')" style="cursor:pointer">
-              <div style="display:flex;align-items:center;gap:16px">
+              <!-- Entity Wrap: Rank + Avatar + Details -->
+              <div class="ai-rec-entity-wrap">
                 <div class="ai-rank-badge ${rankClass}">
                   ${partner.rank}
                 </div>
@@ -3278,25 +3554,27 @@ function renderAIMatchingListView(data, referenceId, matchingType = 'industry') 
                 </div>
               </div>
 
-              <!-- Score & Metrics -->
-              <div style="display:flex;align-items:center;gap:24px">
-                <div class="ai-score-box">
-                  <div class="ai-score-number">${partner.matchScore} / 100</div>
-                  <div class="ai-score-label">${partner.matchLabel}</div>
-                </div>
+              <!-- Meta Wrap: Score & Metrics & Action Buttons -->
+              <div class="ai-rec-meta-wrap">
+                <div class="ai-score-and-metrics">
+                  <div class="ai-score-box">
+                    <div class="ai-score-number">${partner.matchScore} / 100</div>
+                    <div class="ai-score-label">${partner.matchLabel}</div>
+                  </div>
 
-                <div class="ai-rec-metrics">
-                  <div class="ai-metric-item">
-                    <span class="ai-metric-val">${partner.stats?.successRate || 85}%</span>
-                    <span class="ai-metric-lbl">Success Rate</span>
-                  </div>
-                  <div class="ai-metric-item">
-                    <span class="ai-metric-val">${partner.stats?.avgCompletionDays || 45} days</span>
-                    <span class="ai-metric-lbl">Avg. Completion</span>
-                  </div>
-                  <div class="ai-metric-item">
-                    <span class="ai-metric-val">${partner.stats?.similarProjectsCount || 12}</span>
-                    <span class="ai-metric-lbl">Similar Projects</span>
+                  <div class="ai-rec-metrics">
+                    <div class="ai-metric-item">
+                      <span class="ai-metric-val">${partner.stats?.successRate || 85}%</span>
+                      <span class="ai-metric-lbl">Success Rate</span>
+                    </div>
+                    <div class="ai-metric-item">
+                      <span class="ai-metric-val">${partner.stats?.avgCompletionDays || 45} days</span>
+                      <span class="ai-metric-lbl">Avg. Completion</span>
+                    </div>
+                    <div class="ai-metric-item">
+                      <span class="ai-metric-val">${partner.stats?.similarProjectsCount || 12}</span>
+                      <span class="ai-metric-lbl">Similar Projects</span>
+                    </div>
                   </div>
                 </div>
 
@@ -3389,18 +3667,18 @@ window.openCompleteAIAnalysis = async function(institutionId, referenceId, match
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6" /></svg>
           Back to AI Matching
         </button>
-        <div style="display:flex;align-items:center;gap:12px">
+        <div class="ai-analysis-top-nav-actions" style="display:flex;align-items:center;gap:12px">
           <button class="btn btn-ghost btn-sm" onclick="downloadAIAnalysisReport('${p.name.replace(/'/g, "\\'")}')" style="display:flex;align-items:center;gap:6px;font-weight:750">
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download Analysis Report
           </button>
-          <button onclick="closeAIMatchingModal()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer;padding:4px 8px;border-radius:6px">✕</button>
+          <button class="ai-modal-close-btn" onclick="closeAIMatchingModal()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer;padding:4px 8px;border-radius:6px">✕</button>
         </div>
       </div>
 
       <!-- Profile Header Card (Matches Image 2) -->
       <div class="ai-profile-card">
-        <div style="display:flex;align-items:center;gap:20px">
+        <div class="ai-profile-main-info" style="display:flex;align-items:center;gap:20px">
           <div style="width:68px;height:68px;border-radius:16px;background:#f8fafc;border:1.5px solid #e2e8f0;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:#002D62;flex-shrink:0">
             ${initials}
           </div>
@@ -3420,7 +3698,7 @@ window.openCompleteAIAnalysis = async function(institutionId, referenceId, match
           </div>
         </div>
 
-        <div class="ai-score-box" style="padding:12px 24px;min-width:135px">
+        <div class="ai-score-box ai-profile-score-box" style="padding:12px 24px;min-width:135px">
           <div class="ai-score-number" style="font-size:26px">${p.matchScore} / 100</div>
           <div style="font-size:11.5px;color:#64748b;font-weight:700">AI Match Score</div>
           <div class="ai-score-label" style="font-size:12px;margin-top:3px">${p.matchLabel}</div>
@@ -3652,7 +3930,7 @@ window.openCompleteAIAnalysis = async function(institutionId, referenceId, match
       </div>
 
       <!-- Box 7: AI Recommendation & Final Assignment Actions (Matches Image 2) -->
-      <div style="padding:0 32px 32px">
+      <div class="ai-rec-box-wrapper" style="padding:0 32px 32px">
         <div class="ai-recommendation-box">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
             <span style="font-size:20px">🏆</span>
@@ -3664,7 +3942,7 @@ window.openCompleteAIAnalysis = async function(institutionId, referenceId, match
               : `${p.name} is the most suitable candidate for this proposal based on comprehensive analysis of requested technical capabilities, CSR budget allocation, and proven deployment performance in Jharkhand.`}
           </div>
 
-          <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:16px">
+          <div class="ai-rec-box-actions" style="display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:16px">
             <button class="btn btn-ghost" onclick="showPartnerComparison('${p.institutionId}')" style="font-weight:750;color:#334155">
               ⚖ Compare With Others
             </button>

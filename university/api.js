@@ -459,7 +459,7 @@ function enrichProblemDoc(p) {
   return obj;
 }
 
-router.get('/problems', cacheService.middleware('problems:list', 60), async (req, res) => {
+router.get('/problems', async (req, res) => {
   try {
     const { category, impact, discipline, search } = req.query;
 
@@ -473,6 +473,49 @@ router.get('/problems', cacheService.middleware('problems:list', 60), async (req
         { description: { $regex: search, $options: 'i' } },
         { challengeId: { $regex: search, $options: 'i' } }
       ];
+    }
+
+    // Determine calling university identity
+    let callerUniv = (req.query.institution || req.query.university || req.query.univ || '').trim();
+    let callerUid = (req.query.uid || '').trim();
+
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      try {
+        const decoded = jwt.verify(req.headers.authorization.split(' ')[1], process.env.JWT_SECRET || 'your_strong_jwt_secret_key_here');
+        if (decoded && decoded.id) {
+          const u = await User.findById(decoded.id).lean();
+          if (u) {
+            callerUniv = callerUniv || u.institution || u.organization || '';
+            callerUid = callerUid || u.uniqueId || u.universityIdString || '';
+          }
+        }
+      } catch(e) {}
+    }
+
+    // Strict University Assignment rule:
+    // If a problem has universityAssigned, it is ONLY visible to that particular university!
+    if (callerUniv || callerUid) {
+      const allowedConditions = [
+        { universityAssigned: null },
+        { universityAssigned: '' },
+        { universityAssigned: { $exists: false } }
+      ];
+      if (callerUniv) {
+        allowedConditions.push({ universityAssigned: callerUniv });
+        const shortKeyword = callerUniv.split(' ')[0];
+        if (shortKeyword && shortKeyword.length > 2) {
+          allowedConditions.push({ universityAssigned: new RegExp(shortKeyword, 'i') });
+        }
+      }
+      if (callerUid) {
+        allowedConditions.push({ assignedUniversityUid: callerUid });
+      }
+
+      if (query.$or) {
+        query = { $and: [ { $or: query.$or }, { $or: allowedConditions } ] };
+      } else {
+        query.$or = allowedConditions;
+      }
     }
 
     let problems = await Problem.find(query).sort({ createdAt: -1 }).lean();

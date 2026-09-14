@@ -30,14 +30,37 @@ exports.getChallenges = async (req, res, next) => {
           query.isPublic = true;
           query.status = { $nin: ['draft', 'rejected'] };
         }
-      } else if (req.user.role === 'university_rep') {
-        query.assignedUniversity = req.user.universityId;
-      } else if (req.user.role === 'industry_rep') {
-        // Industry reps see all non-draft challenges
-        query.status = { $ne: 'draft' };
+      } else if (req.user.role === 'university_rep' || (req.user.uniqueId && req.user.uniqueId.startsWith('U'))) {
+        // Only visible to members of the particular university assigned
+        const uName = req.user.institution || req.user.organization;
+        const uUid = req.user.uniqueId || req.user.universityIdString;
+        const uId = req.user.universityId;
+        const univConditions = [];
+        if (uName) univConditions.push({ universityAssigned: uName }, { universityAssigned: new RegExp(uName.split(' ')[0], 'i') });
+        if (uUid) univConditions.push({ assignedUniversityUid: uUid });
+        if (uId) univConditions.push({ assignedUniversity: uId });
+        if (univConditions.length > 0) {
+          query.$or = univConditions;
+        } else {
+          query.universityAssigned = { $ne: null };
+        }
+      } else if (req.user.role === 'industry_rep' || (req.user.uniqueId && req.user.uniqueId.startsWith('I'))) {
+        // Only visible to members of the particular industry assigned
+        const iName = req.user.organization || req.user.name;
+        const iIid = req.user.uniqueId || req.user.industryIdString;
+        const iId = req.user.industryPartnerId;
+        const indConditions = [];
+        if (iName) indConditions.push({ industryAssigned: iName }, { industryAssigned: new RegExp(iName.split(' ')[0], 'i') });
+        if (iIid) indConditions.push({ assignedIndustryIid: iIid });
+        if (iId) indConditions.push({ assignedIndustry: iId }, { 'industryCollaborators.partner': iId });
+        if (indConditions.length > 0) {
+          query.$or = indConditions;
+        } else {
+          query.industryAssigned = { $ne: null };
+        }
       }
     } else {
-      // Public: show all active public challenges including newly submitted citizen reports
+      // Public: show all active public challenges
       query.isPublic = true;
       query.status = { $nin: ['draft', 'rejected'] };
     }
@@ -669,6 +692,8 @@ exports.assignChallenge = async (req, res, next) => {
 
     const oldStatus = challenge.status;
     challenge.assignedUniversity = universityId;
+    challenge.assignedUniversityUid = university.uid || ('U' + String(university._id).slice(-4));
+    challenge.universityAssigned = university.name; // updated only when admin assigns
     challenge.assignedAt = new Date();
     challenge.assignedBy = req.user.id;
     challenge.status = 'assigned';
@@ -1568,6 +1593,10 @@ exports.assignIndustryPartner = async (req, res, next) => {
     if (alreadyAssigned) {
       return res.status(400).json({ success: false, message: 'Partner is already collaborating on this challenge' });
     }
+
+    challenge.assignedIndustry = partnerId;
+    challenge.assignedIndustryIid = partner.iid || ('I' + String(partner._id).slice(-4));
+    challenge.industryAssigned = partner.name; // updated only when admin assigns
 
     challenge.industryCollaborators.push({
       partner: partnerId,

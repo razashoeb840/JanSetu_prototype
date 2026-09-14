@@ -3,21 +3,73 @@ import React, { useEffect } from 'react';
 import './adminstyle.css';
 
 function App() {
+  const showSection = (section) => {
+    window.location.hash = section;
+    if (typeof window.showSection === 'function') {
+      try {
+        window.showSection(section);
+        return;
+      } catch (err) {
+        console.warn('Error invoking window.showSection:', err);
+      }
+    }
+    // Fallback UI tab switch if admin.js is not yet attached
+    document.querySelectorAll('.dashboard-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(l => l.classList.remove('active'));
+    const sectionEl = document.getElementById('section-' + section);
+    const navEl = document.getElementById('nav-' + section);
+    if (sectionEl) sectionEl.classList.add('active');
+    if (navEl) navEl.classList.add('active');
+  };
+
+  const toggleSidebar = () => {
+    if (typeof window.toggleSidebar === 'function') {
+      try {
+        window.toggleSidebar();
+        return;
+      } catch (err) {
+        console.warn('Error invoking window.toggleSidebar:', err);
+      }
+    }
+    const sb = document.querySelector('.sidebar');
+    if (sb) {
+      if (window.innerWidth <= 1024) {
+        sb.classList.toggle('mobile-open');
+        document.body.classList.toggle('sidebar-mobile-open', sb.classList.contains('mobile-open'));
+      } else {
+        sb.classList.toggle('collapsed');
+        document.body.classList.toggle('sidebar-collapsed', sb.classList.contains('collapsed'));
+      }
+    }
+  };
+
   useEffect(() => {
-    // Dynamically load scripts after component mounts
-    const loadScript = (src) => {
+    // Dynamically load scripts in strict order after component mounts
+    const loadScript = (src, cb) => {
+      const existing = document.querySelector(`script[data-src="${src}"]`);
+      if (existing) {
+        if (cb) cb();
+        return;
+      }
       const script = document.createElement('script');
-      script.src = src;
+      script.src = `${src}?v=${Date.now()}`;
+      script.setAttribute('data-src', src);
       script.async = false;
+      if (cb) script.onload = cb;
       document.body.appendChild(script);
     };
 
-    loadScript('/js/utils.js');
-    loadScript('/admin/jansetu-civic-loader.js');
-    setTimeout(() => {
-      loadScript('/js/pan-india-heatmap.js');
-      setTimeout(() => loadScript('/admin/admin.js?v=' + Date.now()), 200);
-    }, 200);
+    loadScript('/js/utils.js', () => {
+      loadScript('/admin/jansetu-civic-loader.js', () => {
+        loadScript('/js/pan-india-heatmap.js', () => {
+          loadScript('/admin/admin.js', () => {
+            if (typeof window.initAdmin === 'function') {
+              window.initAdmin();
+            }
+          });
+        });
+      });
+    });
   }, []);
 
   return (
@@ -172,21 +224,6 @@ function App() {
       </div>
 
       <div className="topbar-right">
-        <div className="gov-badge-tag">
-          <span className="gov-badge-dot"></span>
-          <span>Jharkhand Civic Intelligence</span>
-        </div>
-
-        <div className="heritage-flag-pill">
-          <span style={{"fontSize":"13px"}}>🇮🇳</span>
-          <span>सत्यमेव जयते</span>
-        </div>
-
-        <div className="admin-live-badge">
-          <span className="admin-live-badge-dot"></span>
-          <span>Admin</span>
-        </div>
-
         <button className="notif-bell-btn" onClick={() => { showSection('notifications') }} title="Notifications">
           <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
           <span className="notif-pink-badge" id="topbarNotifDot" style={{"display":"none"}}>0</span>
@@ -1159,10 +1196,6 @@ function App() {
   </div>
 </div>
 <div id="adminToast" style={{"display":"none","position":"fixed","bottom":"24px","left":"50%","transform":"translateX(-50%)","background":"#0f172a","color":"white","padding":"10px 22px","borderRadius":"30px","fontSize":"13px","fontWeight":"700","zIndex":"9999","boxShadow":"0 10px 30px rgba(0,0,0,0.3)","alignItems":"center","gap":"8px","pointerEvents":"none","border":"1px solid rgba(255,255,255,0.15)"}}></div>
-<script src="/js/utils.js"></script>
-<script src="/js/pan-india-heatmap.js"></script>
-<script src="/admin/admin.js"></script>
-
     </>
   );
 }

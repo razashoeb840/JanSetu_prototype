@@ -32,26 +32,26 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  citizenId: {
+  // Single Unified Role-Based ID (C... = Citizen, U... = University, I... = Industry)
+  uniqueId: {
     type: String,
     unique: true,
     sparse: true,
+    trim: true,
+    uppercase: true,
+    index: true
+  },
+  citizenId: {
+    type: String,
     trim: true
   },
   universityIdString: {
     type: String,
-    unique: true,
-    sparse: true,
     trim: true
   },
-  aadhaar: {
+  industryIdString: {
     type: String,
-    trim: true,
-    default: '8492-3840-4819'
-  },
-  aadhaarVerified: {
-    type: Boolean,
-    default: true
+    trim: true
   },
   phoneVerified: {
     type: Boolean,
@@ -61,10 +61,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  avatar: {
-    type: String,
-    default: null
-  },
+
   // Citizen fields
   address: {
     street: String,

@@ -2060,7 +2060,7 @@
               <div class="form-group">
                 <label class="form-label" for="regUnivInstitution">University / Institution Name <span class="req-star">*</span></label>
                 <div class="input-wrap">
-                  <select class="input-field" id="regUnivInstitution">
+                  <select class="input-field" id="regUnivInstitution" onchange="handleUnivSelectChange(this.value)">
                     <option value="BIT Mesra, Ranchi" selected>Birla Institute of Technology (BIT) Mesra, Ranchi</option>
                     <option value="IIT (ISM) Dhanbad">Indian Institute of Technology (ISM) Dhanbad</option>
                     <option value="NIT Jamshedpur">National Institute of Technology (NIT) Jamshedpur</option>
@@ -2069,11 +2069,29 @@
                     <option value="Kolhan University">Kolhan University, Chaibasa</option>
                     <option value="Central University of Jharkhand">Central University of Jharkhand (CUJ), Ranchi</option>
                     <option value="IIT Delhi">Indian Institute of Technology (IIT) Delhi</option>
-                    <option value="Other University / Engineering College">Other Recognized Technical Institute / HEI</option>
+                    <option value="__ADD_NEW__" style="font-weight:700;color:#2563eb">➕ Add University (New)</option>
                   </select>
                   <span class="input-icon-left">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3z"/></svg>
                   </span>
+                </div>
+                <!-- Dynamic Add University Block -->
+                <div id="addUnivCustomFields" style="display:none;margin-top:10px;padding:12px 14px;background:#f0f9ff;border:1.5px dashed #38bdf8;border-radius:10px">
+                  <div style="font-size:12px;font-weight:700;color:#0284c7;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+                    <span>🏛️</span> Enter University &amp; Campus Location
+                  </div>
+                  <div class="form-group" style="margin-bottom:8px">
+                    <label class="form-label" for="regUnivCustomName" style="font-size:11.5px">University Name <span class="req-star">*</span></label>
+                    <div class="input-wrap">
+                      <input type="text" class="input-field" id="regUnivCustomName" placeholder="e.g. Usha Martin University" style="font-size:13px;padding:9px 12px" />
+                    </div>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label" for="regUnivCustomCity" style="font-size:11.5px">City / Campus <span class="req-star">*</span></label>
+                    <div class="input-wrap">
+                      <input type="text" class="input-field" id="regUnivCustomCity" placeholder="e.g. Ranchi, Jamshedpur" style="font-size:13px;padding:9px 12px" />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -2796,11 +2814,32 @@
           address: { district, pincode, state: 'Jharkhand' }
         };
       } else if (role === 'university_rep') {
-        const institution = document.getElementById('regUnivInstitution').value;
+        const institutionSelect = document.getElementById('regUnivInstitution').value;
+        let institution = institutionSelect;
+        let customCity = '';
+        let isNewUniversity = false;
+
+        if (institutionSelect === '__ADD_NEW__') {
+          const customName = (document.getElementById('regUnivCustomName')?.value || '').trim();
+          customCity = (document.getElementById('regUnivCustomCity')?.value || '').trim();
+          if (!customName) {
+            showToast('Please enter the University Name.', 'error');
+            document.getElementById('regUnivCustomName')?.focus();
+            return;
+          }
+          if (!customCity) {
+            showToast('Please enter the University City.', 'error');
+            document.getElementById('regUnivCustomCity')?.focus();
+            return;
+          }
+          institution = customName;
+          isNewUniversity = true;
+        }
+
         const department = document.getElementById('regUnivDepartment').value;
         const designation = document.getElementById('regUnivDesignation').value;
-        const facultyId = document.getElementById('regUnivFacultyId').value.trim();
-        const expertiseDomain = document.getElementById('regUnivDomain').value;
+        const facultyId = document.getElementById('regUnivFacultyId') ? document.getElementById('regUnivFacultyId').value.trim() : '';
+        const expertiseDomain = document.getElementById('regUnivDomain') ? document.getElementById('regUnivDomain').value : '';
         roleSpecificBody = {
           institution,
           organization: institution,
@@ -2808,7 +2847,10 @@
           designation,
           universityIdString: facultyId,
           facultyId,
-          expertiseDomain
+          expertiseDomain,
+          city: customCity,
+          isNewUniversity,
+          customUniversityName: isNewUniversity ? institution : undefined
         };
       } else if (role === 'industry_rep') {
         const organization = document.getElementById('regIndOrg').value.trim();
@@ -2983,8 +3025,23 @@
         console.error('LocalStorage error:', e);
       }
 
-      const role = user.role || 'citizen';
-      const dest = DASHBOARD_ROUTES[role] || '/citizen';
+      const rawId = (user.uniqueId || user.citizenId || user.universityIdString || user.industryIdString || '').toUpperCase().trim();
+      let dest = '/citizen';
+      if (user.role === 'admin' || user.email === 'admin@innovatesphere.in' || user.email === 'admin@jansetu.in' || rawId.startsWith('ADM')) {
+        dest = '/admin';
+      } else if (rawId.startsWith('C')) {
+        dest = '/citizen';
+      } else if (rawId.startsWith('U')) {
+        dest = '/university';
+      } else if (rawId.startsWith('I')) {
+        dest = '/industries';
+      } else if (user.role === 'university_rep' || user.role === 'university') {
+        dest = '/university';
+      } else if (user.role === 'industry_rep' || user.role === 'industry') {
+        dest = '/industries';
+      } else {
+        dest = DASHBOARD_ROUTES[user.role] || '/citizen';
+      }
       const welcomeName = displayName || user.name || 'Member';
 
       showToast(`Welcome, ${welcomeName}! Entering Dashboard...`, 'success', 2200);
@@ -2993,6 +3050,17 @@
         window.location.href = dest;
       }, 600);
     }
+
+    window.handleUnivSelectChange = function(val) {
+      const block = document.getElementById('addUnivCustomFields');
+      if (!block) return;
+      if (val === '__ADD_NEW__') {
+        block.style.display = 'block';
+        document.getElementById('regUnivCustomName')?.focus();
+      } else {
+        block.style.display = 'none';
+      }
+    };
 
     // UI Loading state
     function setLoading(btnId, isLoading) {

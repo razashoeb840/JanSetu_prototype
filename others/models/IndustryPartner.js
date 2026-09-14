@@ -7,6 +7,18 @@ const industryPartnerSchema = new mongoose.Schema({
     trim: true,
     unique: true
   },
+  iid: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true,
+    uppercase: true,
+    index: true
+  },
+  industryId: {
+    type: String,
+    trim: true
+  },
   type: {
     type: String,
     enum: ['industry', 'startup', 'msme', 'csr', 'research_lab', 'innovation_hub', 'ngo', 'government_agency'],
@@ -77,6 +89,19 @@ const industryPartnerSchema = new mongoose.Schema({
   employeeCount: String
 }, {
   timestamps: true
+});
+
+industryPartnerSchema.pre('validate', function(next) {
+  if (!this.iid) {
+    this.iid = 'I' + Math.floor(1000 + Math.random() * 9000);
+  } else {
+    this.iid = String(this.iid).trim().toUpperCase();
+    if (!this.iid.startsWith('I')) {
+      this.iid = 'I' + this.iid.replace(/^[^0-9]+/, '');
+    }
+  }
+  this.industryId = this.iid;
+  next();
 });
 
 industryPartnerSchema.pre('save', function(next) {

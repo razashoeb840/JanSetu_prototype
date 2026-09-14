@@ -52,20 +52,17 @@ const challengeSchema = new mongoose.Schema({
   },
   // Location
   location: {
-    address: String,
-    village: String,
-    panchayat: String,
-    block: String,
-    district: {
-      type: String,
-      required: [true, 'District is required']
-    },
-    state: { type: String, default: 'Jharkhand', index: true },
-    pincode: String,
-    coordinates: {
-      lat: { type: Number, default: null },
-      lng: { type: Number, default: null }
-    }
+    type: mongoose.Schema.Types.Mixed,
+    default: () => ({
+      address: '',
+      village: '',
+      panchayat: '',
+      block: '',
+      district: 'Ranchi',
+      state: 'Jharkhand',
+      pincode: '',
+      coordinates: { lat: null, lng: null }
+    })
   },
 
   // Media
@@ -82,10 +79,40 @@ const challengeSchema = new mongoose.Schema({
     filePath: { type: String, default: null },
     uploadedAt: { type: Date, default: Date.now }
   }],
-  // Assignment
+  // Assignment variables (empty by default until assigned by Admin)
+  universityAssigned: {
+    type: String,
+    default: null,
+    trim: true,
+    index: true
+  },
+  industryAssigned: {
+    type: String,
+    default: null,
+    trim: true,
+    index: true
+  },
+  assignedUniversityUid: {
+    type: String,
+    default: null,
+    trim: true,
+    index: true
+  },
+  assignedIndustry: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'IndustryPartner',
+    default: null
+  },
+  assignedIndustryIid: {
+    type: String,
+    default: null,
+    trim: true,
+    index: true
+  },
   assignedUniversity: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'University'
+    ref: 'University',
+    default: null
   },
   assignedAt: Date,
   assignedBy: {
@@ -263,6 +290,7 @@ const challengeSchema = new mongoose.Schema({
   isPublic: { type: Boolean, default: true },
   isFeatured: { type: Boolean, default: false }
 }, {
+  collection: 'problems',
   timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }

@@ -3,7 +3,7 @@
    ============================================================ */
 
 // ── API Base URL ──
-const API_BASE = '/api';
+var API_BASE = window.API_BASE || '/api';
 
 // ── Auth Token Management ──
 var Auth = {
@@ -349,9 +349,9 @@ var Utils = {
 };
 
 // ── Notification Polling ──
-let notifPollInterval = null;
+var notifPollInterval = null;
 
-const NotifManager = {
+var NotifManager = window.NotifManager || {
   count: 0,
 
   async fetchCount() {

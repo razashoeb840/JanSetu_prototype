@@ -68,14 +68,18 @@ window.quickLogin = async (email, password) => {
     if (res.success) {
       Auth.setAuth(res.token, res.user);
       Toast.success('Welcome!', `Logged in as ${res.user.name}`);
-      const routes = {
-        citizen: '/citizen',
-        university_rep: '/university',
-        industry_rep: '/industries',
-        admin: '/admin'
-      };
+      const idStr = (res.user.uniqueId || res.user.citizenId || res.user.universityIdString || res.user.industryIdString || '').toUpperCase().trim();
+      let dest = '/citizen';
+      if (res.user.role === 'admin' || idStr.startsWith('ADM')) dest = '/admin';
+      else if (idStr.startsWith('C')) dest = '/citizen';
+      else if (idStr.startsWith('U')) dest = '/university';
+      else if (idStr.startsWith('I')) dest = '/industries';
+      else {
+        const routes = { citizen: '/citizen', university_rep: '/university', industry_rep: '/industries', admin: '/admin' };
+        dest = routes[res.user.role] || '/citizen';
+      }
       setTimeout(() => {
-        window.location.href = routes[res.user.role] || '/citizen';
+        window.location.href = dest;
       }, 500);
     } else {
       alert(res.message || 'Quick login failed');
