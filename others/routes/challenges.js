@@ -34,7 +34,7 @@ router.post('/check-duplicates', checkDuplicates);
 router.post('/parse-voice', parseVoice);
 router.get('/my', protect, cacheService.middleware('challenges:my', 5), getMyChallenges);
 router.get('/', optionalAuth, cacheService.middleware('challenges:list', 5), getChallenges);
-router.post('/', protect, authorize('citizen'), (req, res, next) => { req.uploadSubDir = 'challenges'; next(); }, upload.array('attachments', 10), createChallenge);
+router.post('/', optionalAuth, (req, res, next) => { req.uploadSubDir = 'challenges'; next(); }, upload.array('attachments', 10), createChallenge);
 router.get('/:id/updates', optionalAuth, getChallengeUpdates);
 router.get('/:id', optionalAuth, cacheService.middleware('challenges:single', 10), getChallenge);
 router.put('/:id', protect, updateChallenge);

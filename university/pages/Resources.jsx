@@ -145,32 +145,32 @@ export default function Resources() {
         {/* ── Left Column (Main Content) ── */}
         <div>
           {/* Filters Row */}
-          <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
-            <div style={{ flex: 1.5, position: 'relative' }}>
+          <div className="res-filter-row" style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 220px', minWidth: 200, position: 'relative' }}>
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input type="text" placeholder="Search resources by title, keyword or topic..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ width: '100%', padding: '10px 16px 10px 40px', borderRadius: 12, border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 500 }} />
+              <input type="text" placeholder="Search resources by title, keyword or topic..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ width: '100%', padding: '10px 16px 10px 40px', borderRadius: 12, border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 500, boxSizing: 'border-box' }} />
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 10, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 4, block: true }}>Discipline</label>
-              <select value={discipline} onChange={e => setDiscipline(e.target.value)} style={{ width: '100%', padding: '10px 16px', borderRadius: 12, border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 600, color: '#1E293B', appearance: 'none' }}>
+            <div style={{ flex: '1 1 140px', minWidth: 130 }}>
+              <label style={{ fontSize: 10, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 4, display: 'block' }}>Discipline</label>
+              <select value={discipline} onChange={e => setDiscipline(e.target.value)} style={{ width: '100%', padding: '10px 16px', borderRadius: 12, border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 600, color: '#1E293B', boxSizing: 'border-box' }}>
                 <option>All Disciplines</option>
                 <option>Environmental Science</option>
                 <option>Disaster Management</option>
                 <option>Sustainable Infrastructure</option>
               </select>
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 10, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 4, block: true }}>Type</label>
-              <select value={type} onChange={e => setType(e.target.value)} style={{ width: '100%', padding: '10px 16px', borderRadius: 12, border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 600, color: '#1E293B', appearance: 'none' }}>
+            <div style={{ flex: '1 1 140px', minWidth: 130 }}>
+              <label style={{ fontSize: 10, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 4, display: 'block' }}>Type</label>
+              <select value={type} onChange={e => setType(e.target.value)} style={{ width: '100%', padding: '10px 16px', borderRadius: 12, border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 600, color: '#1E293B', boxSizing: 'border-box' }}>
                 <option>All Types</option>
                 <option>Research Paper</option>
                 <option>Dataset</option>
                 <option>Guide/Report</option>
               </select>
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 10, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 4, block: true }}>Sort By</label>
-              <select style={{ width: '100%', padding: '10px 16px', borderRadius: 12, border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 600, color: '#1E293B', appearance: 'none' }}>
+            <div style={{ flex: '1 1 130px', minWidth: 120 }}>
+              <label style={{ fontSize: 10, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 4, display: 'block' }}>Sort By</label>
+              <select value={sort} onChange={e => setSort(e.target.value)} style={{ width: '100%', padding: '10px 16px', borderRadius: 12, border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 600, color: '#1E293B', boxSizing: 'border-box' }}>
                 <option>Most Relevant</option>
               </select>
             </div>

@@ -4,8 +4,8 @@ const Mentor = require('./Mentor');
 const Resource = require('./Resource');
 const Notification = require('./Notification');
 const UniversityProfile = require('./UniversityProfile');
-const Leaderboard = require('./Leaderboard');
 const Certificate = require('./Certificate');
+const Proposal = require('../../others/models/Proposal');
 
 module.exports = {
   Project,
@@ -14,6 +14,7 @@ module.exports = {
   Resource,
   Notification,
   UniversityProfile,
-  Leaderboard,
-  Certificate
+  Certificate,
+  Proposal
 };
+

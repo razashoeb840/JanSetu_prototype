@@ -277,7 +277,7 @@ function CollaborationRadar({ twinnedWith = [] }) {
 function TwinningModal({ problem, onClose }) {
   if (!problem) return null;
   const twinnedList = problem.twinnedWith || [];
-  const challengeId = problem.challengeId || problem.reportId || `JH-2026-${problem.id || 1001}`;
+  const challengeId = (problem.challengeId || problem.reportId || (problem._id ? 'JH-2026-' + String(problem._id).slice(-6).toUpperCase() : `JH-2026-${problem.id || 1001}`)).replace(/^#/, '');
 
   const statusStyles = {
     'In Progress': { bg: 'rgba(6, 182, 212, 0.15)', border: 'rgba(6, 182, 212, 0.4)', color: '#22D3EE', label: '⚡ In Progress' },
@@ -926,7 +926,7 @@ function ProblemDetailModal({ problem, onClose, onStartProject, onFork, initialC
     coordinates: { lat: 23.3441, lng: 85.3096 }
   };
   const beforeImg = (problem.beforeImage && !problem.beforeImage.startsWith('/images/')) ? problem.beforeImage : null;
-  const challengeId = problem.challengeId || problem.reportId || `JH-2026-${problem.id || 1001}`;
+  const challengeId = (problem.challengeId || problem.reportId || (problem._id ? 'JH-2026-' + String(problem._id).slice(-6).toUpperCase() : `JH-2026-${problem.id || 1001}`)).replace(/^#/, '');
   const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
 
   // Extract citizen video URL if available
@@ -1493,7 +1493,7 @@ function ProblemCard({ problem, onTwinClick, onDetailClick, onFork, onStartProje
   const impact = impactColors[problem.impact] || impactColors['Medium'];
   const urgency = getUrgencyStyle(problem);
   const urgencyLabel = problem.daysUnassigned > 6 ? getUrgencyLabel(problem.daysUnassigned) : null;
-  const challengeId = problem.challengeId || problem.reportId || `JH-2026-${problem.id || 1001}`;
+  const challengeId = (problem.challengeId || problem.reportId || (problem._id ? 'JH-2026-' + String(problem._id).slice(-6).toUpperCase() : `JH-2026-${problem.id || 1001}`)).replace(/^#/, '');
   const beforeImg = (problem.beforeImage && !problem.beforeImage.startsWith('/images/')) ? problem.beforeImage : null;
   const loc = problem.fullLocation || {
     village: 'Ground Zero Ward',
@@ -1779,26 +1779,25 @@ export default function BrowseProblems() {
 
   const handleStartProject = async (prob) => {
     try {
-      const res = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          problemId: prob._id || prob.id,
-          title: prob.title,
-          category: prob.category,
-          location: prob.location
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast('Project Initiated! Moved to Stage: Assigned in My Projects.', 'success');
-        setDetailModal(null);
-        navigate('/my-projects');
-      } else {
-        toast(data.error || 'Failed to start project', 'error');
-      }
+      const probId = prob._id || prob.id;
+      // Mark problem as claimed in backend
+      fetch(`/api/problems/${probId}/claim`, { method: 'POST' }).catch(() => {});
+
+      // Immediately remove from local problems list
+      setProblems(prev => prev.filter(p => (p._id || p.id) !== probId));
+
+      // Store problem in session for team formation
+      try {
+        sessionStorage.setItem('pendingProjectProblem', JSON.stringify(prob));
+      } catch (e) {}
+
+      toast('Problem claimed! Please assemble your student team to initialize project.', 'success');
+      setDetailModal(null);
+
+      // Redirect to Team section with problem prefilled
+      navigate('/team-mentorship', { state: { startProjectProblem: prob } });
     } catch (e) {
-      toast('Error starting project', 'error');
+      toast('Error claiming problem', 'error');
     }
   };
 
@@ -1830,6 +1829,8 @@ export default function BrowseProblems() {
 
   const filtered = useMemo(() => {
     return problems.filter((p) => {
+      const st = (p.status || '').toLowerCase();
+      if (st === 'assigned' || st === 'in_progress' || st === 'resolved') return false;
       if (activeCategory !== 'All' && p.category !== activeCategory) return false;
       if (discipline !== 'All Disciplines' && p.academicBrief?.discipline !== discipline) return false;
       if (difficulty === 'High Impact' && p.impact !== 'High') return false;

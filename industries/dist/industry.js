@@ -277,7 +277,7 @@ window.loadExploreChallenges = async () => {
       <div class="task-priority-bar ${c.priority}"></div>
       <div class="task-card-header">
         <div>
-          <div class="task-card-id">#${c._id.slice(-8).toUpperCase()}</div>
+          <div class="task-card-id">${c.challengeId ? (c.challengeId.startsWith('#') ? c.challengeId : '#' + c.challengeId) : ('#JH-2026-' + c._id.slice(-6).toUpperCase())}</div>
           <div class="task-card-title" onclick="openChallengeDetails('${c._id}')" style="cursor:pointer">${c.title}</div>
           <div class="task-card-category">${c.category} · ${c.location?.district || 'Jharkhand'}</div>
         </div>
@@ -342,7 +342,7 @@ async function loadCollaborations() {
         <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px">
           <div>
             <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">
-              ID: #${(c._id || '').slice(-8).toUpperCase()} · ${c.category}
+              ID: ${c.challengeId ? (c.challengeId.startsWith('#') ? c.challengeId : '#' + c.challengeId) : ('#JH-2026-' + (c._id || '').slice(-6).toUpperCase())} · ${c.category}
             </div>
             <div style="font-weight:800;font-size:16px;color:var(--gray-900);line-height:1.3">${c.title}</div>
             <div style="font-size:12.5px;color:var(--gray-500);margin-top:4px">
@@ -1297,7 +1297,7 @@ function renderChallengeDetailsPage(c) {
 
       <div class="challenge-meta-row" style="margin-bottom: 8px;">
         <span style="font-size:12px;font-weight:750;color:var(--primary);background:var(--primary-50);padding:3px 10px;border-radius:var(--radius-full);border:1px solid var(--primary-100)">
-          #${(c._id || '').slice(-8).toUpperCase()}
+          ${c.challengeId ? (c.challengeId.startsWith('#') ? c.challengeId : '#' + c.challengeId) : ('#JH-2026-' + (c._id || '').slice(-6).toUpperCase())}
         </span>
         <span>•</span>
         <span style="font-weight:650;color:var(--gray-800)">${c.category || 'Domain'}</span>
@@ -1531,7 +1531,7 @@ function openPartnerModal(id, title) {
   const cidEl = document.getElementById('collabModalChallengeId');
   const titleEl = document.getElementById('partnerProjectTitle');
   const univEl = document.getElementById('collabModalUniversity');
-  if (cidEl) cidEl.textContent = `#${(challenge._id || '').slice(-8).toUpperCase()}`;
+  if (cidEl) cidEl.textContent = challenge.challengeId ? (challenge.challengeId.startsWith('#') ? challenge.challengeId : '#' + challenge.challengeId) : ('#JH-2026-' + (challenge._id || '').slice(-6).toUpperCase());
   if (titleEl) titleEl.textContent = challenge.title;
   if (univEl) univEl.textContent = challenge.heiName || 'University Partner';
 
@@ -2189,7 +2189,7 @@ function getProjectWorkspace(projectId) {
     const matched = (allProjects || []).find(p => p._id === projectId);
     if (matched) {
       ws.projectId = matched._id;
-      ws.challengeId = (matched._id || '').slice(-8).toUpperCase();
+      ws.challengeId = matched.challengeId || ('JH-2026-' + (matched._id || '').slice(-6).toUpperCase());
       ws.title = matched.title || ws.title;
       ws.domain = matched.category || ws.domain;
       ws.district = matched.location?.district || ws.district;

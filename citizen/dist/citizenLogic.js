@@ -2397,6 +2397,33 @@
     }
 
     /* LEAFLET INTERACTIVE MINI-MAP FOR PROBLEM REPORTING */
+    const JHARKHAND_DISTRICT_CENTERS = {
+      'Ranchi': { lat: 23.3441, lng: 85.3096 },
+      'Dhanbad': { lat: 23.7957, lng: 86.4304 },
+      'Bokaro': { lat: 23.6693, lng: 86.1511 },
+      'East Singhbhum': { lat: 22.8046, lng: 86.2029 },
+      'West Singhbhum': { lat: 22.5668, lng: 85.8080 },
+      'Hazaribagh': { lat: 23.9925, lng: 85.3637 },
+      'Deoghar': { lat: 24.4826, lng: 86.7000 },
+      'Giridih': { lat: 24.1852, lng: 86.3079 },
+      'Ramgarh': { lat: 23.6300, lng: 85.5100 },
+      'Palamu': { lat: 24.0300, lng: 84.0700 },
+      'Garhwa': { lat: 24.1800, lng: 83.8100 },
+      'Chatra': { lat: 24.2100, lng: 84.8700 },
+      'Koderma': { lat: 24.4700, lng: 85.5900 },
+      'Jamtara': { lat: 23.9600, lng: 86.8000 },
+      'Godda': { lat: 24.8300, lng: 87.2100 },
+      'Sahibganj': { lat: 25.2500, lng: 87.6500 },
+      'Pakur': { lat: 24.6300, lng: 87.8500 },
+      'Khunti': { lat: 23.0700, lng: 85.2800 },
+      'Gumla': { lat: 23.0400, lng: 84.5400 },
+      'Simdega': { lat: 22.6200, lng: 84.5000 },
+      'Lohardaga': { lat: 23.4400, lng: 84.6800 },
+      'Seraikela Kharsawan': { lat: 22.7000, lng: 85.9800 },
+      'Latehar': { lat: 23.7400, lng: 84.5000 },
+      'Dumka': { lat: 24.2700, lng: 87.2500 }
+    };
+
     let reportMiniMapInstance = null;
     let reportMiniMapMarker = null;
     let currentReportCoords = { lat: 23.3441, lng: 85.3096 };
@@ -2413,10 +2440,9 @@
 
       try {
         reportMiniMapInstance = L.map('reportMiniMap').setView([currentReportCoords.lat, currentReportCoords.lng], 13);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          subdomains: 'abcd',
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
           maxZoom: 19,
-          attribution: '© OpenStreetMap contributors © CARTO'
+          attribution: '&copy; <a href="https://www.esri.com">Esri</a>, DeLorme, NAVTEQ, TomTom'
         }).addTo(reportMiniMapInstance);
 
         reportMiniMapMarker = L.marker([currentReportCoords.lat, currentReportCoords.lng], { draggable: true }).addTo(reportMiniMapInstance);
@@ -2443,6 +2469,26 @@
             await reverseGeocodeCoords(lat, lng);
           }
         });
+
+        // Cross-synchronize: changing District dropdown immediately repositions map and coordinates
+        const repDistEl = document.getElementById('reportDistrict');
+        if (repDistEl && !repDistEl.dataset.syncedWithMap) {
+          repDistEl.dataset.syncedWithMap = 'true';
+          repDistEl.addEventListener('change', () => {
+            repDistEl.dataset.userModified = 'true';
+            const selDist = repDistEl.value;
+            if (selDist && JHARKHAND_DISTRICT_CENTERS[selDist]) {
+              const coords = JHARKHAND_DISTRICT_CENTERS[selDist];
+              updateMarkerCoords(coords.lat, coords.lng);
+              if (reportMiniMapInstance && reportMiniMapMarker) {
+                reportMiniMapInstance.setView([coords.lat, coords.lng], 12);
+                reportMiniMapMarker.setLatLng([coords.lat, coords.lng]);
+              }
+              const gpsBtns = document.querySelectorAll('.btn-gps-autodetect, #reportMiniMap + div button');
+              gpsBtns.forEach(b => { if (b) b.textContent = `✓ ${selDist}`; });
+            }
+          });
+        }
       } catch (err) {
         console.warn('MiniMap initialization error:', err);
       }
@@ -4057,6 +4103,11 @@
         }
       });
 
+      const progFill = document.getElementById('reportProgressBarFill');
+      if (progFill) progFill.style.width = `${stepNum * 20}%`;
+      const stepCounter = document.getElementById('reportModalStepCounter');
+      if (stepCounter) stepCounter.textContent = `Step ${stepNum} of 5 (${stepNum * 20}%)`;
+
       if (stepNum < 5) {
         const submitBtn = document.getElementById('finalSubmitBtn');
         if (submitBtn) submitBtn.style.display = 'inline-flex';
@@ -4078,38 +4129,91 @@
     }
     window.goToStep = goToStep;
 
+    // Category-specific example chips dictionary for Step 2
+    const CATEGORY_EXAMPLES = {
+      'Agriculture': [
+        { text: 'फसल में कीट लग गए हैं और भारी नुकसान हो रहा है', title: 'फसल कीट प्रकोप एवं सहायता', icon: '🌾' },
+        { text: 'सिंचाई नहर में पानी नहीं आ रहा है, फसल सूख रही है', title: 'सिंचाई जल आपूर्ति समस्या', icon: '💧' },
+        { text: 'सरकारी खाद और बीज केंद्र पर समय से नहीं मिल रहे', title: 'खाद-बीज उपलब्धता समस्या', icon: '🌱' }
+      ],
+      'Urban Infrastructure': [
+        { text: 'सड़क पर गहरा गड्ढा है और आवागमन बाधित है', title: 'सड़क व गड्ढा मरम्मत', icon: '🛣️' },
+        { text: 'पुलिया की रेलिंग टूटी हुई है, हादसे का खतरा है', title: 'पुलिया मरम्मत आवश्यकता', icon: '🌉' },
+        { text: 'मुख्य चौराहे पर ट्रैफिक सिग्नल खराब है', title: 'ट्रैफिक सिग्नल खराबी', icon: '🚦' }
+      ],
+      'Water Management': [
+        { text: 'पेयजल पाइपलाइन फट गई है और पानी बह रहा है', title: 'पेयजल पाइपलाइन लीकेज', icon: '🚰' },
+        { text: 'नल से गंदा और बदबूदार पानी आ रहा है', title: 'दूषित जल आपूर्ति निवारण', icon: '💧' },
+        { text: 'गांव का सार्वजनिक चापाकल महीनों से खराब है', title: 'चापाकल मरम्मत की मांग', icon: '🔧' }
+      ],
+      'Sanitation & Environment': [
+        { text: 'सड़क किनारे कचरे का बड़ा ढेर लगा हुआ है', title: 'कचरा जमाव एवं नियमित सफाई', icon: '🗑️' },
+        { text: 'नाली जाम होने से गंदा पानी सड़क पर बह रहा है', title: 'जल निकासी व नाली सफाई', icon: '🌊' },
+        { text: 'सफाईकर्मी नियमित रूप से झाड़ू नहीं लगा रहे', title: 'नियमित सफाई व्यवस्था', icon: '🧹' }
+      ],
+      'Energy & Technology': [
+        { text: 'गांव में बिजली का ट्रांसफॉर्मर जल गया है', title: 'ट्रांसफॉर्मर खराब / बिजली आपूर्ति', icon: '⚡' },
+        { text: 'सड़क की स्ट्रीटलाइट कई हफ्तों से बंद है', title: 'स्ट्रीटलाइट खराबी निवारण', icon: '💡' },
+        { text: 'बिजली के नंगे तार लटक रहे हैं, खतरा है', title: 'लटकते विद्युत तार मरम्मत', icon: '🔌' }
+      ],
+      'Healthcare': [
+        { text: 'स्वास्थ्य केंद्र में डॉक्टर समय पर उपस्थित नहीं रहते', title: 'अस्पताल में चिकित्सक उपस्थिति', icon: '🏥' },
+        { text: 'सरकारी अस्पताल में जरूरी दवाइयां नहीं मिल रही हैं', title: 'आवश्यक दवाओं की आपूर्ति', icon: '💊' },
+        { text: 'आपातकालीन एम्बुलेंस फोन करने पर नहीं आती', title: 'एम्बुलेंस सेवा सुधार', icon: '🚑' }
+      ],
+      'Education': [
+        { text: 'स्कूल भवन की छत जर्जर है और पानी टपकता है', title: 'विद्यालय भवन मरम्मत', icon: '🏫' },
+        { text: 'प्राथमिक विद्यालय में शिक्षकों की भारी कमी है', title: 'शिक्षक व्यवस्था अनुरोध', icon: '📚' },
+        { text: 'विद्यालय में छात्र-छात्राओं के शौचालय की व्यवस्था नहीं है', title: 'स्कूल शौचालय निर्माण व सफाई', icon: '🚻' }
+      ],
+      'Public Administration': [
+        { text: 'राशन डीलर निर्धारित मात्रा से कम अनाज दे रहा है', title: 'राशन वितरण में अनियमितता', icon: '📜' },
+        { text: 'वृद्धावस्था पेंशन पिछले 3 महीनों से खाते में नहीं आई', title: 'पेंशन भुगतान समस्या', icon: '👴' },
+        { text: 'ब्लॉक कार्यालय में प्रमाण पत्र बनाने में अनावश्यक देरी हो रही है', title: 'प्रशासनिक शिकायत', icon: '🏛️' }
+      ]
+    };
+
+    let userSelectedCategory = localStorage.getItem('jansetu_selected_category') || 'Urban Infrastructure';
+    window.aiSuggestedCategory = null;
+
+    function updateExampleChipsForCategory(cat) {
+      const container = document.getElementById('voiceSampleChipsContainer');
+      if (!container) return;
+      const examples = CATEGORY_EXAMPLES[cat] || CATEGORY_EXAMPLES['Urban Infrastructure'];
+      const labelText = currentLanguage === 'hi' ? '💡 उदाहरण:' : '💡 Examples:';
+      let html = `<span style="font-size:10.5px;font-weight:700;color:var(--gray-500);align-self:center;">${labelText}</span>`;
+      examples.forEach(ex => {
+        const safeText = escapeHtml(ex.text).replace(/'/g, "\\'");
+        const safeTitle = escapeHtml(ex.title).replace(/'/g, "\\'");
+        html += `<button type="button" class="voice-chip-btn" onclick="applyVoiceSample('${safeText}', '${safeTitle}', '${cat}')" style="font-size:10.5px;padding:3px 8px;border-radius:6px;border:1px solid #cbd5e1;background:#f8fafc;cursor:pointer;">${ex.icon} ${escapeHtml(ex.title)}</button>`;
+      });
+      container.innerHTML = html;
+    }
+    window.updateExampleChipsForCategory = updateExampleChipsForCategory;
+
     function selectFormCategory(btn, cat) {
       document.querySelectorAll('.category-chip-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
+      userSelectedCategory = cat;
+      window.userSelectedCategory = cat;
+      try { localStorage.setItem('jansetu_selected_category', cat); } catch (e) {}
       if (document.getElementById('reportCategory')) document.getElementById('reportCategory').value = cat;
+      updateExampleChipsForCategory(cat);
     }
     window.selectFormCategory = selectFormCategory;
 
     function applyVoiceSample(sampleText, sampleTitle, sampleCategory) {
       const descEl = document.getElementById('reportDescription');
       const titleEl = document.getElementById('reportTitle');
-      const catEl = document.getElementById('reportCategory');
       const statusText = document.getElementById('voiceStatusText');
 
       if (descEl) descEl.value = sampleText;
       if (titleEl) titleEl.value = sampleTitle;
-      if (catEl && sampleCategory) {
-        catEl.value = sampleCategory;
-      }
       if (statusText) {
         statusText.textContent = currentLanguage === 'hi' 
           ? `✓ नमूना आवाज चयनित: ${sampleTitle}` 
           : `✓ Voice sample selected: ${sampleTitle}`;
       }
-      try {
-        const catTiles = document.querySelectorAll('.category-tile');
-        catTiles.forEach(tile => {
-          if (tile.dataset && tile.dataset.category === sampleCategory) {
-            catTiles.forEach(t => t.classList.remove('selected'));
-            tile.classList.add('selected');
-          }
-        });
-      } catch (e) {}
     }
     window.applyVoiceSample = applyVoiceSample;
 
@@ -4141,7 +4245,7 @@
 
       try {
         speechRecognition = new SpeechRecognition();
-        speechRecognition.lang = currentLanguage === 'hi' ? 'hi-IN' : 'en-IN';
+        speechRecognition.lang = currentLanguage === 'en' ? 'en-IN' : 'hi-IN';
         speechRecognition.continuous = false;
         speechRecognition.interimResults = false;
 
@@ -4168,16 +4272,9 @@
                 document.getElementById('reportTitle').value = json.data.title || text.substring(0, 50);
               }
               if (json.data.category) {
-                if (document.getElementById('reportCategory')) {
-                  document.getElementById('reportCategory').value = json.data.category;
-                }
-                const catTiles = document.querySelectorAll('.category-tile');
-                catTiles.forEach(tile => {
-                  if (tile.dataset && tile.dataset.category === json.data.category) {
-                    catTiles.forEach(t => t.classList.remove('selected'));
-                    tile.classList.add('selected');
-                  }
-                });
+                // Keep user selection authoritative; store AI suggestion separately
+                window.aiSuggestedCategory = json.data.category;
+                console.log('[JanSetu AI] Stored aiSuggestedCategory:', json.data.category, 'User category kept:', userSelectedCategory);
               }
             }
           } catch (e) {
@@ -4188,7 +4285,7 @@
 
           isRecordingVoice = false;
           if (btn) btn.classList.remove('recording');
-          if (statusText) statusText.textContent = currentLanguage === 'hi' ? '✓ ध्वनि रिकॉर्ड हो गई! शीर्षक व श्रेणी स्वतः चयनित' : '✓ Voice recorded! Title & category auto-selected';
+          if (statusText) statusText.textContent = currentLanguage === 'hi' ? '✓ ध्वनि रिकॉर्ड हो गई! शीर्षक स्वतः तैयार' : '✓ Voice recorded! Title generated';
         };
 
         speechRecognition.onerror = (e) => {
@@ -4222,14 +4319,19 @@
         const json = await res.json();
         if (json.success && json.data) {
           const d = json.data;
+          const stateEl = document.getElementById('reportState');
+          if (stateEl && d.state) {
+            stateEl.value = d.state;
+          }
           const distEl = document.getElementById('reportDistrict');
           if (distEl && d.district) {
-            let opt = Array.from(distEl.options).find(o => o.value.toLowerCase() === d.district.toLowerCase());
+            let opt = Array.from(distEl.options).find(o => isSameDistrict(o.value, d.district) || o.value.toLowerCase() === d.district.toLowerCase());
             if (!opt) {
               opt = new Option(d.district, d.district);
               distEl.add(opt);
             }
             distEl.value = opt.value;
+            distEl.dataset.userModified = 'true';
           }
           if (document.getElementById('reportBlock')) {
             document.getElementById('reportBlock').value = d.block || '';
@@ -4267,20 +4369,21 @@
 
       navigator.geolocation.getCurrentPosition(
         async pos => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
+          let lat = pos.coords.latitude;
+          let lng = pos.coords.longitude;
+
           currentReportCoords = { lat, lng };
 
           const pill = document.getElementById('mapCoordsPill');
           if (pill) pill.textContent = `📍 ${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E`;
 
           if (reportMiniMapInstance && reportMiniMapMarker) {
-            reportMiniMapInstance.setView([lat, lng], 15);
+            reportMiniMapInstance.setView([lat, lng], 14);
             reportMiniMapMarker.setLatLng([lat, lng]);
           }
 
           const geo = await reverseGeocodeCoords(lat, lng);
-          const locationLabel = geo ? `${geo.village || geo.block}, ${geo.district}` : `${lat.toFixed(3)}°, ${lng.toFixed(3)}°`;
+          const locationLabel = geo ? `${geo.village || geo.block || ''}, ${geo.district || geo.state || ''}`.replace(/^,\s*/, '') : `${lat.toFixed(3)}°, ${lng.toFixed(3)}°`;
           setBtnText((currentLanguage === 'hi' ? '✓ जीपीएस: ' : '✓ GPS: ') + locationLabel);
         },
         err => {
@@ -4605,17 +4708,57 @@
 
       const title = document.getElementById('reportTitle').value.trim() || 'Community Grievance';
       const description = document.getElementById('reportDescription').value.trim() || title;
-      const category = document.getElementById('reportCategory') ? document.getElementById('reportCategory').value : 'Water Management';
+      const category = (document.getElementById('reportCategory') && document.getElementById('reportCategory').value) || userSelectedCategory || 'Urban Infrastructure';
       const district = document.getElementById('reportDistrict').value;
       const block = document.getElementById('reportBlock').value;
       const village = document.getElementById('reportVillage').value;
 
       goToStep(5);
 
+      // 1. Authoritative Display of User-selected Category
       document.getElementById('aiCardCategory').textContent = category;
       document.getElementById('aiCardLocation').textContent = [village, block, district].filter(Boolean).join(', ');
-      const priorityVal = document.querySelector('input[name="priorityChoice"]:checked')?.value || 'high';
-      document.getElementById('aiCardPriority').textContent = priorityVal.toUpperCase();
+
+      // Standardize Priority Label across app: NORMAL / HIGH / URGENT (never MEDIUM)
+      const priorityVal = document.querySelector('input[name="priorityChoice"]:checked')?.value || 'normal';
+      const pMap = { normal: 'NORMAL', medium: 'NORMAL', low: 'NORMAL', high: 'HIGH', urgent: 'URGENT' };
+      const displayPriority = pMap[priorityVal.toLowerCase()] || 'NORMAL';
+      const prioEl = document.getElementById('aiCardPriority');
+      if (prioEl) {
+        prioEl.textContent = displayPriority;
+        prioEl.style.color = displayPriority === 'URGENT' ? '#dc2626' : (displayPriority === 'HIGH' ? '#ea580c' : '#16a34a');
+      }
+
+      // Handle AI Category Suggestion without silently overwriting user selection
+      const catSuggestBox = document.getElementById('aiCategorySuggestionBox');
+      const aiSuggested = window.aiSuggestedCategory;
+      if (catSuggestBox) {
+        if (aiSuggested && aiSuggested.toLowerCase() !== category.toLowerCase()) {
+          catSuggestBox.style.display = 'block';
+          catSuggestBox.innerHTML = `
+            <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:8px 12px;margin:6px 0;font-size:12px;color:#92400e;">
+              <div style="font-weight:700;margin-bottom:3px;">💡 Category Suggestion:</div>
+              <div>Aapne <strong>'${category}'</strong> select kiya tha. AI ko lagta hai ye <strong>'${aiSuggested}'</strong> se bhi related ho sakta hai — kaunsa sahi hai?</div>
+              <div style="display:flex;gap:8px;margin-top:6px;">
+                <button type="button" id="btnKeepUserCat" style="background:#1e3a8a;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">✓ Aapka: ${category}</button>
+                <button type="button" id="btnSwitchAiCat" style="background:#f59e0b;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">🔄 Badlein: ${aiSuggested}</button>
+              </div>
+            </div>
+          `;
+          document.getElementById('btnKeepUserCat')?.addEventListener('click', () => {
+            document.getElementById('aiCardCategory').textContent = category;
+            if (document.getElementById('reportCategory')) document.getElementById('reportCategory').value = category;
+            catSuggestBox.style.display = 'none';
+          });
+          document.getElementById('btnSwitchAiCat')?.addEventListener('click', () => {
+            document.getElementById('aiCardCategory').textContent = aiSuggested;
+            if (document.getElementById('reportCategory')) document.getElementById('reportCategory').value = aiSuggested;
+            catSuggestBox.style.display = 'none';
+          });
+        } else {
+          catSuggestBox.style.display = 'none';
+        }
+      }
 
       const photoMedia = selectedMediaFiles.find(m => m.type === 'photo' && m.dataUrl);
       const photoRow = document.getElementById('aiCardPhotoRow');
@@ -4623,7 +4766,10 @@
         if (photoMedia) {
           photoRow.style.display = 'flex';
           document.getElementById('aiCardPhotoThumb').src = photoMedia.dataUrl;
-          document.getElementById('aiCardPhotoName').textContent = photoMedia.name || 'Photo Attached';
+          const photoCount = selectedMediaFiles.filter(m => m.type === 'photo').length;
+          const videoCount = selectedMediaFiles.filter(m => m.type === 'video').length;
+          const cleanProofName = `Evidence Photo 1${photoCount > 1 ? ` (+${photoCount - 1} more)` : ''}${videoCount > 0 ? ` · ${videoCount} Video` : ''}`;
+          document.getElementById('aiCardPhotoName').textContent = cleanProofName;
         } else {
           photoRow.style.display = 'none';
         }
@@ -4782,8 +4928,10 @@
 
     async function submitRealProblem() {
       const btn = document.getElementById('finalSubmitBtn');
-      btn.textContent = currentLanguage === 'hi' ? 'दर्ज हो रहा है...' : 'Submitting...';
-      btn.disabled = true;
+      if (btn) {
+        btn.textContent = currentLanguage === 'hi' ? 'दर्ज हो रहा है...' : 'Submitting...';
+        btn.disabled = true;
+      }
 
       // Show circular loading screen with "Submitting problem..."
       if (typeof window.showJanSetuCivicLoader === 'function') {
@@ -4803,33 +4951,33 @@
       if (description.length < 15) {
         description = `${title} — ${description}. Immediate community attention and civic resolution required.`;
       }
-      const priority = document.querySelector('input[name="priorityChoice"]:checked')?.value || 'high';
-      const state = document.getElementById('reportState').value;
-      const district = document.getElementById('reportDistrict').value;
-      const block = document.getElementById('reportBlock').value;
-      const panchayat = document.getElementById('reportPanchayat').value;
-      const village = document.getElementById('reportVillage').value;
+      const rawPriority = document.querySelector('input[name="priorityChoice"]:checked')?.value || 'medium';
+      let priority = rawPriority.toLowerCase();
+      if (priority === 'normal') priority = 'medium';
+      const state = (document.getElementById('reportState')?.value) || 'Jharkhand';
+      const district = (document.getElementById('reportDistrict')?.value) || 'Ranchi';
+      const block = (document.getElementById('reportBlock')?.value) || '';
+      const panchayat = (document.getElementById('reportPanchayat')?.value) || '';
+      const village = (document.getElementById('reportVillage')?.value) || '';
 
-      const user = getCurrentUser();
+      const user = (typeof getCurrentUser === 'function' ? getCurrentUser() : null) || {};
       const userEmail = user && user.email ? user.email.toLowerCase().trim() : '';
       const userId = user ? (user.id || user._id || '').toString() : '';
       const userName = user && user.name ? user.name : 'Citizen';
 
-      // Pre-resolve dataUrl for any selected media that may not have completed reading
+      // Pre-resolve dataUrl for any selected media (both photos and videos)
       for (const m of selectedMediaFiles) {
         if (!m.dataUrl && m.file) {
           const isVid = m.type === 'video' || (m.file && m.file.type && m.file.type.startsWith('video/')) || /\.(mp4|webm|mov|ogg|mkv|3gp|avi)$/i.test(m.name || '');
-          if (isVid) {
-            m.dataUrl = await new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result);
-              reader.onerror = () => resolve(null);
-              reader.readAsDataURL(m.file);
-            });
-            if (m.dataUrl && !m.dataUrl.startsWith('data:video/')) {
-              const comma = m.dataUrl.indexOf(',');
-              if (comma !== -1) m.dataUrl = `data:video/mp4;base64,${m.dataUrl.slice(comma + 1)}`;
-            }
+          m.dataUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(m.file);
+          });
+          if (isVid && m.dataUrl && !m.dataUrl.startsWith('data:video/')) {
+            const comma = m.dataUrl.indexOf(',');
+            if (comma !== -1) m.dataUrl = `data:video/mp4;base64,${m.dataUrl.slice(comma + 1)}`;
           }
         }
       }
@@ -5046,6 +5194,7 @@
       // Background sync with live challenges
       fetchLiveChallenges().catch(() => { });
     }
+    window.submitRealProblem = submitRealProblem;
 
     let allReportsFilter = 'all';
     let allReportsSearchQuery = '';

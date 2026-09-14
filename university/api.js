@@ -27,6 +27,8 @@ const Challenge = require('../others/models/Challenge');
 const Problem = Challenge; // Single source of truth: Problem is Challenge
 const User = require('../others/models/User');
 const CentralNotification = require('../others/models/Notification');
+const IndustryPartner = require('../others/models/IndustryPartner');
+const { uploadBufferToSupabase } = require('../others/services/supabaseStorage');
 
 // University database models
 const {
@@ -36,9 +38,23 @@ const {
   Resource,
   Notification,
   UniversityProfile,
-  Leaderboard,
-  Certificate
+  Certificate,
+  Proposal
 } = require('./database');
+
+// Memory storage Multer setup specifically for proposal requirements documents
+const proposalDocUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    if (ext === '.pdf' || ext === '.docx') {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file format. Only PDF (.pdf) and Word (.docx) documents are permitted.'));
+    }
+  }
+});
 
 const cacheService = require('../others/services/cacheService');
 
@@ -511,6 +527,28 @@ router.patch('/problems/:id/bookmark', async (req, res) => {
   }
 });
 
+// CLAIM PROBLEM (Pre-Team Formation)
+router.post('/problems/:id/claim', async (req, res) => {
+  try {
+    const problem = await Problem.findById(req.params.id);
+    if (problem) {
+      problem.status = 'Assigned';
+      problem.collaborationReady = true;
+      await problem.save();
+      return res.json({ success: true, problem });
+    }
+    const challenge = await Challenge.findById(req.params.id);
+    if (challenge) {
+      challenge.status = 'in_progress';
+      await challenge.save();
+      return res.json({ success: true, challenge });
+    }
+    res.status(404).json({ error: 'Problem not found' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // FORK SOLUTION (Stage 2/3)
 router.post('/problems/:id/fork', async (req, res) => {
   try {
@@ -801,9 +839,43 @@ router.get('/projects', cacheService.middleware('problems:projects', 60), async 
           { name: 'report', title: 'Pond Testing Report', status: 'pending' }
         ]
       });
-      await p1.save();
-      await p2.save();
-      projects = await Project.find(query).sort({ createdAt: -1 });
+      await Promise.all([p1.save(), p2.save()]);
+    }
+
+    // Ensure at least one deployed project exists in DB for History tracking
+    const deployedExists = await Project.exists({ $or: [{ stage: 'Deployed' }, { status: 'Deployed' }] });
+    if (!deployedExists) {
+      const pDeployed = new Project({
+        title: 'Automated Solar Water Purification Plant',
+        stage: 'Deployed',
+        status: 'Deployed',
+        progress: 4,
+        type: 'Environmental Science',
+        loc: 'Khunti, Jharkhand',
+        team: ['Pooja Deshmukh', 'Manish Agarwal', 'Ritu Bansal'],
+        teamSize: 3,
+        mentor: { name: 'Prof. Sandeep Joshi', org: 'IIT Bombay', initials: 'SJ' },
+        description: 'Off-grid automated solar-powered water filtration and UV sterilization kiosk providing 5,000L clean drinking water daily to rural households.',
+        deployedAt: '12 Feb 2026',
+        isBattleTested: true,
+        certificatesIssued: true,
+        proposalStatus: 'approved',
+        assignedIndustryDetails: {
+          name: 'Tata Cleantech Capital',
+          companyName: 'Tata Cleantech Capital',
+          fundingCommitted: 85000,
+          supportType: 'Testing Facility & Pilot Funding'
+        },
+        requirementsDocName: 'Solar_Water_Purification_Requirements_v2.pdf',
+        milestones: [
+          { name: 'proposal', title: '1. Technical Proposal & Requirements Spec', status: 'approved', fileUrl: '/uploads/solar_water_proposal.pdf', approvedAt: new Date('2025-11-14') },
+          { name: 'prototype', title: '2. Working Solar Filtration Prototype', status: 'approved', fileUrl: '/uploads/prototype_schematics.pdf', approvedAt: new Date('2025-12-22') },
+          { name: 'report', title: '3. Field Water Quality Validation Report', status: 'approved', fileUrl: '/uploads/neeri_test_report.pdf', approvedAt: new Date('2026-01-28') },
+          { name: 'video', title: '4. Ground Deployment Pilot & Citizen Verification', status: 'approved', fileUrl: '/uploads/ground_deployment_pilot.mp4', approvedAt: new Date('2026-02-12') }
+        ]
+      });
+      await pDeployed.save();
+      projects = await Project.find(query).sort({ createdAt: -1 }).lean();
     }
 
     res.json(projects);
@@ -878,6 +950,191 @@ router.delete('/projects/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+/* ══════════════════════════════════════════
+   PROPOSAL SUBMISSION & GATING (UNIVERSITY SIDE)
+   ══════════════════════════════════════════ */
+
+const proposalUploadMiddleware = (req, res, next) => {
+  proposalDocUpload.single('requirementsDocument')(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ success: false, error: 'File size limit exceeded. Maximum file size allowed is 10MB.' });
+      }
+      return res.status(400).json({ success: false, error: err.message || 'File upload error.' });
+    }
+    next();
+  });
+};
+
+const handleProposalSubmission = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ success: false, error: 'Project not found.' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'Requirements document (PDF or DOCX) is required.' });
+    }
+
+    const ext = path.extname(req.file.originalname || '').toLowerCase();
+    if (!['.pdf', '.docx'].includes(ext)) {
+      return res.status(400).json({ success: false, error: 'Invalid file format. Only .pdf and .docx documents are accepted.' });
+    }
+
+    const fundingNum = Number(req.body.fundingRequested);
+    if (isNaN(fundingNum) || fundingNum <= 0) {
+      return res.status(400).json({ success: false, error: 'Funding requested must be a positive number.' });
+    }
+
+    let supportArray = [];
+    if (req.body.industrySupportRequired) {
+      if (Array.isArray(req.body.industrySupportRequired)) {
+        supportArray = req.body.industrySupportRequired;
+      } else if (typeof req.body.industrySupportRequired === 'string') {
+        try {
+          const parsed = JSON.parse(req.body.industrySupportRequired);
+          supportArray = Array.isArray(parsed) ? parsed : [parsed];
+        } catch {
+          supportArray = req.body.industrySupportRequired.split(',').map(s => s.trim()).filter(Boolean);
+        }
+      }
+    }
+
+    // Upload to Supabase Storage (with fallback to local storage)
+    const uploadResult = await uploadBufferToSupabase({
+      buffer: req.file.buffer,
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      folder: 'proposals'
+    });
+
+    let submitterName = project.mentor?.name || 'Dr. Rohan Mehta';
+    let submitterEmail = 'rohan.mehta@iitranchi.ac.in';
+    let universityName = project.mentor?.org || 'IIT Ranchi';
+    let submittedBy = null;
+
+    if (req.headers.authorization) {
+      try {
+        const token = req.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+        if (decoded && decoded.id) {
+          const u = await User.findById(decoded.id);
+          if (u) {
+            submittedBy = u._id;
+            submitterName = u.name || submitterName;
+            submitterEmail = u.email || submitterEmail;
+          }
+        }
+      } catch (err) {
+        // ignore jwt error
+      }
+    }
+
+    let proposal = await Proposal.findOne({ projectId: project._id });
+    if (!proposal) {
+      proposal = new Proposal({
+        projectId: project._id,
+        teamId: project.teamId || null,
+        university: null,
+        universityName,
+        submittedBy,
+        submitterName,
+        submitterEmail,
+        problemId: project.problemId || null,
+        problemTitle: project.title,
+        problemCategory: project.type || 'Infrastructure',
+        fundingRequested: fundingNum,
+        industrySupportRequired: supportArray,
+        requirementsDocument: {
+          url: uploadResult.publicUrl,
+          filename: req.file.originalname,
+          size: req.file.size || (req.file.buffer ? req.file.buffer.length : 0),
+          mimetype: uploadResult.mimetype || req.file.mimetype,
+          storageType: uploadResult.storageType || 'supabase',
+          uploadedAt: new Date()
+        },
+        status: 'submitted'
+      });
+    } else {
+      proposal.fundingRequested = fundingNum;
+      proposal.industrySupportRequired = supportArray;
+      proposal.requirementsDocument = {
+        url: uploadResult.publicUrl,
+        filename: req.file.originalname,
+        size: req.file.size || (req.file.buffer ? req.file.buffer.length : 0),
+        mimetype: uploadResult.mimetype || req.file.mimetype,
+        storageType: uploadResult.storageType || 'supabase',
+        uploadedAt: new Date()
+      };
+      proposal.status = 'submitted';
+      proposal.reviewedBy = null;
+      proposal.reviewedAt = null;
+      proposal.reviewComment = null;
+    }
+    await proposal.save();
+
+    // Lock project in proposal submitted state
+    project.proposalId = proposal._id;
+    project.proposalStatus = 'submitted';
+    if (!project.fundingSummary) project.fundingSummary = {};
+    project.fundingSummary.goal = fundingNum;
+    project.fundingSummary.status = 'Pending Admin Approval';
+    await project.save();
+
+    // Dispatch CentralNotification to Admin
+    try {
+      const adminUsers = await User.find({ role: 'admin' });
+      for (const adm of adminUsers) {
+        await new CentralNotification({
+          recipient: adm._id,
+          type: 'proposal_submitted',
+          title: 'New Solution Proposal Submitted',
+          message: `New solution proposal submitted for review: "${project.title}" by ${submitterName} (${universityName}).`,
+          data: {
+            url: `/admin#proposals`,
+            problemId: project.problemId?.toString()
+          },
+          priority: 'high'
+        }).save();
+      }
+    } catch (e) {
+      console.warn('Central admin notification error:', e.message);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Solution proposal submitted successfully for admin review.',
+      proposal,
+      project
+    });
+  } catch (err) {
+    console.error('Proposal submission error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+// University Proposal endpoints
+router.post('/university/projects/:projectId/proposal', proposalUploadMiddleware, handleProposalSubmission);
+router.post('/projects/:projectId/proposal', proposalUploadMiddleware, handleProposalSubmission);
+
+router.get(['/university/projects/:projectId/proposal', '/projects/:projectId/proposal'], async (req, res) => {
+  try {
+    const proposal = await Proposal.findOne({ projectId: req.params.projectId })
+      .populate('assignedIndustry', 'name companyName sector logo contact capabilities fundingCapacity pastCollaborations')
+      .populate('reviewedBy', 'name email role')
+      .lean();
+    if (!proposal) {
+      return res.status(404).json({ success: false, error: 'No proposal found for this project.' });
+    }
+    res.json({ success: true, proposal });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 
 /* ══════════════════════════════════════════
@@ -1079,6 +1336,7 @@ async function deployProjectInternal(project, res) {
   project.status = 'Deployed';
   project.progress = 4;
   project.isBattleTested = true;
+  project.deployedAt = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
   // 1. Action 1: Auto-generate Battle-Tested Resource
   let resource = await Resource.findOne({ linkedProblems: project.problemId });
@@ -1161,29 +1419,10 @@ async function deployProjectInternal(project, res) {
     console.error('Citizen feedback notification error:', e);
   }
 
-  // 4. Action 4: Leaderboard update (+500 points for university & team)
-  try {
-    let topEntry = await Leaderboard.findOne({ rank: 1 });
-    if (topEntry) {
-      topEntry.pts += 500;
-      await topEntry.save();
-    } else {
-      topEntry = new Leaderboard({
-        name: 'Indian Institute of Technology Delhi',
-        initials: 'IITD',
-        pts: 2450,
-        rank: 1
-      });
-      await topEntry.save();
-    }
-  } catch (e) {
-    console.error('Leaderboard update error:', e);
-  }
-
   // University notification
   const uniNotif = new Notification({
     title: `🎉 Project Successfully Deployed: ${project.title}`,
-    subtitle: `Battle-Tested Resource created, certificates issued to ${teamMembers.length} members, and +500 points awarded on Leaderboard!`,
+    subtitle: `Battle-Tested Resource created and official certificates issued to ${teamMembers.length} members!`,
     category: 'system',
     iconType: 'trophy',
     iconColor: '#16A34A',
@@ -1198,11 +1437,11 @@ async function deployProjectInternal(project, res) {
 
   return res.json({
     success: true,
-    message: 'Project marked DEPLOYED! 4-fold deployment triggers fired: Proven Resource published, Certificates issued, Citizen notified, +500 Leaderboard points added!',
+    message: 'Project marked DEPLOYED! Deployment triggers fired: Proven Resource published, Certificates issued, Citizen notified!',
     project,
     resource,
     certificatesCount: issuedCerts.length,
-    leaderboardPoints: 500
+    innovationPoints: 500
   });
 }
 
@@ -2307,22 +2546,6 @@ router.patch('/user', async (req, res) => {
 });
 
 
-router.get('/leaderboard', async (req, res) => {
-  try {
-    let board = await Leaderboard.find().sort({ rank: 1 });
-    if (board.length === 0) {
-      board = [
-        new Leaderboard({ name: 'Indian Institute of Technology Delhi', initials: 'IITD', pts: 2450, rank: 1 }),
-        new Leaderboard({ name: 'Indian Institute of Science Bengaluru', initials: 'IISC', pts: 2180, rank: 2 }),
-        new Leaderboard({ name: 'Indian Institute of Technology Bombay', initials: 'IITB', pts: 1940, rank: 3 }),
-        new Leaderboard({ name: 'National Institute of Technology Patna', initials: 'NITP', pts: 1680, rank: 4 })
-      ];
-      for (const b of board) await b.save();
-      board = await Leaderboard.find().sort({ rank: 1 });
-    }
-    res.json(board);
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
 router.get('/dashboard/stats', async (req, res) => {
   try {

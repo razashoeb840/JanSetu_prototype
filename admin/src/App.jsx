@@ -16,51 +16,15 @@ function App() {
     loadScript('/admin/jansetu-civic-loader.js');
     setTimeout(() => {
       loadScript('/js/pan-india-heatmap.js');
-      setTimeout(() => loadScript('/admin/admin.js'), 200);
+      setTimeout(() => loadScript('/admin/admin.js?v=' + Date.now()), 200);
     }, 200);
   }, []);
 
   return (
     <>
       
-  {/* Fixed Background Canvas with Indian Heritage & Flag Watermarks (Zero Lag / GPU Smooth) */}
-  <div className="fixed-canvas-bg">
-    {/* Ashoka Chakra Watermark */}
-    <svg style={{"position":"absolute","top":"40px","right":"60px","width":"340px","height":"340px","opacity":"0.045","pointerEvents":"none"}}
-      viewBox="0 0 100 100" fill="none" stroke="#002D62">
-      <circle cx="50" cy="50" r="45" stroke-width="2.5" />
-      <circle cx="50" cy="50" r="10" stroke-width="2.5" />
-      <circle cx="50" cy="50" r="3" fill="#002D62" />
-      <g stroke-width="1.5">
-        <line x1="50" y1="5" x2="50" y2="95" />
-        <line x1="5" y1="50" x2="95" y2="50" />
-        <line x1="18.18" y1="18.18" x2="81.82" y2="81.82" />
-        <line x1="18.18" y1="81.82" x2="81.82" y2="18.18" />
-        <line x1="32.7" y1="8.4" x2="67.3" y2="91.6" />
-        <line x1="8.4" y1="32.7" x2="91.6" y2="67.3" />
-        <line x1="67.3" y1="8.4" x2="32.7" y2="91.6" />
-        <line x1="91.6" y1="32.7" x2="8.4" y2="67.3" />
-        <line x1="41.3" y1="5.8" x2="58.7" y2="94.2" />
-        <line x1="5.8" y1="41.3" x2="94.2" y2="58.7" />
-        <line x1="58.7" y1="5.8" x2="41.3" y2="94.2" />
-        <line x1="94.2" y1="41.3" x2="5.8" y2="58.7" />
-      </g>
-    </svg>
-
-    {/* Indian Architectural Heritage Watermark Silhouette (Lal Qila / India Gate) */}
-    <svg style={{"position":"absolute","bottom":"20px","left":"40px","width":"420px","height":"140px","opacity":"0.04","pointerEvents":"none"}}
-      viewBox="0 0 300 100" fill="#002D62">
-      <path
-        d="M10 90 L10 50 L20 40 L30 50 L30 90 Z M40 90 L40 30 L55 15 L70 30 L70 90 Z M80 90 L80 40 L90 30 L100 40 L100 90 Z M110 90 L110 20 L130 5 L150 20 L150 90 Z M160 90 L160 40 L170 30 L180 40 L180 90 Z M190 90 L190 30 L205 15 L220 30 L220 90 Z M230 90 L230 50 L240 40 L250 50 L250 90 Z M120 90 A20 20 0 0 1 140 90 Z" />
-    </svg>
-
-    {/* Ashoka Lion Capital Emblem Watermark */}
-    <svg style={{"position":"absolute","bottom":"100px","right":"80px","width":"180px","height":"180px","opacity":"0.035","pointerEvents":"none"}}
-      viewBox="0 0 100 100" fill="#FF9933">
-      <circle cx="50" cy="30" r="20" />
-      <path d="M30 50 L70 50 L65 75 L35 75 Z M35 78 L65 78 L70 90 L30 90 Z" />
-    </svg>
-  </div>
+  {/* Modern Command Background Ambient Canvas */}
+  <div className="fixed-canvas-bg"></div>
 
   <div className="app-layout">
     {/* ROYAL NAVY SIDEBAR WITH MONUMENT WATERMARK (CITIZEN.HTML SYSTEM) */}
@@ -71,17 +35,16 @@ function App() {
 
     <div className="sidebar-brand-wrapper">
       <a className="sidebar-brand" href="#overview" onClick={() => { showSection('overview') }}>
-        <svg className="brand-icon-svg" viewBox="0 0 48 48" fill="none">
-          <circle cx="16" cy="14" r="6" fill="#FF9933" />
-          <path d="M7 32C7 25 12 21 17 21C22 21 27 25 27 32" stroke="#FF9933" stroke-width="4" stroke-linecap="round" />
-          <circle cx="24" cy="12" r="6" fill="#002D62" />
-          <path d="M15 30C15 23 20 19 25 19C30 19 35 23 35 30" stroke="#002D62" stroke-width="4" stroke-linecap="round" />
-          <circle cx="32" cy="14" r="6" fill="#138808" />
-          <path d="M23 32C23 25 28 21 33 21C38 21 43 25 43 32" stroke="#138808" stroke-width="4" stroke-linecap="round" />
-        </svg>
+        <img
+          src="/jansetu-logo.png"
+          alt="JanSetu Logo"
+          className="brand-icon-svg"
+          style={{"width":"42px","height":"42px","borderRadius":"50%","objectFit":"cover","border":"2px solid rgba(255,255,255,0.7)","boxShadow":"0 2px 8px rgba(0,0,0,0.3)","flexShrink":0}}
+          onError={(e) => { e.target.src = '/admin/jansetu-logo.png'; }}
+        />
         <div className="brand-text-block">
           <span className="brand-title"><span className="brand-saffron">Jan</span><span className="brand-green">Setu</span></span>
-          <span className="brand-tagline">ADMIN COMMAND CENTER</span>
+          <span className="brand-tagline">ADMIN PORTAL</span>
         </div>
       </a>
       <button type="button" className="sidebar-collapse-btn" id="sidebarCollapseBtn" onClick={() => { toggleSidebar() }} title="Toggle Navigation Drawer">
@@ -93,7 +56,7 @@ function App() {
 
     <div className="admin-pill">
       <div className="admin-pill-dot"></div>
-      <div className="admin-pill-text">🛡️ Admin Command</div>
+      <div className="admin-pill-text">🛡️ Admin Portal</div>
       <div className="admin-pill-name" id="sidebarName">Dr. Admin</div>
     </div>
 
@@ -101,36 +64,28 @@ function App() {
       <div className="nav-section-label">Command Center</div>
       <button className="nav-item active" id="nav-overview" onClick={() => { showSection('overview') }}>
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        <span>Overview</span>
+        <span>Dashboard</span>
       </button>
 
       <div className="nav-section-label">Challenge Operations</div>
-      <button className="nav-item" id="nav-challenges" onClick={() => { showSection('challenges') }}>
+      <button className="nav-item" id="nav-challenges" onClick={() => { showSection('challenges'); if (window.filterChallengesByTab) window.filterChallengesByTab(''); }}>
         <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span>All Challenges</span>
+        <span>Challenges</span>
         <span className="nav-badge" id="pendingCountBadge" style={{"display":"none"}}>0</span>
       </button>
-      <button className="nav-item" id="nav-pending" onClick={() => { showSection('pending') }}>
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span>Pending Validation</span>
-        <span className="nav-badge red" id="pendingValidBadge" style={{"display":"none"}}>0</span>
+      <button className="nav-item" id="nav-proposals" onClick={() => { showSection('proposals') }}>
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Solution Proposals</span>
+        <span className="nav-badge" id="proposalsNavBadge" style={{"display":"none"}}>0</span>
       </button>
       <button className="nav-item" id="nav-aimatching" onClick={() => { showSection('aimatching') }}>
         <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         <span>AI Matching</span>
       </button>
-      <button className="nav-item" id="nav-assigned" onClick={() => { showSection('assigned') }}>
-        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-        <span>Assigned</span>
-      </button>
       <button className="nav-item" id="nav-sla" onClick={() => { showSection('sla') }}>
         <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <span>Overdue / Escalated</span>
         <span className="nav-badge red" id="overdueNavBadge" style={{"display":"none"}}>0</span>
-      </button>
-      <button className="nav-item" id="nav-resolved" onClick={() => { showSection('resolved') }}>
-        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        <span>Resolved</span>
       </button>
 
       <div className="nav-section-label">Network & Partners</div>
@@ -148,10 +103,6 @@ function App() {
       </button>
 
       <div className="nav-section-label">Intelligence</div>
-      <button className="nav-item" id="nav-analytics" onClick={() => { showSection('analytics') }}>
-        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        <span>Impact Analytics</span>
-      </button>
       <button className="nav-item" id="nav-heatmap" onClick={() => { showSection('heatmap') }}>
         <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
         <span>District Heatmap</span>
@@ -184,6 +135,9 @@ function App() {
     </div>
   </aside>
 
+  {/* Mobile Sidebar Backdrop Overlay */}
+  <div className="sidebar-backdrop" id="sidebarBackdrop" onClick={() => { if (window.toggleSidebar) window.toggleSidebar(); }}></div>
+
   {/* Floating Drawer Reopen Tab (Always visible if drawer is collapsed) */}
   <button type="button" className="drawer-floating-toggle" id="drawerFloatingToggle" onClick={() => { toggleSidebar() }} title="Expand Navigation Drawer">
     <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" /></svg>
@@ -192,122 +146,768 @@ function App() {
   {/* MAIN VIEWPORT */}
   <div className="main-viewport">
 
-    {/* 176px TOP PANORAMA MONUMENT BANNER (RASHTRAPATI BHAVAN / CENTRAL VISTA TWILIGHT) */}
-    <header className="top-panorama-wrapper">
-      <div className="panorama-monument-layer">
-        <img src="/admin/images/admin-monument-banner.jpg" className="panorama-monument-photo" alt="Rashtrapati Bhavan Central Vista" onerror="this.src='images/admin-monument-banner.jpg'" />
-        <div className="panorama-monument-scrim"></div>
-      </div>
+    {/* NEXT-GEN ENTERPRISE COMMAND TOPBAR */}
+    <header className="command-topbar">
+      <div className="topbar-left">
+        <button type="button" className="drawer-open-btn" onClick={() => { toggleSidebar() }} title="Toggle Navigation Drawer">
+          <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+        </button>
 
-      <div className="panorama-top-row">
-        <div style={{"display":"flex","alignItems":"center","gap":"10px"}}>
-          <button type="button" className="drawer-open-btn" onClick={() => { toggleSidebar() }} title="Toggle Navigation Drawer">
-            <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
-          </button>
-          <div className="gov-badge-tag">
-            <span style={{"width":"7px","height":"7px","borderRadius":"50%","background":"#FF9933"}}></span>
-            <span>Government of Jharkhand · Societal Innovation Command</span>
-          </div>
+        <div className="topbar-brand-badge" onClick={() => { showSection('overview'); }} style={{"cursor":"pointer","display":"flex","alignItems":"center","gap":"4px","padding":"4px 10px","borderRadius":"8px","background":"#F8FAFC","border":"1px solid #E2E8F0"}}>
+          <span style={{"fontSize":"14px"}}>🇮🇳</span>
+          <span className="brand-saffron" style={{"fontWeight":"900","fontSize":"16px"}}>Jan</span><span className="brand-green" style={{"fontWeight":"900","fontSize":"16px"}}>Setu</span>
+          <span style={{"fontSize":"10px","fontWeight":"800","background":"#E0F2FE","color":"#0284C7","padding":"1px 6px","borderRadius":"999px","marginLeft":"2px"}}>ADMIN</span>
         </div>
 
-        <div className="panorama-actions-right">
-          <div className="heritage-flag-pill">
-            <span style={{"fontSize":"14px"}}>🇮🇳</span>
-            <span>सत्यमेव जयते · झारखण्ड</span>
-          </div>
+        <div className="breadcrumb-box">
+          <span className="breadcrumb-path" id="pageBreadcrumb">Command Center</span>
+          <span className="breadcrumb-slash">/</span>
+          <span className="breadcrumb-current" id="pageTitle">Dashboard</span>
+        </div>
 
-          <div className="admin-live-badge">
-            <span className="admin-live-badge-dot"></span>
-            <span>Live Admin</span>
-          </div>
-
-          <button className="notif-bell-btn" onClick={() => { showSection('notifications') }} title="Notifications">
-            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-            <span className="notif-pink-badge" id="topbarNotifDot" style={{"display":"none"}}>0</span>
-          </button>
-
-          <div className="profile-pill" onClick={() => { showSection('overview') }}>
-            <div className="profile-avatar-circle" id="topbarAvatar">A</div>
-            <div className="profile-text-meta">
-              <span className="profile-name" id="topbarName">Admin</span>
-              <span className="profile-role-tag">Command Center</span>
-            </div>
-          </div>
+        <div className="live-status-pill">
+          <span className="live-status-dot"></span>
+          <span className="live-status-text">LIVE ENGINE</span>
         </div>
       </div>
 
-      <div className="panorama-hero-row">
-        <div className="hero-quote-container">
-          <div>
-            <div className="hero-quote-lines" id="welcomeName">JanSetu Command Center — Welcome, Dr. Admin</div>
-            <div className="hero-quote-sub">Real-time civic challenge governance, university R&D matching & industry CSR acceleration across Jharkhand.</div>
-          </div>
+      <div className="topbar-right">
+        <div className="gov-badge-tag">
+          <span className="gov-badge-dot"></span>
+          <span>Jharkhand Civic Intelligence</span>
         </div>
 
-        <div className="hero-action-buttons">
-          <button className="btn-hero-action btn-hero-orange" onClick={() => { showSection('pending') }}>
-            <span>✓</span> Review Pending
-          </button>
-          <button className="btn-hero-action btn-hero-glass" onClick={() => { showSection('aimatching') }}>
-            <span>⚡</span> AI Matching
-          </button>
-          <button className="btn-hero-action btn-hero-glass" onClick={() => { showSection('heatmap') }}>
-            <span>🗺️</span> Heatmap
-          </button>
+        <div className="heritage-flag-pill">
+          <span style={{"fontSize":"13px"}}>🇮🇳</span>
+          <span>सत्यमेव जयते</span>
+        </div>
+
+        <div className="admin-live-badge">
+          <span className="admin-live-badge-dot"></span>
+          <span>Admin</span>
+        </div>
+
+        <button className="notif-bell-btn" onClick={() => { showSection('notifications') }} title="Notifications">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
+          <span className="notif-pink-badge" id="topbarNotifDot" style={{"display":"none"}}>0</span>
+        </button>
+
+        <div className="profile-pill" onClick={() => { showSection('overview') }}>
+          <div className="profile-avatar-circle" id="topbarAvatar">A</div>
+          <div className="profile-text-meta">
+            <span className="profile-name" id="topbarName">Admin</span>
+            <span className="profile-role-tag">Super Admin</span>
+          </div>
         </div>
       </div>
     </header>
 
     <div className="page-content">
-      {/* OVERVIEW */}
+      {/* DASHBOARD (FORMERLY OVERVIEW) */}
       <div id="section-overview" className="dashboard-section active">
-        <div className="metrics-grid" id="adminMetrics">
-          <div className="skeleton" style={{"height":"110px"}}></div><div className="skeleton" style={{"height":"110px"}}></div>
-          <div className="skeleton" style={{"height":"110px"}}></div><div className="skeleton" style={{"height":"110px"}}></div>
-        </div>
-        <div className="grid-2">
-          <div className="chart-container"><div className="chart-header"><div><div className="chart-title">Submission Trends</div><div className="chart-subtitle">Monthly challenges submitted</div></div></div><div className="chart-body"><canvas id="trendChart"></canvas></div></div>
-          <div className="chart-container"><div className="chart-header"><div><div className="chart-title">Status Distribution</div><div className="chart-subtitle">Current pipeline</div></div></div><div className="chart-body"><canvas id="statusChart"></canvas></div></div>
-        </div>
-        <div className="grid-2" style={{"marginTop":"20px"}}>
-          <div className="card">
-            <div className="card-header"><div><div className="card-title">Pending Validation</div><div className="card-subtitle">Challenges awaiting review</div></div><button onClick={() => { showSection('pending') }} className="btn btn-ghost btn-sm">View All</button></div>
-            <div className="card-body" id="pendingChallengesList"><div className="skeleton" style={{"height":"60px","marginBottom":"8px"}}></div><div className="skeleton" style={{"height":"60px"}}></div></div>
+        {/* ROW 1: 6 KPI CARDS (100% REAL MONGODB DATABASE METRICS) */}
+        <div className="dsh-kpis-grid">
+          {/* 1. Total Reports */}
+          <div className="dsh-kpi-card" onClick={() => { showSection('challenges'); if(window.filterChallengesByTab) window.filterChallengesByTab('all'); }} style={{"cursor":"pointer"}}>
+            <div className="dsh-kpi-top">
+              <div className="dsh-kpi-icon-sq blue">&#128196;</div>
+              <span className="dsh-kpi-watermark">&#128196;</span>
+            </div>
+            <div>
+              <div className="dsh-kpi-lbl">Total Reports</div>
+              <div className="dsh-kpi-val" id="dshTotalReports">70</div>
+              <div className="dsh-kpi-trend up" id="dshTotalReportsTrend">&#8593; 70 Real Synced</div>
+            </div>
           </div>
-          <div className="card">
-            <div className="card-header"><div><div className="card-title">University Rankings</div><div className="card-subtitle">By performance score</div></div></div>
-            <div className="card-body" id="univLeaderboard"><div className="skeleton" style={{"height":"50px","marginBottom":"8px"}}></div><div className="skeleton" style={{"height":"50px"}}></div></div>
-          </div>
-        </div>
-        <div className="chart-container" style={{"marginTop":"20px"}}><div className="chart-header"><div><div className="chart-title">Category Distribution</div><div className="chart-subtitle">Challenges by domain</div></div></div><div className="chart-body"><canvas id="categoryBarChart"></canvas></div></div>
 
-      </div>
-      {/* ALL CHALLENGES */}
-      <div id="section-challenges" className="dashboard-section">
-        <div className="section-header"><div><div className="section-title">All Challenges</div><div className="section-subtitle">Review, validate, assign and monitor challenges</div></div><div><button onClick={() => { exportChallenges() }} className="btn btn-ghost btn-sm">&#11015; Export CSV</button></div></div>
-        <div className="filter-bar">
-          <div className="search-wrap"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" className="search-input" placeholder="Search challenges..." id="adminChallengeSearch" oninput="debounceLoadChallenges()" /></div>
-          <select className="filter-select" id="adminStatusFilter" onChange={(e) => { loadAdminChallenges() }}>
-            <option value="">All Statuses</option><option value="submitted">Submitted</option><option value="under_review">Under Review</option>
-            <option value="validated">Validated</option><option value="assigned">Assigned</option><option value="in_progress">In Progress</option>
-            <option value="testing">Testing</option><option value="resolved">Resolved</option><option value="rejected">Rejected</option><option value="escalated">Escalated</option>
-          </select>
-          <select className="filter-select" id="adminCategoryFilter" onChange={(e) => { loadAdminChallenges() }}>
-            <option value="">All Categories</option><option>Education</option><option>Healthcare</option><option>Agriculture</option>
-            <option>Water Management</option><option>Sanitation &amp; Environment</option><option>Rural Livelihoods</option>
-            <option>Accessibility</option><option>Urban Infrastructure</option><option>Public Administration</option><option>Energy &amp; Technology</option>
-          </select>
-          <select className="filter-select" id="adminPriorityFilter" onChange={(e) => { loadAdminChallenges() }}>
-            <option value="">All Priorities</option><option value="urgent">Urgent</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
-          </select>
+          {/* 2. Pending Verification */}
+          <div className="dsh-kpi-card" onClick={() => { showSection('challenges'); if(window.filterChallengesByTab) window.filterChallengesByTab('pending'); }} style={{"cursor":"pointer"}}>
+            <div className="dsh-kpi-top">
+              <div className="dsh-kpi-icon-sq orange">&#9201;</div>
+              <span className="dsh-kpi-watermark">&#9201;</span>
+            </div>
+            <div>
+              <div className="dsh-kpi-lbl">Pending Verification</div>
+              <div className="dsh-kpi-val" id="dshPendingVerification">13</div>
+              <div className="dsh-kpi-trend down" id="dshPendingVerificationTrend">&#9888; Requires Triage</div>
+            </div>
+          </div>
+
+          {/* 3. Active Projects */}
+          <div className="dsh-kpi-card" onClick={() => { showSection('challenges'); if(window.filterChallengesByTab) window.filterChallengesByTab('assigned'); }} style={{"cursor":"pointer"}}>
+            <div className="dsh-kpi-top">
+              <div className="dsh-kpi-icon-sq green">&#9881;</div>
+              <span className="dsh-kpi-watermark">&#9881;</span>
+            </div>
+            <div>
+              <div className="dsh-kpi-lbl">Active Projects</div>
+              <div className="dsh-kpi-val" id="dshActiveProjects">42</div>
+              <div className="dsh-kpi-trend up" id="dshActiveProjectsTrend">&#8593; 42 Under R&D</div>
+            </div>
+          </div>
+
+          {/* 4. University Assigned */}
+          <div className="dsh-kpi-card" onClick={() => { showSection('universities'); }} style={{"cursor":"pointer"}}>
+            <div className="dsh-kpi-top">
+              <div className="dsh-kpi-icon-sq purple">&#127891;</div>
+              <span className="dsh-kpi-watermark">&#127891;</span>
+            </div>
+            <div>
+              <div className="dsh-kpi-lbl">University Assigned</div>
+              <div className="dsh-kpi-val" id="dshUnivAssigned">21</div>
+              <div className="dsh-kpi-trend up" id="dshUnivAssignedTrend">&#8593; 8 Universities</div>
+            </div>
+          </div>
+
+          {/* 5. Industry / CSR Partners */}
+          <div className="dsh-kpi-card" onClick={() => { showSection('industry'); }} style={{"cursor":"pointer"}}>
+            <div className="dsh-kpi-top">
+              <div className="dsh-kpi-icon-sq coral">&#127970;</div>
+              <span className="dsh-kpi-watermark">&#127970;</span>
+            </div>
+            <div>
+              <div className="dsh-kpi-lbl">Industry / CSR Partners</div>
+              <div className="dsh-kpi-val" id="dshIndustryPartners">6</div>
+              <div className="dsh-kpi-trend up" id="dshIndustryPartnersTrend">&#8593; 6 CSR Partners</div>
+            </div>
+          </div>
+
+          {/* 6. Resolved */}
+          <div className="dsh-kpi-card" onClick={() => { showSection('challenges'); if(window.filterChallengesByTab) window.filterChallengesByTab('resolved'); }} style={{"cursor":"pointer"}}>
+            <div className="dsh-kpi-top">
+              <div className="dsh-kpi-icon-sq green">&#9989;</div>
+              <span className="dsh-kpi-watermark">&#9989;</span>
+            </div>
+            <div>
+              <div className="dsh-kpi-lbl">Resolved</div>
+              <div className="dsh-kpi-val" id="dshResolved">15</div>
+              <div className="dsh-kpi-trend up" id="dshResolvedTrend">&#8593; 21.4% Resolved</div>
+            </div>
+          </div>
         </div>
-        <div className="table-container">
+
+        {/* ROW 2: 3 LIVE INTERACTIVE MID PANELS (REPLACING STATIC CHARTS WITH ACTIONABLE GOVERNANCE HUBS) */}
+        <div className="dsh-mid-grid">
+          {/* Panel 1: Live Citizen Incident Radar */}
+          <div className="dsh-panel live-radar-panel">
+            <div className="dsh-panel-header">
+              <div className="dsh-panel-title">
+                <span className="dsh-icon-sq-sm red">&#128680;</span>
+                <span>Live Citizen Incident Radar</span>
+                <span className="live-radar-tag"><span className="radar-pulse-dot"></span> LIVE FEED</span>
+              </div>
+              <div className="dsh-pill-tabs" id="radarFilterTabs">
+                <button className="dsh-pill-btn active" id="radarTabAll" onClick={() => { if(window.filterIncidentRadar) window.filterIncidentRadar('all'); }}>All</button>
+                <button className="dsh-pill-btn" id="radarTabPending" onClick={() => { if(window.filterIncidentRadar) window.filterIncidentRadar('pending'); }}>Needs Review</button>
+                <button className="dsh-pill-btn" id="radarTabUrgent" onClick={() => { if(window.filterIncidentRadar) window.filterIncidentRadar('urgent'); }}>Urgent</button>
+              </div>
+            </div>
+            <div className="radar-feed-wrap" id="dshIncidentRadarList">
+              <div className="radar-feed-item low" onClick={() => { if(window.openChallengeAction) window.openChallengeAction('6aa6dd7d4403e99e76314153'); }}>
+                <div className="radar-item-main">
+                  <div className="radar-item-header">
+                    <span className="radar-item-id">JH-2026-314153</span>
+                    <span className="radar-item-priority low">Low</span>
+                  </div>
+                  <div className="radar-item-title" title="Poor access to quality education in rural areas of North Delhi - Urgent Innovation Needed">Poor access to quality education in rural areas of North Delhi</div>
+                  <div className="radar-item-meta">
+                    <span>📍 North Delhi</span><span>·</span><span>Rural Livelihoods</span><span>·</span><span style={{"color":"#94A3B8"}}>Just now</span>
+                  </div>
+                </div>
+                <button className="btn-radar-triage" onClick={(e) => { e.stopPropagation(); if(window.openChallengeAction) window.openChallengeAction('6aa6dd7d4403e99e76314153'); }}>
+                  <span>⚡ Triage</span>
+                </button>
+              </div>
+
+              <div className="radar-feed-item high" onClick={() => { if(window.openChallengeAction) window.openChallengeAction('6aa6dd7c4403e99e76314120'); }}>
+                <div className="radar-item-main">
+                  <div className="radar-item-header">
+                    <span className="radar-item-id">JH-2026-314120</span>
+                    <span className="radar-item-priority high">High</span>
+                  </div>
+                  <div className="radar-item-title" title="No Solar Energy Access for Off-Grid Villages in Latehar District">No Solar Energy Access for Off-Grid Villages in Latehar District</div>
+                  <div className="radar-item-meta">
+                    <span>📍 Latehar</span><span>·</span><span>Energy & Technology</span><span>·</span><span style={{"color":"#94A3B8"}}>1h ago</span>
+                  </div>
+                </div>
+                <button className="btn-radar-triage" onClick={(e) => { e.stopPropagation(); if(window.openChallengeAction) window.openChallengeAction('6aa6dd7c4403e99e76314120'); }}>
+                  <span>⚡ Triage</span>
+                </button>
+              </div>
+
+              <div className="radar-feed-item high" onClick={() => { if(window.openChallengeAction) window.openChallengeAction('6aa6dd7c4403e99e7631411d'); }}>
+                <div className="radar-item-main">
+                  <div className="radar-item-header">
+                    <span className="radar-item-id">JH-2026-31411D</span>
+                    <span className="radar-item-priority high">High</span>
+                  </div>
+                  <div className="radar-item-title" title="Bureaucratic Delays in Issuance of Certificates Harassing Citizens">Bureaucratic Delays in Issuance of Certificates Harassing Citizens</div>
+                  <div className="radar-item-meta">
+                    <span>📍 Hazaribagh</span><span>·</span><span>Public Administration</span><span>·</span><span style={{"color":"#94A3B8"}}>2h ago</span>
+                  </div>
+                </div>
+                <button className="btn-radar-triage" onClick={(e) => { e.stopPropagation(); if(window.openChallengeAction) window.openChallengeAction('6aa6dd7c4403e99e7631411d'); }}>
+                  <span>⚡ Triage</span>
+                </button>
+              </div>
+
+              <div className="radar-feed-item medium" onClick={() => { if(window.openChallengeAction) window.openChallengeAction('6aa6dd7c4403e99e7631411a'); }}>
+                <div className="radar-item-main">
+                  <div className="radar-item-header">
+                    <span className="radar-item-id">JH-2026-31411A</span>
+                    <span className="radar-item-priority medium">Medium</span>
+                  </div>
+                  <div className="radar-item-title" title="Smart Waste Management System Required for Ranchi Smart City">Smart Waste Management System Required for Ranchi Smart City</div>
+                  <div className="radar-item-meta">
+                    <span>📍 Ranchi</span><span>·</span><span>Urban Infrastructure</span><span>·</span><span style={{"color":"#94A3B8"}}>3h ago</span>
+                  </div>
+                </div>
+                <button className="btn-radar-triage" onClick={(e) => { e.stopPropagation(); if(window.openChallengeAction) window.openChallengeAction('6aa6dd7c4403e99e7631411a'); }}>
+                  <span>⚡ Triage</span>
+                </button>
+              </div>
+
+              <div className="radar-feed-item high" onClick={() => { if(window.openChallengeAction) window.openChallengeAction('6aa6dd7c4403e99e76314114'); }}>
+                <div className="radar-item-main">
+                  <div className="radar-item-header">
+                    <span className="radar-item-id">JH-2026-314114</span>
+                    <span className="radar-item-priority high">High</span>
+                  </div>
+                  <div className="radar-item-title" title="Forest-Dependent Communities Losing Livelihoods as Forest Depletes">Forest-Dependent Communities Losing Livelihoods as Forest Depletes</div>
+                  <div className="radar-item-meta">
+                    <span>📍 West Singhbhum</span><span>·</span><span>Rural Livelihoods</span><span>·</span><span style={{"color":"#94A3B8"}}>4h ago</span>
+                  </div>
+                </div>
+                <button className="btn-radar-triage" onClick={(e) => { e.stopPropagation(); if(window.openChallengeAction) window.openChallengeAction('6aa6dd7c4403e99e76314114'); }}>
+                  <span>⚡ Triage</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Panel 2: District Civic Severity & SLA Escalation Index */}
+          <div className="dsh-panel district-sla-panel">
+            <div className="dsh-panel-header">
+              <div className="dsh-panel-title">
+                <span className="dsh-icon-sq-sm purple">&#127963;</span>
+                <span>District Severity & SLA Index</span>
+              </div>
+              <button className="dsh-btn-link" onClick={() => { showSection('heatmap'); }}>Heatmap &rarr;</button>
+            </div>
+            <div className="district-sla-body" id="dshDistrictSeverityList">
+              <div className="district-sla-row" onClick={() => { showSection('challenges'); }}>
+                <div className="district-name-badge">
+                  <span>📍 Ranchi</span><span className="district-count-pill">16</span>
+                </div>
+                <div className="district-bar-wrap">
+                  <div className="district-bar-track">
+                    <div className="district-bar-urgent" style={{"width":"25%"}}></div>
+                    <div className="district-bar-high" style={{"width":"30%"}}></div>
+                    <div className="district-bar-resolved" style={{"width":"20%"}}></div>
+                    <div className="district-bar-active" style={{"width":"25%"}}></div>
+                  </div>
+                </div>
+                <span className="sla-tag action">⚡ 4 Urgent</span>
+              </div>
+
+              <div className="district-sla-row" onClick={() => { showSection('challenges'); }}>
+                <div className="district-name-badge">
+                  <span>📍 Dhanbad</span><span className="district-count-pill">12</span>
+                </div>
+                <div className="district-bar-wrap">
+                  <div className="district-bar-track">
+                    <div className="district-bar-urgent" style={{"width":"20%"}}></div>
+                    <div className="district-bar-high" style={{"width":"35%"}}></div>
+                    <div className="district-bar-resolved" style={{"width":"25%"}}></div>
+                    <div className="district-bar-active" style={{"width":"20%"}}></div>
+                  </div>
+                </div>
+                <span className="sla-tag moderate">⚠️ High SLA</span>
+              </div>
+
+              <div className="district-sla-row" onClick={() => { showSection('challenges'); }}>
+                <div className="district-name-badge">
+                  <span>📍 Jamshedpur</span><span className="district-count-pill">10</span>
+                </div>
+                <div className="district-bar-wrap">
+                  <div className="district-bar-track">
+                    <div className="district-bar-high" style={{"width":"30%"}}></div>
+                    <div className="district-bar-resolved" style={{"width":"40%"}}></div>
+                    <div className="district-bar-active" style={{"width":"30%"}}></div>
+                  </div>
+                </div>
+                <span className="sla-tag ok">🛡️ On Track</span>
+              </div>
+
+              <div className="district-sla-row" onClick={() => { showSection('challenges'); }}>
+                <div className="district-name-badge">
+                  <span>📍 Hazaribagh</span><span className="district-count-pill">8</span>
+                </div>
+                <div className="district-bar-wrap">
+                  <div className="district-bar-track">
+                    <div className="district-bar-urgent" style={{"width":"25%"}}></div>
+                    <div className="district-bar-high" style={{"width":"35%"}}></div>
+                    <div className="district-bar-resolved" style={{"width":"20%"}}></div>
+                    <div className="district-bar-active" style={{"width":"20%"}}></div>
+                  </div>
+                </div>
+                <span className="sla-tag action">⚡ 2 Urgent</span>
+              </div>
+
+              <div className="district-sla-row" onClick={() => { showSection('challenges'); }}>
+                <div className="district-name-badge">
+                  <span>📍 Bokaro</span><span className="district-count-pill">8</span>
+                </div>
+                <div className="district-bar-wrap">
+                  <div className="district-bar-track">
+                    <div className="district-bar-high" style={{"width":"40%"}}></div>
+                    <div className="district-bar-resolved" style={{"width":"30%"}}></div>
+                    <div className="district-bar-active" style={{"width":"30%"}}></div>
+                  </div>
+                </div>
+                <span className="sla-tag ok">🛡️ On Track</span>
+              </div>
+
+              <div className="district-sla-row" onClick={() => { showSection('challenges'); }}>
+                <div className="district-name-badge">
+                  <span>📍 Dumka</span><span className="district-count-pill">7</span>
+                </div>
+                <div className="district-bar-wrap">
+                  <div className="district-bar-track">
+                    <div className="district-bar-high" style={{"width":"25%"}}></div>
+                    <div className="district-bar-resolved" style={{"width":"45%"}}></div>
+                    <div className="district-bar-active" style={{"width":"30%"}}></div>
+                  </div>
+                </div>
+                <span className="sla-tag ok">🛡️ On Track</span>
+              </div>
+            </div>
+            <div className="district-sla-footer">
+              <div className="sla-stat-chip">
+                <span className="sla-chip-val" id="dshResolutionRate">21.4%</span>
+                <span className="sla-chip-lbl">State Resolution Rate</span>
+              </div>
+              <div className="sla-stat-chip">
+                <span className="sla-chip-val" id="dshActiveRndCount">42</span>
+                <span className="sla-chip-lbl">Active R&D Projects</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Panel 3: Quick Actions 2x2 Grid with Real Live Badges */}
+          <div className="dsh-panel">
+            <div className="dsh-panel-header">
+              <div className="dsh-panel-title">
+                <span style={{"color":"#F59E0B","fontSize":"16px"}}>&#9889;</span>
+                <span>Quick Actions</span>
+              </div>
+              <span className="dsh-badge-live-ai">&#9889; 1-Click Triage</span>
+            </div>
+            <div className="dsh-actions-grid">
+              <div className="dsh-action-card" onClick={() => { showSection('challenges'); if (window.filterChallengesByTab) window.filterChallengesByTab('pending'); }}>
+                <div className="dsh-action-icon" style={{"background":"#FEF2F2","color":"#DC2626"}}>&#128196;</div>
+                <div style={{"flex":"1","minWidth":"0"}}>
+                  <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between"}}>
+                    <div className="dsh-action-title">Review Pending</div>
+                    <span className="dsh-action-pill-count red" id="dshQuickPendingCount">13</span>
+                  </div>
+                  <div className="dsh-action-sub">Triage citizen issues</div>
+                </div>
+              </div>
+
+              <div className="dsh-action-card" onClick={() => { showSection('aimatching'); }}>
+                <div className="dsh-action-icon" style={{"background":"#F3E8FF","color":"#8B5CF6"}}>&#10024;</div>
+                <div style={{"flex":"1","minWidth":"0"}}>
+                  <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between"}}>
+                    <div className="dsh-action-title">AI Matching</div>
+                    <span className="dsh-action-pill-count purple">Smart</span>
+                  </div>
+                  <div className="dsh-action-sub">Find optimal matches</div>
+                </div>
+              </div>
+
+              <div className="dsh-action-card" onClick={() => { showSection('challenges'); if (window.filterChallengesByTab) window.filterChallengesByTab('assigned'); }}>
+                <div className="dsh-action-icon" style={{"background":"#EFF6FF","color":"#2563EB"}}>&#127891;</div>
+                <div style={{"flex":"1","minWidth":"0"}}>
+                  <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between"}}>
+                    <div className="dsh-action-title">Assign University</div>
+                    <span className="dsh-action-pill-count blue" id="dshQuickUnivCount">8 Univs</span>
+                  </div>
+                  <div className="dsh-action-sub">Allocate to R&D cells</div>
+                </div>
+              </div>
+
+              <div className="dsh-action-card" onClick={() => { showSection('industry'); }}>
+                <div className="dsh-action-icon" style={{"background":"#FFF7ED","color":"#EA580C"}}>&#127970;</div>
+                <div style={{"flex":"1","minWidth":"0"}}>
+                  <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between"}}>
+                    <div className="dsh-action-title">Assign Industry</div>
+                    <span className="dsh-action-pill-count orange" id="dshQuickIndCount">6 CSR</span>
+                  </div>
+                  <div className="dsh-action-sub">Connect funding & CSR</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ROW 3: 3 REAL DATA TABLES (RECENT PROBLEMS, TOP UNIVERSITIES, CSR CONTRIBUTION) */}
+        <div className="dsh-tables-grid">
+          {/* Table 1: Recent Problems */}
+          <div className="dsh-panel">
+            <div className="dsh-panel-header">
+              <div className="dsh-panel-title">
+                <span className="dsh-icon-sq-sm blue">&#128203;</span>
+                <span>Recent Citizen Problems</span>
+              </div>
+              <button className="dsh-btn-link" onClick={() => { showSection('challenges'); }}>View All &rarr;</button>
+            </div>
+            <div className="dsh-table-wrap">
+              <table className="dsh-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Location</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody id="dshRecentProblemsBody">
+                  <tr onClick={() => { if(window.openChallengeAction) window.openChallengeAction('6aa6dd7d4403e99e76314153'); }} style={{"cursor":"pointer"}}>
+                    <td className="dsh-cell-id">JH-2026-314153</td>
+                    <td className="dsh-cell-title">Poor access to quality education in rural areas...</td>
+                    <td>North Delhi</td>
+                    <td>Rural Livelihoods</td>
+                    <td><span className="dsh-tag pending">Pending</span></td>
+                    <td style={{"color":"#64748B"}}>Just now</td>
+                  </tr>
+                  <tr onClick={() => { if(window.openChallengeAction) window.openChallengeAction('6aa6dd7c4403e99e76314120'); }} style={{"cursor":"pointer"}}>
+                    <td className="dsh-cell-id">JH-2026-314120</td>
+                    <td className="dsh-cell-title">No Solar Energy Access for Off-Grid Villages...</td>
+                    <td>Latehar</td>
+                    <td>Energy & Tech</td>
+                    <td><span className="dsh-tag working">Working</span></td>
+                    <td style={{"color":"#64748B"}}>1h ago</td>
+                  </tr>
+                  <tr onClick={() => { if(window.openChallengeAction) window.openChallengeAction('6aa6dd7c4403e99e7631411d'); }} style={{"cursor":"pointer"}}>
+                    <td className="dsh-cell-id">JH-2026-31411D</td>
+                    <td className="dsh-cell-title">Bureaucratic Delays in Issuance of Certificates...</td>
+                    <td>Hazaribagh</td>
+                    <td>Public Admin</td>
+                    <td><span className="dsh-tag review">Under Review</span></td>
+                    <td style={{"color":"#64748B"}}>2h ago</td>
+                  </tr>
+                  <tr onClick={() => { if(window.openChallengeAction) window.openChallengeAction('6aa6dd7c4403e99e7631411a'); }} style={{"cursor":"pointer"}}>
+                    <td className="dsh-cell-id">JH-2026-31411A</td>
+                    <td className="dsh-cell-title">Smart Waste Management System Required for Ranchi...</td>
+                    <td>Ranchi</td>
+                    <td>Urban Infra</td>
+                    <td><span className="dsh-tag working">Working</span></td>
+                    <td style={{"color":"#64748B"}}>3h ago</td>
+                  </tr>
+                  <tr onClick={() => { if(window.openChallengeAction) window.openChallengeAction('6aa6dd7c4403e99e76314114'); }} style={{"cursor":"pointer"}}>
+                    <td className="dsh-cell-id">JH-2026-314114</td>
+                    <td className="dsh-cell-title">Forest-Dependent Communities Losing Livelihoods...</td>
+                    <td>West Singhbhum</td>
+                    <td>Environment</td>
+                    <td><span className="dsh-tag verified">Verified</span></td>
+                    <td style={{"color":"#64748B"}}>4h ago</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Table 2: Top Performing Universities */}
+          <div className="dsh-panel">
+            <div className="dsh-panel-header">
+              <div className="dsh-panel-title">
+                <span className="dsh-icon-sq-sm purple">&#127891;</span>
+                <span>Top Performing Universities</span>
+              </div>
+              <button className="dsh-btn-link" onClick={() => { showSection('universities'); }}>View All &rarr;</button>
+            </div>
+            <div className="dsh-table-wrap">
+              <table className="dsh-table">
+                <thead>
+                  <tr>
+                    <th style={{"width":"18px","textAlign":"center"}}>#</th>
+                    <th>University</th>
+                    <th style={{"textAlign":"center"}}>Assigned</th>
+                    <th style={{"textAlign":"center"}}>Completed</th>
+                    <th>Progress</th>
+                    <th style={{"textAlign":"center"}}>Success Rate</th>
+                  </tr>
+                </thead>
+                <tbody id="dshUnivLeaderboardBody">
+                  <tr onClick={() => { showSection('universities'); }} style={{"cursor":"pointer"}}>
+                    <td style={{"fontWeight":"700","color":"#64748B","textAlign":"center"}}>1</td>
+                    <td style={{"fontWeight":"650","color":"#0F172A"}}>IIT (ISM) Dhanbad</td>
+                    <td style={{"textAlign":"center"}}>20</td>
+                    <td style={{"textAlign":"center"}}>16</td>
+                    <td>
+                      <div className="dsh-progress-bar-wrap">
+                        <div className="dsh-progress-track"><div className="dsh-progress-fill" style={{"width":"80%"}}></div></div>
+                        <span style={{"fontSize":"11px","fontWeight":"700","color":"#059669"}}>80%</span>
+                      </div>
+                    </td>
+                    <td style={{"fontWeight":"700","color":"#059669","textAlign":"center"}}>94%</td>
+                  </tr>
+                  <tr onClick={() => { showSection('universities'); }} style={{"cursor":"pointer"}}>
+                    <td style={{"fontWeight":"700","color":"#64748B","textAlign":"center"}}>2</td>
+                    <td style={{"fontWeight":"650","color":"#0F172A"}}>BIT Mesra</td>
+                    <td style={{"textAlign":"center"}}>19</td>
+                    <td style={{"textAlign":"center"}}>14</td>
+                    <td>
+                      <div className="dsh-progress-bar-wrap">
+                        <div className="dsh-progress-track"><div className="dsh-progress-fill" style={{"width":"74%"}}></div></div>
+                        <span style={{"fontSize":"11px","fontWeight":"700","color":"#059669"}}>74%</span>
+                      </div>
+                    </td>
+                    <td style={{"fontWeight":"700","color":"#059669","textAlign":"center"}}>91%</td>
+                  </tr>
+                  <tr onClick={() => { showSection('universities'); }} style={{"cursor":"pointer"}}>
+                    <td style={{"fontWeight":"700","color":"#64748B","textAlign":"center"}}>3</td>
+                    <td style={{"fontWeight":"650","color":"#0F172A"}}>BAU Ranchi</td>
+                    <td style={{"textAlign":"center"}}>18</td>
+                    <td style={{"textAlign":"center"}}>12</td>
+                    <td>
+                      <div className="dsh-progress-bar-wrap">
+                        <div className="dsh-progress-track"><div className="dsh-progress-fill" style={{"width":"67%"}}></div></div>
+                        <span style={{"fontSize":"11px","fontWeight":"700","color":"#059669"}}>67%</span>
+                      </div>
+                    </td>
+                    <td style={{"fontWeight":"700","color":"#059669","textAlign":"center"}}>78%</td>
+                  </tr>
+                  <tr onClick={() => { showSection('universities'); }} style={{"cursor":"pointer"}}>
+                    <td style={{"fontWeight":"700","color":"#64748B","textAlign":"center"}}>4</td>
+                    <td style={{"fontWeight":"650","color":"#0F172A"}}>NIT Jamshedpur</td>
+                    <td style={{"textAlign":"center"}}>15</td>
+                    <td style={{"textAlign":"center"}}>12</td>
+                    <td>
+                      <div className="dsh-progress-bar-wrap">
+                        <div className="dsh-progress-track"><div className="dsh-progress-fill" style={{"width":"80%"}}></div></div>
+                        <span style={{"fontSize":"11px","fontWeight":"700","color":"#059669"}}>80%</span>
+                      </div>
+                    </td>
+                    <td style={{"fontWeight":"700","color":"#059669","textAlign":"center"}}>87%</td>
+                  </tr>
+                  <tr onClick={() => { showSection('universities'); }} style={{"cursor":"pointer"}}>
+                    <td style={{"fontWeight":"700","color":"#64748B","textAlign":"center"}}>5</td>
+                    <td style={{"fontWeight":"650","color":"#0F172A"}}>Ranchi University</td>
+                    <td style={{"textAlign":"center"}}>14</td>
+                    <td style={{"textAlign":"center"}}>10</td>
+                    <td>
+                      <div className="dsh-progress-bar-wrap">
+                        <div className="dsh-progress-track"><div className="dsh-progress-fill" style={{"width":"71%"}}></div></div>
+                        <span style={{"fontSize":"11px","fontWeight":"700","color":"#059669"}}>71%</span>
+                      </div>
+                    </td>
+                    <td style={{"fontWeight":"700","color":"#059669","textAlign":"center"}}>82%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Table 3: Industry / CSR Contribution */}
+          <div className="dsh-panel">
+            <div className="dsh-panel-header">
+              <div className="dsh-panel-title">
+                <span className="dsh-icon-sq-sm orange">&#127970;</span>
+                <span>Industry & CSR Contribution</span>
+              </div>
+              <button className="dsh-btn-link" onClick={() => { showSection('industry'); }}>View All &rarr;</button>
+            </div>
+            <div className="dsh-table-wrap">
+              <table className="dsh-table">
+                <thead>
+                  <tr>
+                    <th>Partner</th>
+                    <th style={{"textAlign":"center"}}>Funding / Support</th>
+                    <th style={{"textAlign":"center"}}>Projects Supported</th>
+                    <th style={{"textAlign":"center"}}>Sector</th>
+                  </tr>
+                </thead>
+                <tbody id="dshIndustryLeaderboardBody">
+                  <tr onClick={() => { showSection('industry'); }} style={{"cursor":"pointer"}}>
+                    <td style={{"fontWeight":"650","color":"#0F172A"}}>Tata Steel Foundation</td>
+                    <td style={{"fontWeight":"750","color":"#002D62","textAlign":"center"}}>₹50 L</td>
+                    <td style={{"fontWeight":"700","color":"#334155","textAlign":"center"}}>17</td>
+                    <td style={{"textAlign":"center"}}><span className="dsh-tag verified" style={{"fontSize":"10px"}}>CSR & Innovation</span></td>
+                  </tr>
+                  <tr onClick={() => { showSection('industry'); }} style={{"cursor":"pointer"}}>
+                    <td style={{"fontWeight":"650","color":"#0F172A"}}>Apex Engineering & Testing Labs</td>
+                    <td style={{"fontWeight":"750","color":"#002D62","textAlign":"center"}}>₹35 L</td>
+                    <td style={{"fontWeight":"700","color":"#334155","textAlign":"center"}}>8</td>
+                    <td style={{"textAlign":"center"}}><span className="dsh-tag verified" style={{"fontSize":"10px"}}>Urban Infra</span></td>
+                  </tr>
+                  <tr onClick={() => { showSection('industry'); }} style={{"cursor":"pointer"}}>
+                    <td style={{"fontWeight":"650","color":"#0F172A"}}>Jharkhand Medical Supplies Corp</td>
+                    <td style={{"fontWeight":"750","color":"#002D62","textAlign":"center"}}>₹25 L</td>
+                    <td style={{"fontWeight":"700","color":"#334155","textAlign":"center"}}>4</td>
+                    <td style={{"textAlign":"center"}}><span className="dsh-tag verified" style={{"fontSize":"10px"}}>Healthcare</span></td>
+                  </tr>
+                  <tr onClick={() => { showSection('industry'); }} style={{"cursor":"pointer"}}>
+                    <td style={{"fontWeight":"650","color":"#0F172A"}}>CSIR - NEERI Innovation Wing</td>
+                    <td style={{"fontWeight":"750","color":"#002D62","textAlign":"center"}}>₹15 L</td>
+                    <td style={{"fontWeight":"700","color":"#334155","textAlign":"center"}}>7</td>
+                    <td style={{"textAlign":"center"}}><span className="dsh-tag verified" style={{"fontSize":"10px"}}>Environment</span></td>
+                  </tr>
+                  <tr onClick={() => { showSection('industry'); }} style={{"cursor":"pointer"}}>
+                    <td style={{"fontWeight":"650","color":"#0F172A"}}>Jharkhand Startup Hub</td>
+                    <td style={{"fontWeight":"750","color":"#002D62","textAlign":"center"}}>₹10 L</td>
+                    <td style={{"fontWeight":"700","color":"#334155","textAlign":"center"}}>9</td>
+                    <td style={{"textAlign":"center"}}><span className="dsh-tag verified" style={{"fontSize":"10px"}}>Startup Support</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* ROW 4: FOOTER QUOTE & TRICOLOR BANNER */}
+        <div className="dsh-footer-bar">
+          <div className="dsh-footer-quote">
+            <span className="dsh-footer-quote-mark">&ldquo;</span>
+            <span>Collective innovation for a stronger, inclusive and developed Jharkhand.</span>
+          </div>
+          <div className="dsh-footer-right">
+            <div className="dsh-tricolor-wave"></div>
+            <div className="dsh-footer-tags">People &nbsp;|&nbsp; Innovation &nbsp;|&nbsp; Impact</div>
+          </div>
+        </div>
+      </div>
+      {/* CHALLENGES */}
+      <div id="section-challenges" className="dashboard-section">
+        <div className="section-header">
+          <div>
+            <div className="section-title">Challenges</div>
+            <div className="section-subtitle">Review, validate, assign and monitor challenges</div>
+          </div>
+          <div style={{"display":"flex","alignItems":"center","gap":"10px"}}>
+            <div className="view-toggle-pills">
+              <button type="button" id="chViewCardsBtn" className="view-toggle-pill active" onClick={() => { if (window.setChallengeViewMode) window.setChallengeViewMode('cards'); }} title="Card Grid View">
+                <span>▦</span> Cards
+              </button>
+              <button type="button" id="chViewTableBtn" className="view-toggle-pill" onClick={() => { if (window.setChallengeViewMode) window.setChallengeViewMode('table'); }} title="Table View">
+                <span>▤</span> Table
+              </button>
+            </div>
+            <button onClick={() => { if (window.exportChallenges) window.exportChallenges(); }} className="btn btn-ghost btn-sm">&#11015; Export CSV</button>
+          </div>
+        </div>
+        <div className="filter-bar">
+          <div className="search-wrap">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" className="search-input" placeholder="Search challenges..." id="adminChallengeSearch" onInput={() => { if (window.debounceLoadChallenges) window.debounceLoadChallenges(); }} />
+          </div>
+
+          <div className="status-tab-group" id="adminChallengeStatusTabs">
+            <button
+              type="button"
+              className="status-tab-btn active"
+              data-status=""
+              onClick={() => { if (window.filterChallengesByTab) window.filterChallengesByTab(''); }}
+            >
+              All
+            </button>
+            <button
+              type="button"
+              className="status-tab-btn"
+              data-status="pending"
+              onClick={() => { if (window.filterChallengesByTab) window.filterChallengesByTab('pending'); }}
+            >
+              Pending
+            </button>
+            <button
+              type="button"
+              className="status-tab-btn"
+              data-status="assigned"
+              onClick={() => { if (window.filterChallengesByTab) window.filterChallengesByTab('assigned'); }}
+            >
+              Assigned
+            </button>
+            <button
+              type="button"
+              className="status-tab-btn"
+              data-status="resolved"
+              onClick={() => { if (window.filterChallengesByTab) window.filterChallengesByTab('resolved'); }}
+            >
+              Resolved
+            </button>
+          </div>
+        </div>
+
+        {/* MODERN CHALLENGES CARDS GRID (DEFAULT) */}
+        <div id="challengesCardsContainer" className="challenges-cards-grid">
+          <div style={{"textAlign":"center","padding":"50px","gridColumn":"1/-1"}}><div className="spinner" style={{"margin":"0 auto"}}></div></div>
+        </div>
+
+        {/* COMPACT TABLE VIEW (TOGGLEABLE) */}
+        <div className="table-container" id="challengesTableContainer" style={{"display":"none"}}>
           <table className="table" id="challengesTable">
             <thead><tr><th>ID / Title</th><th>Category</th><th>Priority</th><th>Status</th><th>District</th><th>Submitter</th><th>Assigned To</th><th>Date</th><th>Actions</th></tr></thead>
             <tbody id="challengesTableBody"><tr><td colspan="9" style={{"textAlign":"center","padding":"40px"}}><div className="spinner" style={{"margin":"0 auto"}}></div></td></tr></tbody>
           </table>
         </div>
         <div id="adminChallengesPagination" style={{"marginTop":"16px","display":"flex","gap":"6px","justifyContent":"center"}}></div>
+      </div>
+      {/* SOLUTION PROPOSALS & INDUSTRY MATCHING */}
+      <div id="section-proposals" className="dashboard-section">
+        <div className="section-header">
+          <div>
+            <div className="section-title">Solution Proposals & Industry Matching</div>
+            <div className="section-subtitle">Review university project proposals, verify funding & documents, and match approved proposals with eligible industry partners</div>
+          </div>
+          <div>
+            <button onClick={() => { if (window.loadAdminProposals) window.loadAdminProposals(); }} className="btn btn-ghost btn-sm">&#8635; Refresh</button>
+          </div>
+        </div>
+
+        {/* Proposals List View */}
+        <div id="proposalsListView">
+          <div className="filter-bar">
+            <div className="search-wrap">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" className="search-input" placeholder="Search proposals by problem, university, or submitter..." id="proposalSearchInput" onInput={() => { if (window.filterProposalsList) window.filterProposalsList(); }} />
+            </div>
+            <select className="filter-select" id="proposalStatusFilter" onChange={() => { if (window.filterProposalsList) window.filterProposalsList(); }}>
+              <option value="all">All Statuses</option>
+              <option value="submitted">Submitted (Pending Review)</option>
+              <option value="approved">Approved</option>
+              <option value="changes_requested">Changes Requested</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div className="table-container">
+            <table className="table" id="proposalsTable">
+              <thead>
+                <tr>
+                  <th>Problem / Project</th>
+                  <th>University</th>
+                  <th>Submitted By</th>
+                  <th>Funding Ask</th>
+                  <th>Required Support</th>
+                  <th>Status</th>
+                  <th>Submitted</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="proposalsTableBody">
+                <tr><td colSpan="8" style={{"textAlign":"center","padding":"40px"}}><div className="spinner" style={{"margin":"0 auto"}}></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Proposal Detail View (renders the exact Detail Card from specification) */}
+        <div id="proposalDetailView" style={{"display":"none"}}>
+          <div id="proposalDetailCardContent"></div>
+        </div>
       </div>
       {/* PENDING VALIDATION */}
       <div id="section-pending" className="dashboard-section">
@@ -319,21 +919,73 @@ function App() {
       </div>
       {/* AI MATCHING CENTER */}
       <div id="section-aimatching" className="dashboard-section">
-        <div className="section-header"><div><div className="section-title">&#9889; AI Matching Center</div><div className="section-subtitle">AI-powered university and industry partner recommendations for validated challenges</div></div></div>
-        <div className="grid-2" style={{"alignItems":"start"}}>
+        <div className="section-header" style={{"display":"flex","alignItems":"center","justifyContent":"space-between","flexWrap":"wrap","gap":"14px"}}>
           <div>
-            <div className="card" style={{"marginBottom":"16px"}}>
-              <div className="card-header"><div><div className="card-title">Validated Challenges</div><div className="card-subtitle">Click a challenge to see AI recommendations</div></div></div>
-              <div className="card-body" id="aiMatchingChallengeList">
-                <div className="skeleton" style={{"height":"80px","marginBottom":"10px"}}></div><div className="skeleton" style={{"height":"80px","marginBottom":"10px"}}></div><div className="skeleton" style={{"height":"80px"}}></div>
+            <div className="section-title" style={{"display":"flex","alignItems":"center","gap":"10px"}}>
+              <span>&#9889; AI Matching Center</span>
+              <span className="badge badge-green" style={{"fontSize":"11px","fontWeight":"800","padding":"3px 10px"}}>LIVE NEURAL ENGINE</span>
+            </div>
+            <div className="section-subtitle">Real-time AI-powered matching between civic problems, universities, and industry CSR partners across Jharkhand</div>
+          </div>
+          <div style={{"display":"flex","alignItems":"center","gap":"10px"}}>
+            <button type="button" className="btn btn-batch-optimizer" onClick={() => window.openAIBatchOptimizerModal && window.openAIBatchOptimizerModal()} style={{"display":"inline-flex","alignItems":"center","gap":"8px","padding":"10px 18px","borderRadius":"10px"}}>
+              <span>&#9889;</span>
+              <span>Batch AI Optimizer</span>
+            </button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => window.loadAIMatchingSection && window.loadAIMatchingSection()} title="Re-sync data" style={{"fontWeight":"700"}}>
+              &#8635; Refresh
+            </button>
+          </div>
+        </div>
+
+        {/* Top AI Telemetry Strip */}
+        <div className="aimatch-telemetry-strip">
+          <div className="aimatch-telemetry-card">
+            <div className="aimatch-telemetry-icon" style={{"background":"#eff6ff","color":"#1e40af"}}>&#127891;</div>
+            <div>
+              <div className="aimatch-telemetry-val">12</div>
+              <div className="aimatch-telemetry-lbl">Active Jharkhand R&amp;D Labs</div>
+            </div>
+          </div>
+          <div className="aimatch-telemetry-card">
+            <div className="aimatch-telemetry-icon" style={{"background":"#f0fdf4","color":"#16a34a"}}>&#127970;</div>
+            <div>
+              <div className="aimatch-telemetry-val">&#8377;4.20 Cr</div>
+              <div className="aimatch-telemetry-lbl">Committed CSR Capital</div>
+            </div>
+          </div>
+          <div className="aimatch-telemetry-card">
+            <div className="aimatch-telemetry-icon" style={{"background":"#fefce8","color":"#ca8a04"}}>&#9889;</div>
+            <div>
+              <div className="aimatch-telemetry-val">94.8%</div>
+              <div className="aimatch-telemetry-lbl">Avg. Match Accuracy</div>
+            </div>
+          </div>
+          <div className="aimatch-telemetry-card">
+            <div className="aimatch-telemetry-icon" style={{"background":"#faf5ff","color":"#7e22ce"}}>&#9201;</div>
+            <div>
+              <div className="aimatch-telemetry-val">42 Days</div>
+              <div className="aimatch-telemetry-lbl">Avg. Problem Turnaround</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main 2-Column Command Grid */}
+        <div className="grid-2" style={{"alignItems":"start","gap":"24px"}}>
+          <div>
+            <div className="card" style={{"marginBottom":"16px","borderRadius":"18px","border":"1px solid #e2e8f0","boxShadow":"0 4px 16px rgba(0,45,98,0.05)"}}>
+              <div className="card-body" id="aiMatchingChallengeList" style={{"padding":"20px"}}>
+                <div className="skeleton" style={{"height":"80px","marginBottom":"10px"}}></div>
+                <div className="skeleton" style={{"height":"80px","marginBottom":"10px"}}></div>
+                <div className="skeleton" style={{"height":"80px"}}></div>
               </div>
             </div>
           </div>
           <div id="aiMatchingPanel">
-            <div style={{"padding":"40px","textAlign":"center","background":"white","borderRadius":"18px","border":"1px solid var(--gray-200)"}}>
-              <div style={{"fontSize":"48px","marginBottom":"12px"}}>&#9889;</div>
-              <div style={{"fontSize":"16px","fontWeight":"800","color":"var(--gray-900)","marginBottom":"6px"}}>Select a Challenge</div>
-              <div style={{"fontSize":"13px","color":"var(--gray-400)"}}>Click any challenge on the left to see AI-powered matching analysis</div>
+            <div style={{"padding":"60px 30px","textAlign":"center","background":"white","borderRadius":"20px","border":"1px solid #e2e8f0","boxShadow":"0 4px 16px rgba(0,45,98,0.05)"}}>
+              <div className="spinner" style={{"margin":"0 auto 16px"}}></div>
+              <div style={{"fontSize":"16px","fontWeight":"800","color":"#0f172a","marginBottom":"6px"}}>Connecting to JanSetu AI Engine...</div>
+              <div style={{"fontSize":"13px","color":"#64748b"}}>Analyzing domain capabilities and real-time partner performance</div>
             </div>
           </div>
         </div>
@@ -381,43 +1033,6 @@ function App() {
       <div id="section-industry" className="dashboard-section">
         <div className="section-header"><div><div className="section-title">Industry / CSR Partners</div><div className="section-subtitle">Industry collaborators — CSR budget, capabilities and availability</div></div></div>
         <div className="grid-auto" id="industryGrid"><div className="skeleton" style={{"height":"320px"}}></div><div className="skeleton" style={{"height":"320px"}}></div></div>
-      </div>
-      {/* IMPACT ANALYTICS */}
-      <div id="section-analytics" className="dashboard-section">
-        <div className="section-header"><div><div className="section-title">Impact Analytics</div><div className="section-subtitle">Comprehensive platform performance and outcome metrics</div></div></div>
-        <div className="kpi-section">
-          <div className="kpi-section-title">&#128202; Platform Impact</div>
-          <div className="kpi-row">
-            <div className="kpi-card"><div className="kpi-num" id="kpi-reported">&#8212;</div><div className="kpi-lbl">Problems Reported</div></div>
-            <div className="kpi-card"><div className="kpi-num" id="kpi-validated">&#8212;</div><div className="kpi-lbl">Problems Validated</div></div>
-            <div className="kpi-card"><div className="kpi-num" id="kpi-solved">&#8212;</div><div className="kpi-lbl">Problems Solved</div></div>
-            <div className="kpi-card"><div className="kpi-num" id="kpi-impacted">3.2M</div><div className="kpi-lbl">People Impacted</div><div className="kpi-sub">Estimated reach</div></div>
-          </div>
-          <div className="kpi-row">
-            <div className="kpi-card"><div className="kpi-num" id="kpi-univs">&#8212;</div><div className="kpi-lbl">Universities</div></div>
-            <div className="kpi-card"><div className="kpi-num" id="kpi-industry">&#8212;</div><div className="kpi-lbl">Industry Partners</div></div>
-            <div className="kpi-card"><div className="kpi-num">186</div><div className="kpi-lbl">Successful Pilots</div></div>
-            <div className="kpi-card"><div className="kpi-num">4.4/5</div><div className="kpi-lbl">Citizen Satisfaction</div><div className="kpi-sub">Avg rating</div></div>
-          </div>
-        </div>
-        <div className="kpi-section">
-          <div className="kpi-section-title">&#9889; Efficiency</div>
-          <div className="kpi-row">
-            <div className="kpi-card"><div className="kpi-num">1.8</div><div className="kpi-lbl">Avg Validation Time</div><div className="kpi-sub">days</div></div>
-            <div className="kpi-card"><div className="kpi-num">4.2</div><div className="kpi-lbl">Avg Matching Time</div><div className="kpi-sub">minutes (AI)</div></div>
-            <div className="kpi-card"><div className="kpi-num" id="kpi-res-time">&#8212;</div><div className="kpi-lbl">Avg Resolution Time</div><div className="kpi-sub">days</div></div>
-            <div className="kpi-card"><div className="kpi-num">87%</div><div className="kpi-lbl">AI Recommendation Accuracy</div></div>
-          </div>
-        </div>
-        <div className="grid-2">
-          <div className="chart-container"><div className="chart-header"><div><div className="chart-title">Monthly Trends</div><div className="chart-subtitle">Submissions vs Resolutions</div></div></div><div className="chart-body"><canvas id="analyticsLineChart"></canvas></div></div>
-          <div className="chart-container"><div className="chart-header"><div><div className="chart-title">Domain Distribution</div><div className="chart-subtitle">Challenges by category</div></div></div><div className="chart-body"><canvas id="analyticsDoughnutChart"></canvas></div></div>
-        </div>
-        <div className="chart-container" style={{"marginTop":"20px"}}><div className="chart-header"><div><div className="chart-title">University Performance</div><div className="chart-subtitle">Assigned vs Resolved per university</div></div></div><div className="chart-body"><canvas id="univPerfChart"></canvas></div></div>
-        <div className="card" style={{"marginTop":"20px"}}>
-          <div className="card-header"><div><div className="card-title">&#128293; High Impact Challenges</div><div className="card-subtitle">Ranked by impact score</div></div></div>
-          <div className="card-body" id="highImpactList"><div className="skeleton" style={{"height":"50px","marginBottom":"8px"}}></div><div className="skeleton" style={{"height":"50px"}}></div></div>
-        </div>
       </div>
       {/* PAN-INDIA & DISTRICT HEATMAP */}
       <div id="section-heatmap" className="dashboard-section">

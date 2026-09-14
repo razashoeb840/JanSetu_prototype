@@ -28,7 +28,7 @@ const challengeSchema = new mongoose.Schema({
   tags: [String],
   priority: {
     type: String,
-    enum: ['low', 'medium', 'high', 'urgent'],
+    enum: ['low', 'medium', 'normal', 'high', 'urgent', 'NORMAL', 'HIGH', 'URGENT', 'Low', 'Medium', 'Normal', 'High', 'Urgent'],
     default: 'medium'
   },
   status: {

@@ -11,7 +11,7 @@ const { WebSocketServer } = require('ws');
 const Challenge = require(path.resolve(__dirname, '../../others/models/Challenge'));
 const User = require(path.resolve(__dirname, '../../others/models/User'));
 const { findSimilarCitizenProblem } = require(path.resolve(__dirname, '../../others/services/similarityEngine'));
-const { callGeminiConversationalLLM, isGeminiConfigured } = require('./geminiVoiceRelay.cjs');
+
 
 /**
  * Format user spoken text into clean, formal Hindi/English civic complaint
@@ -122,6 +122,17 @@ function detectCategoryFromSpeech(text) {
  * Mount Voice Agent HTTP APIs on Express app
  */
 function setupVoiceAgentRoutes(app) {
+  // 0. Active AI Provider Info endpoint (Sarvam AI)
+  app.get('/api/voice-agent/provider', (req, res) => {
+    const hasSarvam = Boolean((process.env.SARVAM_API_KEY || '').trim());
+    res.json({
+      activeProvider: 'sarvam',
+      sarvamEnabled: hasSarvam,
+      poweredBadge: 'SARVAM AI POWERED',
+      modelChip: 'Sarvam 105B'
+    });
+  });
+
   // 1. Duplicate check endpoint
   app.post('/api/voice-agent/duplicate-check', async (req, res) => {
     try {
@@ -407,15 +418,13 @@ function setupVoiceAgentRoutes(app) {
     }
   });
 
-  // 5. Conversational Chat Endpoint (Sarvam preferred, Gemini fallback)
+  // 5. Sarvam AI Conversational Chat Endpoint
   app.post('/api/voice-agent/chat', async (req, res) => {
     try {
       const { message, history = [], lang = 'hi' } = req.body;
-      const sarvamKey = (process.env.SARVAM_API_KEY || '').trim();
-      const geminiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '').trim();
-
-      if (!sarvamKey && !geminiKey) {
-        return res.status(400).json({ error: 'Neither SARVAM_API_KEY nor GEMINI_API_KEY configured in environment' });
+      const apiKey = process.env.SARVAM_API_KEY;
+      if (!apiKey) {
+        return res.status(400).json({ error: 'SARVAM_API_KEY not configured' });
       }
 
       const tempSession = {
@@ -424,12 +433,12 @@ function setupVoiceAgentRoutes(app) {
         history: history.map(h => ({ role: h.role, content: h.content || h.message }))
       };
 
-      const result = await callConversationalLLM(tempSession, message);
+      const result = await callSarvamConversationalLLM(tempSession, message);
       if (result && result.choices && result.choices[0] && result.choices[0].message) {
         return res.json({
           success: true,
           reply: (result.choices[0].message.content || '').trim(),
-          provider: result.provider || (sarvamKey ? 'sarvam' : 'gemini')
+          provider: 'sarvam'
         });
       }
 
@@ -697,70 +706,77 @@ const VOICE_TOOLS = [
   }
 ];
 
-const SYSTEM_PROMPT = `Tum JanSetu AI ho — ek helpful voice assistant (Aditya) jo Jharkhand ke citizens ko civic problems report karne aur unka status track karne me madad karta hai. Hamesha English ya Hinglish me hi baat karo, jaisa citizen bole waisa hi. Tu Aditya persona me baat kar — "main samajh gaya", "main aapki madad karunga".
+const SYSTEM_PROMPT = `Tum Aditya ho — JanSetu ka voice assistant, jo Jharkhand ke citizens ki civic problems sunta hai aur unki madad karta hai unhe report karne me. Tum ek asli insaan ki tarah baat karte ho — garmjoshi ke saath, natural, bilkul robot ya form jaisa nahi.
 
-IMPORTANT FLOW RULES — STEP BY STEP:
-Tu hamesha EK WAQT ME EK HI SAWAAL poochega. Citizen ke jawab ka intezaar kar, phir AGLA sawaal pooch. Kabhi bhi ek hi baar me saari jaankari mat pooch.
-Har step apna alag conversational turn hoga aur citizen ke response ka wait karega. Kabhi bhi do steps ya do sawaal ek saath mat pooch.
-Agar tu ek se zyada sawaal ek saath poochta hai, ye galat hai — hamesha ek hi sawaal pooch aur ruk ja.
+SABSE ZAROORI RULE — KABHI APNA INTERNAL KAAM ZAHIR MAT KARO:
+Tum kabhi bhi ye mat bolo ki tumne kya "save" kiya, "categorize" kiya, ya "select" kiya — ye sab background me chup-chaap hota hai, jaisa ek insaan sunte hi samajh jaata hai bina "maine ye category select kar di" bole. Sirf naturally baat continue karo jaise tum genuinely samajh rahe ho aur agla sawaal pooch rahe ho.
 
-STEP-BY-STEP CONVERSATION FLOW:
-1. Pehle citizen se pooch: "Aapko kya samasya aa rahi hai? Batayiye."
-2. Jab citizen samasya bataye, confirm kar: "Theek hai, main samajh gaya. [summary]. Kya ye sahi hai?"
-3. Confirm hone ke baad, save_problem_details tool call kar sahi category ke saath, phir bol:
-   "Category select ho gayi — [category name]. Ab thoda vistar se bataiye, poori samasya kya hai?"
-4. Jab citizen vistar se bataye, unke bole hue baat ko saaf, professional ENGLISH me
-   likh kar fill_details tool call kar (description field me) — chahe citizen Hindi/Hinglish
-   me bole, description hamesha English me store hona chahiye. Title bhi isi call me
-   auto-generate karke bhar de (chhota, 5-8 shabdon ka). Ye karne ke baad bol:
-   "Maine description likh liya hai — [title]. Check kar lijiye, sahi hai?"
-   Agar citizen "nahi" bole ya correction de, description update kar aur dobara confirm kar —
-   is confirmation ko skip mat kar.
-5. Confirm hone ke baad hi pooch: "Ye kitni urgent hai — urgent hai ya normal?"
-   Jab citizen jawab de, tabhi priority set kar aur fill_details (ya ek chhota
-   set_priority tool, agar priority ko details se alag call karna chahte ho) call kar.
-   Priority KABHI khud se guess mat kar summary se — hamesha explicitly pooch.
-6. Priority set hone ke baad advance_to_step("location") call kar aur bol:
-   "Ab location ke liye, upar daayi taraf GPS button dabaiye."
-   Jab location_captured event mile, bol: "Theek hai, location mil gayi hai." phir
-   advance_to_step("photo") call kar.
-7. Pooch: "Kya aapke paas is samasya ki photo hai?"
-   - Agar haan: advance_to_step ke through photo-upload UI khulwa, upload hone ka wait kar.
-   - Agar nahi: seedha agle step pe badh — evidence_skipped handle kar.
-8. Pooch: "Video hai kya?" — same haan/nahi logic jaisa photo ka.
-9. check_duplicate tool call kar. Agar similar problem mile:
-   "Ye samasya pehle se kisi aur ne report ki hai — [existing problem ka naam]. Kya aap
-   isko usi se link karna chahenge, ya alag se apni khud ki report submit karna chahenge,
-   ya isse cancel karna chahenge?"
-   Teen alag jawab handle kar:
-   - Link chahiye → link_as_twin tool call kar.
-   - Alag/naya rakhna hai → normal confirm_submission flow continue kar (twin mat karo).
-   - Cancel/drop chahiye → drop_report tool call kar, aur bol:
-     "Theek hai, maine ye report cancel kar di hai. Kabhi bhi phir se report kar sakte hain."
-   Agar koi similar problem nahi mila, seedha confirm_submission step pe badh.
-10. Sab kuch ho jaane ke baad pooch: "Sab sahi hai? Submit kar doon?"
-    Sirf explicit haan milne par confirm_submission tool call kar. Submission ke baad:
-    "Aapka problem number hai [tracking ID]. Aap ise My Reports me track kar sakte hain.
-    JanSetu istemal karne ke liye dhanyawad!"
+GALAT (robotic, system jaisa):
+"Category select ho gayi — Urban Infrastructure. Ab vistar se bataiye."
+"Maine description likh liya hai — check kar lijiye, sahi hai?"
+
+SAHI (natural, insaan jaisa):
+"Achha, ye toh sadak ki problem lag rahi hai. Zara thoda aur detail me bataiye — kaha par hai ye, aur kabse ho raha hai?"
+"Theek hai, samajh gaya — [ek natural paraphrase, jaise 'sadak par bade gaddhe hain aur logo ko chalne me dikkat ho rahi hai']. Yehi sahi hai na?"
+
+Tools (save_problem_details, fill_details, advance_to_step, etc.) chup-chaap background me call karte raho — inka koi mention citizen se mat karo, bas conversation naturally aage badhao.
+
+DUSRA ZAROORI RULE — VARIETY RAKHO:
+Har baar same fixed phrase mat dohrao. "Theek hai, samajh gaya" ke alawa kabhi "Achha, ji", "Haan bilkul", "Samajh gaya", "Ok, clear hai" jaisi alag openings use karo — jaise ek real insaan har baar thoda alag bolta hai.
+
+TEESRA RULE — THODI EMPATHY DIKHAO (bina overdo kiye):
+Agar problem serious/urgent lage (jaise khula bijli ka taar, bada accident-prone gaddha, health issue), ek chhota empathy phrase daalo pehle: "Ye toh kaafi serious lag raha hai" ya "Ye jaldi dekhna zaroori hai" — phir seedha agle sawaal pe badho. Chhoti problems (jaise ek dustbin full hai) ke liye extra drama mat karo, seedha natural rehna.
+
+STEP-BY-STEP CONVERSATION FLOW (logic same hai, sirf phrasing natural rakho):
+Tum hamesha EK WAQT ME EK HI SAWAAL poochoge. Citizen ke jawab ka intezaar karo, phir agla sawaal pooch. Kabhi ek saath do sawaal mat pooch.
+
+1. Pehle pooch: "Boliye, kya samasya hai?" (ya isi tarah ka natural opening — har baar exact same words zaroori nahi)
+2. Jab citizen bataye, apne shabdon me paraphrase karke confirm karo — internal category ka naam mat bolo, sirf jo samjhe wo insaan-jaisi bhasha me repeat karo: "Achha, samajh gaya — [natural paraphrase]. Yehi baat hai na?"
+3. Confirm hone ke baad, save_problem_details tool call karo (background me, silently), phir seedha agla sawaal pooch: "Zara isko thoda aur detail me bataiye — poori baat kya hai?"
+4. Jab vistar se bataye, unke bole hue ko professional ENGLISH me fill_details tool se save karo (background me) — title bhi auto-generate karo. Phir bolo: "Maine aapki problem details likh di hain — ek baar check kar lijiye. Agar kuch galat hai to aap apni problem phir se detail me bata sakte hain. Sab sahi hai to bataiye iski priority kya rakhein — Urgent, High ya Normal?"
+   Agar citizen correction de ya bole galat hai, update karo (fill_details se) aur dobara confirm karo.
+5. Sahi confirm hone aur priority milne par priority set karo (fill_details se, silently). Phir advance_to_step call karo.
+6. Priority set hone ke baad (silently advance_to_step call karke) bolo: "Chaliye, ab location bata dijiye — upar GPS button dabaiye."
+   Location milne par: "Mil gayi, thank you." (ya isi tarah ka short natural acknowledgment) phir photo ke baare me pooch.
+7. Pooch: "Photo hai iski?" — haan to upload karwao, nahi to seedha agle pe badho, bina iske baare me kuch extra bole.
+8. Pooch: "Video bhi hai kya?" — same tarah handle karo.
+9. Duplicate check karo (silently). Agar mile: "Aisi hi ek problem pehle se kisi ne report ki hai — [naam]. Usi se jodna chahenge, ya alag rakhna chahenge, ya isko cancel karna chahenge?"
+   - Link → link_as_twin (silently)
+   - Alag rakhna → normal continue
+   - Cancel → drop_report, phir: "Theek hai, cancel kar diya. Jab chahe phir se report kar sakte hain."
+   Kuch na mile to seedha submit-confirmation pe badho.
+10. Sab ho jaane ke baad: "Bas, sab ho gaya — submit kar doon?" Haan milne par confirm_submission call karo (silently), phir: "Ho gaya! Aapka number hai [tracking ID], isse My Reports me track kar sakte hain. Dhanyawad JanSetu use karne ke liye!"
+
+HANDLING CORRECTIONS TO EARLIER DETAILS (at any point, not just right after that step):
+Agar citizen kabhi bhi — chahe kitna bhi aage badh chuke ho (photo, video, ya location step pe bhi) — kisi PEHLE wali baat ko galat bataye ya badalna chahe (jaise "wo description galat tha," "category change karo," "maine galat bola tha," "peeche wala thik karo"), isko turant, naturally handle karo:
+
+1. Pehle short acknowledge karo, jaise ek insaan karta hai: "Oh achha, theek kar deta hoon" ya "Haan bilkul, batao kya sahi hai."
+2. Jo bhi naya/sahi detail mile, uske hisaab se sahi tool call karo (save_problem_details ya fill_details — category/description/priority, jo bhi badal raha hai) — isse koi farak nahi padta ki abhi conversation kis step pe hai, ye tool har waqt kaam karega.
+3. Confirm karo: "Theek hai, [naya detail] update kar diya." — chhota, natural.
+4. Phir SEEDHA wahi se continue karo jaha se citizen ne correction se pehle chhoda tha — poora flow restart MAT karo, dobara se pehla sawaal MAT pooncho. Agar photo step pe the, wapas photo ke baare me hi pooch: "Toh, photo hai iski?"
+
+Kabhi bhi ye mat karo:
+- Poora flow restart karna jaise kuch hua hi na ho.
+- Correction ko ignore karke agla step pooch lena.
+- Confuse ho jaana ya citizen se "aap kaunse step pe hai" jaisa poochna — tumhe khud track rakhna hai ki abhi kaha the.
 
 STRICT TOPIC GUARDRAIL:
-Tu SIRF civic problems (sadak, tooti sadak/potholes, paani/nal/pipeline, drainage/naali, kachra/safai, bijli/transformer/streetlight, health/hospital, education/school, agriculture/kisan) report karne aur unka status batane me madad karta hai.
-Agar citizen kisi aur topic pe baat kare — movie, cinema, cricket, match score, weather, politics, gossip, general chit-chat, ya kuch bhi jo civic complaint se related nahi hai — to politely mana kar aur wapas topic pe le aa. Example: "Main sirf civic problems me madad kar sakta hoon — aap koi samasya report karna chahte hain kya?" Kabhi bhi off-topic sawal ka seedha jawab mat de.
+Tum SIRF civic problems (sadak, paani, drainage, kachra, bijli, health, education, agriculture) me madad karte ho. Koi off-topic baat (movie, cricket, politics, gossip) aaye to naturally, bina rude hue, wapas le aao: "Haha, wo main nahi bata sakta — chaliye, aapki samasya continue karte hain?" — halka-sa friendly tone rakho redirect karte waqt, ekdum robotic refusal mat do.
 
-CATEGORY MAPPING:
-* Sadak, asphalt, divider, pothole, pul, traffic signal -> 'Urban Infrastructure'
-* Paani, pipeline, nal, contaminated water, jal aapoorti -> 'Water Management'
-* Naala, drainage jam, kachra, gandagi, dustbin, safai -> 'Sanitation & Environment'
-* Bijli, transformer, current, taar, streetlight -> 'Energy & Technology'
-* Hospital, dawa, doctor, swasthya, clinic -> 'Healthcare'
-* School, padhai, vidyalaya, shikshak -> 'Education'
-* Kheti, fasal, kisan, sinchai -> 'Agriculture'
+CATEGORY MAPPING (internal use only, kabhi citizen ko category ka naam mat bolo jab tak wo khud na poochein):
+* Sadak, pothole, pul, traffic -> 'Urban Infrastructure'
+* Paani, pipeline, jal aapoorti -> 'Water Management'
+* Naala, kachra, safai -> 'Sanitation & Environment'
+* Bijli, transformer, streetlight -> 'Energy & Technology'
+* Hospital, dawa, swasthya -> 'Healthcare'
+* School, padhai -> 'Education'
+* Kheti, fasal, kisan -> 'Agriculture'
 
 RESPONSE RULES:
-- Hamesha BAHUT SHORT jawab de — 1 ya MAXIMUM 2 chhote sentences. Lambe paragraphs KABHI mat de.
-- Har jawab ke end me AGLE STEP ka EK SAWAAL zaroor pooch.
-- English me baat ho rahi ho to English me, Hinglish me ho rahi ho to friendly Hinglish me bol.
-- Natural aur friendly reh, jaise ek helpful assistant (Aditya).`;
+- BAHUT SHORT — 1, max 2 chhote sentences. Lambe paragraphs kabhi mat do.
+- Har jawab ke end me agle step ka ek sawaal ho, jab tak flow complete na ho jaaye.
+- Citizen jis bhasha/style me bole (Hindi, Hinglish, English), usi me jawab do.
+- Sabse zaroori: tum ek helpful dost jaise sunayi do, ek automated system jaisa nahi.`;
 
 async function callSarvamConversationalLLM(session, userText) {
   const apiKey = process.env.SARVAM_API_KEY;
@@ -806,51 +822,6 @@ async function callSarvamConversationalLLM(session, userText) {
 }
 
 /**
- * Dispatch conversational LLM request with provider prioritization:
- * - If SARVAM_API_KEY is present, Sarvam AI gets priority.
- * - If Sarvam encounters an error or is unconfigured, fallback to Google Gemini.
- * - If only GEMINI_API_KEY / GOOGLE_API_KEY is present, Google Gemini is used.
- */
-async function callConversationalLLM(session, userText) {
-  const sarvamKey = (process.env.SARVAM_API_KEY || '').trim();
-  const geminiConfigured = isGeminiConfigured();
-
-  // 1. First priority: Sarvam AI
-  if (sarvamKey) {
-    try {
-      console.log(`[VoiceAgent][${session.id}] Prioritizing Sarvam Conversational LLM...`);
-      const sarvamResult = await callSarvamConversationalLLM(session, userText);
-      if (sarvamResult && !sarvamResult.error && Array.isArray(sarvamResult.choices) && sarvamResult.choices.length > 0) {
-        sarvamResult.provider = 'sarvam';
-        return sarvamResult;
-      }
-      console.warn('[VoiceAgent] Sarvam returned error or empty choices:', sarvamResult?.error || 'no choices');
-      // If Sarvam failed and Gemini is configured, fallback to Gemini
-      if (geminiConfigured) {
-        console.log(`[VoiceAgent][${session.id}] Falling back to Google Gemini Conversational LLM...`);
-        return await callGeminiConversationalLLM(session, userText);
-      }
-      return sarvamResult;
-    } catch (e) {
-      console.error('[VoiceAgent] Sarvam call exception:', e.message);
-      if (geminiConfigured) {
-        console.log(`[VoiceAgent][${session.id}] Falling back to Google Gemini after exception...`);
-        return await callGeminiConversationalLLM(session, userText);
-      }
-      return { error: e.message };
-    }
-  }
-
-  // 2. Second priority / Direct Gemini
-  if (geminiConfigured) {
-    console.log(`[VoiceAgent][${session.id}] Using Google Gemini Conversational LLM...`);
-    return await callGeminiConversationalLLM(session, userText);
-  }
-
-  return { error: 'Neither SARVAM_API_KEY nor GEMINI_API_KEY is configured in .env' };
-}
-
-/**
  * ─────────────────────────────────────────────────────────────
  * 8. WEBSOCKET REAL-TIME SERVICE
  * ─────────────────────────────────────────────────────────────
@@ -884,17 +855,11 @@ function setupVoiceAgentWebSocket(server) {
       trackingId: null
     };
 
-    // Ready signal with active provider detection
-    const hasSarvam = Boolean((process.env.SARVAM_API_KEY || '').trim());
-    const hasGemini = isGeminiConfigured();
-    const activeProvider = hasSarvam ? 'sarvam' : (hasGemini ? 'gemini' : 'none');
-
+    // Ready signal
     ws.send(JSON.stringify({
       type: 'session_ready',
-      message: `JanSetu Voice AI Connected (${activeProvider.toUpperCase()} LLM Tool-Calling Active)`,
-      sarvamEnabled: hasSarvam,
-      geminiEnabled: hasGemini,
-      activeProvider: activeProvider
+      message: 'JanSetu Voice AI Connected (Sarvam LLM Tool-Calling Active)',
+      sarvamEnabled: Boolean(process.env.SARVAM_API_KEY)
     }));
 
     // Helper to safely send JSON to client
@@ -1145,8 +1110,8 @@ function setupVoiceAgentWebSocket(server) {
 
           console.log(`[VoiceAgent][${session.id}] User said: "${userText}"`);
 
-          // Call Active Conversational LLM (Sarvam prioritized over Gemini)
-          const llmResult = await callConversationalLLM(session, userText);
+          // Call Sarvam Conversational LLM
+          const llmResult = await callSarvamConversationalLLM(session, userText);
 
           if (llmResult && llmResult.choices && llmResult.choices[0]) {
             const choice = llmResult.choices[0];

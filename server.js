@@ -128,7 +128,6 @@ setupVoiceAgentRoutes(app);
 app.use('/api/auth', require('./others/routes/auth'));
 app.use('/api/challenges', require('./others/routes/challenges'));
 app.use('/api/notifications', require('./others/routes/notifications'));
-app.use('/api/analytics', require('./others/routes/analytics'));
 app.use('/api/admin', require('./others/routes/admin'));
 app.use('/api', require('./university/api'));
 
@@ -186,11 +185,16 @@ app.get('/api/location/reverse-geocode', async (req, res) => {
       'Dumka': { lat: 24.2700, lng: 87.2500 }
     };
 
+    // Check if coordinates are inside Jharkhand
+    const JHARKHAND_BOUNDS = { minLat: 21.9, maxLat: 25.4, minLng: 83.3, maxLng: 87.9 };
+    const isInsideJharkhand = (lat >= JHARKHAND_BOUNDS.minLat && lat <= JHARKHAND_BOUNDS.maxLat &&
+                               lng >= JHARKHAND_BOUNDS.minLng && lng <= JHARKHAND_BOUNDS.maxLng);
+
     let nominatimData = null;
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 3500);
-      const osmUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+      const osmUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&countrycodes=in`;
       const resp = await fetch(osmUrl, {
         headers: { 'User-Agent': 'JanSetuCivicApp/2.0 (jansetu.jharkhand.gov)' },
         signal: controller.signal
@@ -203,7 +207,7 @@ app.get('/api/location/reverse-geocode', async (req, res) => {
       // Graceful timeout or offline fallback
     }
 
-    let state = 'Jharkhand';
+    let state = isInsideJharkhand ? 'Jharkhand' : 'India';
     let rawDistrict = '';
     let block = '';
     let panchayat = '';
@@ -214,33 +218,39 @@ app.get('/api/location/reverse-geocode', async (req, res) => {
     if (nominatimData && nominatimData.address) {
       const a = nominatimData.address;
       formattedAddress = nominatimData.display_name || '';
-      state = a.state || 'Jharkhand';
-      rawDistrict = (a.state_district || a.district || a.county || '').replace(/\s+District$/i, '').trim();
-      block = a.county || a.subdistrict || a.tehsil || a.taluk || a.municipality || '';
-      panchayat = a.suburb || a.neighbourhood || a.quarter || a.city_district || a.hamlet || '';
-      village = a.village || a.town || a.residential || a.suburb || '';
+      state = a.state || (isInsideJharkhand ? 'Jharkhand' : 'India');
+      rawDistrict = (a.state_district || a.district || a.county || a.city || a.town || '').replace(/\s+District$/i, '').trim();
+      block = a.county || a.subdistrict || a.tehsil || a.taluk || a.municipality || a.city_district || '';
+      panchayat = a.suburb || a.neighbourhood || a.quarter || a.hamlet || village || '';
+      village = a.village || a.town || a.suburb || a.residential || '';
       landmark = a.amenity || a.building || a.road || '';
     }
 
-    // Match district against valid 24 districts
-    let matchedDistrict = jharkhandDistricts.find(d => 
-      rawDistrict && (rawDistrict.toLowerCase().includes(d.toLowerCase()) || d.toLowerCase().includes(rawDistrict.toLowerCase()))
-    );
+    let matchedDistrict = '';
+    if (isInsideJharkhand) {
+      // Match district against valid 24 Jharkhand districts
+      matchedDistrict = jharkhandDistricts.find(d => 
+        rawDistrict && (rawDistrict.toLowerCase() === d.toLowerCase() || rawDistrict.toLowerCase().includes(d.toLowerCase()) || d.toLowerCase().includes(rawDistrict.toLowerCase()))
+      );
 
-    if (!matchedDistrict) {
-      let minDistance = Infinity;
-      matchedDistrict = 'Ranchi';
-      for (const [name, coords] of Object.entries(districtCenters)) {
-        const d = Math.hypot(coords.lat - lat, coords.lng - lng);
-        if (d < minDistance) {
-          minDistance = d;
-          matchedDistrict = name;
+      if (!matchedDistrict) {
+        let minDistance = Infinity;
+        matchedDistrict = 'Ranchi';
+        for (const [name, coords] of Object.entries(districtCenters)) {
+          const d = Math.hypot(coords.lat - lat, coords.lng - lng);
+          if (d < minDistance) {
+            minDistance = d;
+            matchedDistrict = name;
+          }
         }
       }
+    } else {
+      // Outside Jharkhand — use real district/city name
+      matchedDistrict = rawDistrict || (nominatimData && nominatimData.address ? (nominatimData.address.city || nominatimData.address.town || nominatimData.address.state) : 'District');
     }
 
     if (!block) block = `${matchedDistrict} Sadar`;
-    if (!panchayat) panchayat = village || `${matchedDistrict} Panchayat`;
+    if (!panchayat) panchayat = village || `${matchedDistrict} Area`;
     if (!village) village = landmark || 'Ward 1';
     if (!landmark && formattedAddress) {
       landmark = formattedAddress.split(',')[0] || '';
@@ -248,6 +258,7 @@ app.get('/api/location/reverse-geocode', async (req, res) => {
 
     res.json({
       success: true,
+      isOutsideJharkhand: !isInsideJharkhand,
       data: {
         state,
         district: matchedDistrict,
@@ -270,56 +281,58 @@ const IndustryPartner = require('./others/models/IndustryPartner');
 
 app.get('/api/universities', cacheService.middleware('universities', 30), async (req, res) => {
   try {
-    // Automatically ensure all active university portal profile institutions exist in universities collection
-    try {
-      const { UniversityProfile } = require('./university/database');
-      const profiles = await UniversityProfile.find().lean();
-      for (const profile of profiles) {
-        if (profile && profile.institution) {
-          const instName = profile.institution.trim();
-          const escaped = instName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const existing = await University.findOne({
-            $or: [
-              { name: { $regex: new RegExp('^' + escaped + '$', 'i') } },
-              { shortName: { $regex: new RegExp('^' + escaped + '$', 'i') } }
-            ]
-          });
-          if (!existing) {
-            await University.create({
-              name: instName,
-              shortName: instName.length > 20 ? (instName.match(/\b([A-Z])/g)?.join('') || instName) : instName,
-              type: instName.toLowerCase().includes('iit') ? 'iit' : instName.toLowerCase().includes('nit') ? 'nit' : 'central',
-              location: {
-                city: profile.location?.split(',')[0]?.trim() || 'New Delhi',
-                district: 'University Campus',
-                state: profile.location?.split(',')[1]?.trim() || 'Delhi',
-                pincode: '110016'
-              },
-              contact: {
-                email: profile.email || 'faculty@university.ac.in',
-                phone: profile.phone || '+91 11 2659 1000'
-              },
-              departments: [profile.department || 'Department of Engineering and Technology'],
-              expertiseDomains: [
-                'Energy & Technology',
-                'Healthcare',
-                'Water Management',
-                'Urban Infrastructure',
-                'Sanitation & Environment',
-                'Public Administration'
-              ],
-              facilities: { hasIncubationCenter: true, hasResearchLab: true, hasInnovationHub: true, hasTBICenter: true },
-              naacGrade: 'A++',
-              stats: { totalAssigned: 18, totalResolved: 14, performanceScore: 98 },
-              isActive: true,
-              isVerified: true
+    // Automatically ensure active university profiles exist in background without blocking response
+    setImmediate(async () => {
+      try {
+        const { UniversityProfile } = require('./university/database');
+        const profiles = await UniversityProfile.find().lean();
+        for (const profile of profiles) {
+          if (profile && profile.institution) {
+            const instName = profile.institution.trim();
+            const escaped = instName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const existing = await University.findOne({
+              $or: [
+                { name: { $regex: new RegExp('^' + escaped + '$', 'i') } },
+                { shortName: { $regex: new RegExp('^' + escaped + '$', 'i') } }
+              ]
             });
+            if (!existing) {
+              await University.create({
+                name: instName,
+                shortName: instName.length > 20 ? (instName.match(/\b([A-Z])/g)?.join('') || instName) : instName,
+                type: instName.toLowerCase().includes('iit') ? 'iit' : instName.toLowerCase().includes('nit') ? 'nit' : 'central',
+                location: {
+                  city: profile.location?.split(',')[0]?.trim() || 'New Delhi',
+                  district: 'University Campus',
+                  state: profile.location?.split(',')[1]?.trim() || 'Delhi',
+                  pincode: '110016'
+                },
+                contact: {
+                  email: profile.email || 'faculty@university.ac.in',
+                  phone: profile.phone || '+91 11 2659 1000'
+                },
+                departments: [profile.department || 'Department of Engineering and Technology'],
+                expertiseDomains: [
+                  'Energy & Technology',
+                  'Healthcare',
+                  'Water Management',
+                  'Urban Infrastructure',
+                  'Sanitation & Environment',
+                  'Public Administration'
+                ],
+                facilities: { hasIncubationCenter: true, hasResearchLab: true, hasInnovationHub: true, hasTBICenter: true },
+                naacGrade: 'A++',
+                stats: { totalAssigned: 18, totalResolved: 14, performanceScore: 98 },
+                isActive: true,
+                isVerified: true
+              });
+            }
           }
         }
+      } catch (e) {
+        // silent background sync catch
       }
-    } catch (e) {
-      console.error('Error auto-syncing profile university:', e.message);
-    }
+    });
 
     const { search, domain } = req.query;
     const query = { isActive: true };

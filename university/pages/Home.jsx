@@ -15,218 +15,6 @@ import { toast } from '../utils/toast';
 const TIMELINE_STEPS = ['Assigned', 'In Progress', 'Prototype', 'Submitted', 'Deployed'];
 
 /* ────────────────────────────────────────────
-   SUCCESS STORIES DATA & MODAL
-──────────────────────────────────────────── */
-const SUCCESS_STORIES = [
-  {
-    id: 'nit-patna-flood',
-    badge: 'DEPLOYED',
-    category: 'Disaster Management',
-    tag: "This Week's Success Story",
-    title: 'Flood Alert System by NIT Patna just got deployed!',
-    desc: 'The student team from NIT Patna developed a real-time flood early warning system, now actively used in 3 districts of Bihar, impacting 12,000+ citizens. This solution has been added as a Battle-Tested Resource and is now inspiring 3 twinned teams across India.',
-    image: '/university/flood_alert_success.jpg',
-    stats: [
-      { icon: Building2, value: '3', label: 'Districts' },
-      { icon: Users, value: '12,000+', label: 'Citizens Impacted', color: '#EA580C' },
-      { icon: GitFork, value: '3', label: 'Twinned Teams', color: '#16A34A' }
-    ],
-    fullStory: {
-      team: 'Team JalRakshak (NIT Patna)',
-      mentor: 'Dr. Ramesh Verma (Prof. Water Resources)',
-      location: 'Patna, Vaishali & Saran Districts, Bihar',
-      partner: 'Bihar State Disaster Management Authority (BSDMA)',
-      hardware: 'Solar Ultrasonic Water Sensors + LoRaWAN Telemetry Mesh + SMS Auto-Dialer',
-      timeline: '8 Months from Student Capstone to Live Municipal Deployment',
-      quote: 'The 4-hour advance SMS alert gave our ward enough time to move livestock and evacuation boats safely during the high-tide monsoon surge.',
-      quoteAuthor: 'Pramod Kumar (Ward Councillor, Danapur)',
-      twinned: ['IIT Roorkee', 'NIT Trichy', 'IIIT Allahabad']
-    }
-  },
-  {
-    id: 'iit-delhi-opd',
-    badge: 'DEPLOYED',
-    category: 'Healthcare',
-    tag: 'Civic Healthcare Impact',
-    title: 'Smart Hospital OPD Queue by IIT Delhi live across 5 Civil Hospitals!',
-    desc: 'Innovators from IIT Delhi engineered an AI-powered smart queue management kiosk reducing outpatient waiting times by 68%. Deployed in Delhi civil hospitals, directly serving 45,000+ patients monthly.',
-    image: '/university/backgrounds/home/header.png',
-    stats: [
-      { icon: Building2, value: '5', label: 'Hospitals' },
-      { icon: Users, value: '45,000+', label: 'Patients / Mo', color: '#2563EB' },
-      { icon: GitFork, value: '4', label: 'Twinned Teams', color: '#16A34A' }
-    ],
-    fullStory: {
-      team: 'Team HealthBridge (IIT Delhi)',
-      mentor: 'Dr. Rohan Mehta (Dept. of Computer Science)',
-      location: 'Safdarjung & Delhi Gov Civil Hospitals',
-      partner: 'Delhi State Health Mission',
-      hardware: 'Multi-lingual Touchscreen Kiosks + Aadhaar ABHA QR Integration',
-      timeline: '6 Months Prototype to District Rollout',
-      quote: 'Senior citizens and mothers with infants now spend 40 minutes instead of 3.5 hours standing in crowded OPD queues.',
-      quoteAuthor: 'Medical Superintendent, Safdarjung Hospital',
-      twinned: ['AIIMS New Delhi', 'BHU Varanasi', 'KGMU Lucknow']
-    }
-  }
-];
-
-function SuccessStoryModal({ story, onClose, onFork }) {
-  if (!story) return null;
-  const fs = story.fullStory || {};
-
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [onClose]);
-
-  return createPortal(
-    <div
-      style={{
-        position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 999999,
-        background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, overflowY: 'auto'
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          background: '#FFFFFF', borderRadius: 20, width: '100%', maxWidth: 680,
-          maxHeight: '90vh', overflowY: 'auto', padding: 0, position: 'relative',
-          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.35)', border: '1px solid #E2E8F0',
-          margin: 'auto'
-        }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Modal Hero Image */}
-        <div style={{ position: 'relative', height: 210, width: '100%', overflow: 'hidden' }}>
-          <img src={story.image} alt={story.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.2) 60%, transparent 100%)' }} />
-          <button
-            onClick={onClose}
-            style={{
-              position: 'absolute', top: 16, right: 16, background: 'rgba(15,23,42,0.6)',
-              border: 'none', borderRadius: '50%', width: 34, height: 34,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF'
-            }}
-          >
-            <X size={18} />
-          </button>
-          <div style={{ position: 'absolute', bottom: 16, left: 20, right: 20, color: '#FFFFFF' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <span style={{ background: '#22C55E', color: '#FFFFFF', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 4, letterSpacing: '0.05em' }}>
-                DEPLOYED CIVIC SOLUTION
-              </span>
-              <span style={{ background: 'rgba(255,255,255,0.2)', color: '#FFFFFF', fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 12 }}>
-                {story.category}
-              </span>
-            </div>
-            <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, lineHeight: 1.25, color: '#FFFFFF' }}>
-              {story.title}
-            </h2>
-          </div>
-        </div>
-
-        {/* Modal Body */}
-        <div style={{ padding: '24px 28px' }}>
-          {/* Quick Stats Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 22 }}>
-            {story.stats?.map((st, i) => (
-              <div key={i} style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '12px 14px', textAlign: 'center' }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: st.color || '#0F172A', fontFamily: 'Outfit, sans-serif' }}>
-                  {st.value}
-                </div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', marginTop: 2 }}>
-                  {st.label}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Narrative */}
-          <div style={{ marginBottom: 20 }}>
-            <h4 style={{ fontSize: 13, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 6 }}>
-              Project Deployment Overview
-            </h4>
-            <p style={{ fontSize: 13.5, color: '#334155', lineHeight: 1.6, margin: 0 }}>
-              {story.desc}
-            </p>
-          </div>
-
-          {/* Architecture & Institutional Details */}
-          <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 12, padding: 16, marginBottom: 20 }}>
-            <h4 style={{ fontSize: 12.5, fontWeight: 700, color: '#1E40AF', textTransform: 'uppercase', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <ShieldCheck size={16} /> Verified Civic Implementation Specs
-            </h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 12 }}>
-              <div>
-                <span style={{ color: '#60A5FA', display: 'block', fontSize: 10.5, fontWeight: 700 }}>STUDENT INNOVATION TEAM</span>
-                <strong style={{ color: '#1E3A8A' }}>{fs.team || 'NIT Patna Innovation Cell'}</strong>
-              </div>
-              <div>
-                <span style={{ color: '#60A5FA', display: 'block', fontSize: 10.5, fontWeight: 700 }}>FACULTY MENTOR</span>
-                <strong style={{ color: '#1E3A8A' }}>{fs.mentor || 'Dr. Ramesh Verma'}</strong>
-              </div>
-              <div>
-                <span style={{ color: '#60A5FA', display: 'block', fontSize: 10.5, fontWeight: 700 }}>CIVIC PARTNER</span>
-                <strong style={{ color: '#1E3A8A' }}>{fs.partner || 'Bihar State Disaster Management'}</strong>
-              </div>
-              <div>
-                <span style={{ color: '#60A5FA', display: 'block', fontSize: 10.5, fontWeight: 700 }}>HARDWARE & TELEMETRY</span>
-                <strong style={{ color: '#1E3A8A' }}>{fs.hardware || 'Solar IoT Sensors + GSM Telemetry'}</strong>
-              </div>
-            </div>
-          </div>
-
-          {/* Citizen Quote */}
-          {fs.quote && (
-            <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 12, padding: 14, marginBottom: 22, fontStyle: 'italic', fontSize: 12.5, color: '#78350F' }}>
-              "{fs.quote}"
-              <div style={{ fontWeight: 700, fontStyle: 'normal', color: '#B45309', marginTop: 4, fontSize: 11.5 }}>
-                — {fs.quoteAuthor}
-              </div>
-            </div>
-          )}
-
-          {/* Modal Actions */}
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingTop: 14, borderTop: '1px solid #E2E8F0' }}>
-            <Link
-              to="/resources"
-              onClick={onClose}
-              style={{
-                padding: '9px 16px', borderRadius: 8, border: '1.5px solid #CBD5E1', background: '#FFFFFF',
-                color: '#334155', fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6
-              }}
-            >
-              <BookOpen size={14} /> View Battle-Tested Resource
-            </Link>
-            <button
-              onClick={() => {
-                onClose();
-                onFork && onFork(story);
-              }}
-              style={{
-                padding: '10px 20px', borderRadius: 8, border: 'none', background: '#0F172A',
-                color: '#FFFFFF', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
-                boxShadow: '0 4px 12px rgba(15,23,42,0.25)'
-              }}
-            >
-              <GitFork size={14} /> Fork Solution for My University
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
-
-/* ────────────────────────────────────────────
    SUB-COMPONENTS
 ──────────────────────────────────────────── */
 
@@ -1482,12 +1270,10 @@ function ProjectCard({ proj }) {
 ──────────────────────────────────────────── */
 export default function HomePage() {
   const navigate = useNavigate();
-  const [lbTab, setLbTab] = useState('Universities');
   const [stats, setStats] = useState({ totalProblems: 0, studentTeams: 0, projectsInProgress: 0, projectsDeployed: 0, needAttention: 0 });
   const [problems, setProblems] = useState([]);
   const [activeProjects, setActiveProjects] = useState([]);
   const [deployedProjects, setDeployedProjects] = useState([]);
-  const [leaderboard, setLeaderboard] = useState([]);
   const [discipline, setDiscipline] = useState('All Disciplines');
   const [difficulty, setDifficulty] = useState('All Levels');
   const [duration, setDuration] = useState('All Durations');
@@ -1508,12 +1294,6 @@ export default function HomePage() {
       historyTrackRef.current.scrollBy({ left: direction * 224, behavior: 'smooth' });
     }
   };
-
-  // Success Story & Dashboard Upgrades State
-  const [showSuccessBanner, setShowSuccessBanner] = useState(true);
-  const [currentStoryIdx, setCurrentStoryIdx] = useState(0);
-  const [successModalStory, setSuccessModalStory] = useState(null);
-  const [lbPeriod, setLbPeriod] = useState('This Semester');
 
   useEffect(() => {
     const token = localStorage.getItem('is_token') || localStorage.getItem('token') || '';
@@ -1559,10 +1339,6 @@ export default function HomePage() {
 
     fetch('/api/projects?status=Deployed').then(r => r.json()).then(data => {
       if (Array.isArray(data)) setDeployedProjects(data);
-    }).catch(() => {});
-
-    fetch('/api/leaderboard').then(r => r.json()).then(data => {
-      if (Array.isArray(data)) setLeaderboard(data);
     }).catch(() => {});
 
     return () => window.removeEventListener('profile-update', handleProfileUpdate);
@@ -1727,100 +1503,6 @@ export default function HomePage() {
         {/* ─── LEFT COLUMN: Browse Problems ─── */}
         <div className="page-left">
 
-          {/* ── This Week's Success Story Banner ── */}
-          {showSuccessBanner ? (
-            <div className="success-story-banner">
-              <div className="ss-confetti-bg" />
-              
-              <div className="ss-header">
-                <div className="ss-tag-wrap">
-                  <div className="ss-star-badge">
-                    <Star size={12} fill="#FFFFFF" color="#FFFFFF" />
-                  </div>
-                  <span className="ss-tag-title">{SUCCESS_STORIES[currentStoryIdx].tag}</span>
-                </div>
-
-                <div className="ss-controls">
-                  {SUCCESS_STORIES.length > 1 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <button
-                        className="ss-nav-btn"
-                        onClick={() => setCurrentStoryIdx(prev => (prev === 0 ? SUCCESS_STORIES.length - 1 : prev - 1))}
-                        title="Previous Success Story"
-                      >
-                        <ChevronLeft size={14} />
-                      </button>
-                      <button
-                        className="ss-nav-btn"
-                        onClick={() => setCurrentStoryIdx(prev => (prev === SUCCESS_STORIES.length - 1 ? 0 : prev + 1))}
-                        title="Next Success Story"
-                      >
-                        <ChevronRight size={14} />
-                      </button>
-                    </div>
-                  )}
-                  <button
-                    className="ss-close-btn"
-                    onClick={() => setShowSuccessBanner(false)}
-                    title="Dismiss Success Story"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Banner Body */}
-              <div className="ss-body">
-                <div className="ss-img-container">
-                  <img
-                    src={SUCCESS_STORIES[currentStoryIdx].image}
-                    alt={SUCCESS_STORIES[currentStoryIdx].title}
-                  />
-                  <span className="ss-deployed-chip">
-                    {SUCCESS_STORIES[currentStoryIdx].badge || 'DEPLOYED'}
-                  </span>
-                </div>
-
-                <div className="ss-text-content">
-                  <h3 className="ss-headline">
-                    {SUCCESS_STORIES[currentStoryIdx].title}
-                  </h3>
-                  <p className="ss-desc">
-                    {SUCCESS_STORIES[currentStoryIdx].desc}
-                  </p>
-                </div>
-
-                <div className="ss-right-section">
-                  <div className="ss-metrics-row">
-                    {SUCCESS_STORIES[currentStoryIdx].stats.map((st, i) => (
-                      <div key={i} className="ss-metric-item">
-                        <div className="ss-metric-icon">
-                          <st.icon size={16} color={st.color || '#475569'} />
-                        </div>
-                        <div className="ss-metric-val">{st.value}</div>
-                        <div className="ss-metric-lbl">{st.label}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-                    className="ss-cta-btn"
-                    onClick={() => setSuccessModalStory(SUCCESS_STORIES[currentStoryIdx])}
-                  >
-                    View Full Story <ArrowRight size={13} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <button
-              className="ss-restore-trigger"
-              onClick={() => setShowSuccessBanner(true)}
-            >
-              <Star size={12} fill="#B45309" color="#B45309" />
-              Show This Week's Success Story
-            </button>
-          )}
           <div className="section-header">
             <div>
               <div className="section-title">Browse Problems</div>
@@ -2004,52 +1686,6 @@ export default function HomePage() {
               <ProjectCard key={proj._id || proj.id} proj={proj} />
             )) : <div style={{ padding: '20px 0', color: '#64748B' }}>No active projects found.</div>}
           </div>
-
-          {/* Leaderboard */}
-          <div>
-            <div className="section-header" style={{ marginBottom: 10 }}>
-              <div className="section-title">Leaderboard</div>
-              <Link to="/browse-problems" className="view-all-link">
-                View Full <ArrowRight />
-              </Link>
-            </div>
-
-            {/* Tabs */}
-            <div className="leaderboard-tabs" style={{ marginBottom: 10 }}>
-              {['Universities', 'Teams'].map((tab) => (
-                <button
-                  key={tab}
-                  className={`lb-tab ${lbTab === tab ? 'active' : 'inactive'}`}
-                  onClick={() => setLbTab(tab)}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-
-            {/* Rows */}
-            <div>
-              {leaderboard.length > 0 ? leaderboard.map((entry) => (
-                <div className="leaderboard-row" key={entry.rank}>
-                  <div className={`lb-rank ${entry.rank === 1 ? 'lb-rank-1' : entry.rank === 2 ? 'lb-rank-2' : entry.rank === 3 ? 'lb-rank-3' : 'lb-rank-n'}`}>{entry.rank}</div>
-                  <div className="lb-logo">{entry.initials}</div>
-                  <div className="lb-name">{entry.name}</div>
-                  <div className="lb-pts">{entry.pts}</div>
-                </div>
-              )) : <div style={{ padding: '20px 0', color: '#64748B' }}>Loading leaderboard...</div>}
-            </div>
-
-            {/* Quote card */}
-            <div className="quote-card">
-              <div className="quote-mark-large">"</div>
-              <div>
-                <div className="quote-text">
-                  Universities are the catalysts of a better tomorrow.
-                </div>
-                <div className="quote-attr">— JanSetu</div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -2063,18 +1699,6 @@ export default function HomePage() {
         />
       )}
 
-      {/* Success Story Detail Modal */}
-      {successModalStory && (
-        <SuccessStoryModal
-          story={successModalStory}
-          onClose={() => setSuccessModalStory(null)}
-          onFork={(s) => {
-            setSuccessModalStory(null);
-            navigate('/my-projects');
-            toast(`Solution template initialized in My Projects!`, 'success');
-          }}
-        />
-      )}
 
       {/* ── Footer Strip ── */}
       <div className="footer-strip">

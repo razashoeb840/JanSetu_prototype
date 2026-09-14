@@ -480,6 +480,17 @@ exports.createChallenge = async (req, res, next) => {
       }
     }
 
+    // Normalize priority value for database compatibility ('normal' -> 'medium', uppercase -> lowercase)
+    let sanitizedPriority = (priority || suggestedPriority || 'medium').toString().toLowerCase();
+    if (sanitizedPriority === 'normal') sanitizedPriority = 'medium';
+    if (!['low', 'medium', 'high', 'urgent'].includes(sanitizedPriority)) {
+      sanitizedPriority = 'medium';
+    }
+
+    let parsedLoc = typeof location === 'string' ? JSON.parse(location) : (location || {});
+    if (!parsedLoc.district) parsedLoc.district = 'Ranchi';
+    if (!parsedLoc.state) parsedLoc.state = 'Jharkhand';
+
     const challenge = await Challenge.create({
       title: title.trim(),
       description,
@@ -487,14 +498,14 @@ exports.createChallenge = async (req, res, next) => {
       aiSuggestedCategory: aiResult.category,
       aiConfidenceScore: aiResult.confidence,
       tags,
-      priority: priority || suggestedPriority,
+      priority: sanitizedPriority,
       submittedBy: submitterUserId,
       submitterContact: submitterContact || {
         name: submitterName,
         email: submitterEmail,
         phone: submitterPhone
       },
-      location: typeof location === 'string' ? JSON.parse(location) : location,
+      location: parsedLoc,
       filePath: finalFilePath,
       attachments,
       coverImage,
@@ -529,8 +540,9 @@ exports.createChallenge = async (req, res, next) => {
     await logActivity({
       actor: req.user || { name: submitterName, role: 'citizen', id: submitterUserId },
       action: 'challenge_created',
+      description: `New grievance submitted: ${challenge.title}`,
       target: { type: 'Challenge', id: challenge._id, name: challenge.title },
-    });
+    }).catch(() => {});
 
     res.status(201).json({ success: true, data: challenge, message: `Challenge submitted! ID: ${challenge.challengeId}` });
   } catch (error) {

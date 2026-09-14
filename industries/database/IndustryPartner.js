@@ -35,23 +35,27 @@ const industryPartnerSchema = new mongoose.Schema({
     state: String,
     country: { type: String, default: 'India' }
   },
+  companyName: {
+    type: String,
+    trim: true
+  },
   contact: {
     email: String,
     phone: String,
     website: String
   },
-  // Collaboration capabilities
+  // Collaboration capabilities (supports array of capability strings and legacy capability flags)
   capabilities: {
-    canMentor: { type: Boolean, default: false },
-    canFund: { type: Boolean, default: false },
-    canCoDevelop: { type: Boolean, default: false },
-    canPilot: { type: Boolean, default: false },
-    canProvideInfrastructure: { type: Boolean, default: false }
+    type: mongoose.Schema.Types.Mixed,
+    default: () => ['Funding', 'Mentorship']
   },
   fundingCapacity: {
-    type: String,
-    enum: ['under_5L', '5L_to_25L', '25L_to_1Cr', 'above_1Cr', 'na'],
-    default: 'na'
+    type: mongoose.Schema.Types.Mixed,
+    default: 1000000
+  },
+  pastCollaborations: {
+    type: Number,
+    default: 5
   },
   // Representatives
   representatives: [{

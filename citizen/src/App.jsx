@@ -218,16 +218,25 @@ function App() {
         <div className="taj-mahal-card-scrim"></div>
         <div className="sidebar-card-content">
           <div className="sidebar-flag-badge"
-            style={{"display":"inline-flex","alignItems":"center","gap":"6px","background":"rgba(255,153,51,0.28)","border":"1px solid rgba(255,153,51,0.6)","borderRadius":"12px","padding":"3px 10px","fontSize":"10.5px","fontWeight":"800","color":"#FFB066","marginBottom":"8px","backdropFilter":"blur(4px)"}}>
-            <span style={{"fontSize":"12px"}}>🇮🇳</span><span data-i18n="sidebar_flag_badge">Citizen Participation Portal</span>
+            style={{"display":"inline-flex","alignItems":"center","gap":"6px","background":"rgba(255,153,51,0.28)","border":"1px solid rgba(255,153,51,0.6)","borderRadius":"12px","padding":"3px 10px","fontSize":"10.5px","fontWeight":"800","color":"#FFB066","marginBottom":"6px","backdropFilter":"blur(4px)"}}>
+            <span style={{"fontSize":"12px"}}>🇮🇳</span><span data-i18n="sidebar_flag_badge">Public Grievance Redressal</span>
           </div>
-          <div className="sidebar-card-title" data-i18n="contribute_title">Make a Difference</div>
+          <div className="sidebar-card-title" data-i18n="contribute_title">📢 Report New Problem</div>
           <div className="sidebar-card-desc" data-i18n="contribute_desc">
-            Report community issues in your panchayat &amp; village directly to authorities.
+            Directly notify district &amp; municipal authorities. Live tracking &amp; AI ground duplicate check.
           </div>
-          <button type="button" className="btn-sidebar-report" onClick={() => { openReportModal(); }} title="Report a Problem">
-            <span data-i18n="btn_report_problem">+ Report a Problem</span>
-          </button>
+          <div className="sidebar-card-badges-row">
+            <span className="sidebar-micro-pill">⚡ Fast Action</span>
+            <span className="sidebar-micro-pill">📍 GPS Tagged</span>
+          </div>
+          <div className="sidebar-btn-group">
+            <button type="button" className="btn-sidebar-report" onClick={() => { openReportModal(); }} title="Report a Problem Form">
+              <span data-i18n="btn_report_problem">+ File Problem Report</span>
+            </button>
+            <button type="button" className="btn-sidebar-ai-voice" onClick={() => setIsVoiceAgentOpen(true)} title="Voice AI Report">
+              <span>🎙️ Voice AI Se Report Karein</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -748,37 +757,55 @@ function App() {
      MODAL 1: REPORT A PROBLEM (6-STEP RURAL CITIZEN FLOW)
      ============================================================ */}
   <div className="modal-overlay" id="reportModal">
-    <div className="modal-card-box">
+    <div className="modal-card-box report-modal-card">
+      <div className="report-modal-tricolor-line"></div>
       <div className="modal-header-bar">
-        <div className="modal-header-title" style={{"display":"flex","alignItems":"center","gap":"10px"}}>
-          <img src="/jansetu-logo.png" style={{"width":"26px","height":"26px","borderRadius":"50%","objectFit":"cover"}} alt="Logo" onError={(e) => { e.target.src = '/citizen/jansetu-logo.png'; }} />
-          <span data-i18n="modal_report_title">Report a Community Problem</span>
+        <div className="modal-header-title" style={{"display":"flex","alignItems":"center","gap":"12px"}}>
+          <img src="/jansetu-logo.png" style={{"width":"28px","height":"28px","borderRadius":"50%","objectFit":"cover","border":"1.5px solid rgba(0,45,98,0.2)","boxShadow":"0 2px 6px rgba(0,0,0,0.1)"}} alt="Logo" onError={(e) => { e.target.src = '/citizen/jansetu-logo.png'; }} />
+          <div>
+            <div style={{"fontSize":"15.5px","fontWeight":"900","color":"#0f172a","display":"flex","alignItems":"center","gap":"8px"}}>
+              <span data-i18n="modal_report_title">Report a Community Problem</span>
+              <span className="report-badge-pill">Citizen Redressal</span>
+            </div>
+            <div style={{"fontSize":"11px","color":"#64748B","fontWeight":"600"}}>Govt. of Jharkhand · Smart India Portal PS2643</div>
+          </div>
         </div>
-        <button className="modal-close-btn" onClick={() => { closeModal('reportModal') }}>✕</button>
+        <div style={{"display":"flex","alignItems":"center","gap":"10px"}}>
+          <span id="reportModalStepCounter" className="report-step-counter-pill">Step 1 of 5 (20%)</span>
+          <button className="modal-close-btn" onClick={() => { closeModal('reportModal') }} title="Close Modal">✕</button>
+        </div>
       </div>
 
       <div className="modal-body-scroll">
+        <div className="report-progress-track">
+          <div className="report-progress-fill" id="reportProgressBarFill" style={{"width":"20%"}}></div>
+        </div>
+
         <div className="step-bar">
-          <span className="step-dot active" id="dotStep1" data-i18n="flow_step1">1. Category</span>
-          <span className="step-dot" id="dotStep2" data-i18n="flow_step2">2. Problem</span>
-          <span className="step-dot" id="dotStep3" data-i18n="flow_step3">3. Location</span>
-          <span className="step-dot" id="dotStep4" data-i18n="flow_step4">4. Proof</span>
-          <span className="step-dot" id="dotStep5" data-i18n="flow_step5">5. AI Check</span>
+          <span className="step-dot active" id="dotStep1">🏷️ <span data-i18n="flow_step1">1. Category</span></span>
+          <span className="step-dot" id="dotStep2">📝 <span data-i18n="flow_step2">2. Problem</span></span>
+          <span className="step-dot" id="dotStep3">📍 <span data-i18n="flow_step3">3. Location</span></span>
+          <span className="step-dot" id="dotStep4">📸 <span data-i18n="flow_step4">4. Proof</span></span>
+          <span className="step-dot" id="dotStep5">🤖 <span data-i18n="flow_step5">5. AI Check</span></span>
         </div>
 
         {/* STEP 1: CATEGORY */}
         <div id="stepSection1">
           <div className="form-group-field">
-            <label className="form-label-text" data-i18n="label_step1">Step 1: Select Problem Category *</label>
+            <div style={{"display":"flex","justifyContent":"space-between","alignItems":"center","marginBottom":"4px"}}>
+              <label className="form-label-text" data-i18n="label_step1" style={{"fontSize":"13px","fontWeight":"800","color":"#0f172a"}}>Step 1: Select Problem Category *</label>
+              <span style={{"fontSize":"11px","fontWeight":"700","color":"#0284c7","background":"#E0F2FE","padding":"2px 8px","borderRadius":"8px"}}>Select 1 Domain</span>
+            </div>
             <div className="category-chips-grid" id="categoryChipsContainer">
               {/* Populated via setLanguage */}
             </div>
-            <input type="hidden" id="reportCategory" value="Water Management" />
+            <input type="hidden" id="reportCategory" value="" />
           </div>
 
-          <div className="modal-footer-nav" style={{"marginTop":"14px"}}>
-            <button type="button" className="btn-modal-primary" onClick={() => { goToStep(2) }} data-i18n="btn_next_problem">Next:
-              Problem Details →</button>
+          <div className="modal-footer-nav" style={{"marginTop":"16px"}}>
+            <button type="button" className="btn-modal-primary" onClick={() => { goToStep(2) }} data-i18n="btn_next_problem">
+              Next: Problem Details →
+            </button>
           </div>
         </div>
 
@@ -788,72 +815,100 @@ function App() {
             <div className="voice-left">
               <button type="button" className="voice-mic-btn" id="voiceMicBtn" onClick={() => { (window.toggleVoiceInput || toggleVoiceInput)() }}>🎙️</button>
               <div>
-                <div style={{"fontSize":"13.5px","fontWeight":"800","color":"var(--gray-900)"}} id="voiceStatusText"
-                  data-i18n="voice_heading">Speak to Report</div>
-                <div style={{"fontSize":"11.5px","color":"var(--gray-500)"}} data-i18n="voice_sub">Click mic and speak your
-                  problem naturally</div>
+                <div style={{"fontSize":"14px","fontWeight":"800","color":"var(--gray-900)"}} id="voiceStatusText"
+                  data-i18n="voice_heading">Speak to Report (Voice AI)</div>
+                <div style={{"fontSize":"11.5px","color":"var(--gray-500)"}} data-i18n="voice_sub">Click mic and speak your problem naturally in Hindi or English</div>
               </div>
             </div>
-            <span style={{"fontSize":"11px","fontWeight":"800","color":"#FF9933"}} data-i18n="voice_ai_active">Voice AI Active</span>
+            <span className="voice-ai-active-pill" data-i18n="voice_ai_active">🎙️ Voice AI Active</span>
           </div>
 
-          <div className="voice-sample-chips" style={{"display":"flex","gap":"6px","flexWrap":"wrap","marginTop":"6px"}}>
+          <div className="voice-sample-chips" id="voiceSampleChipsContainer" style={{"display":"flex","gap":"6px","flexWrap":"wrap","marginTop":"8px"}}>
             <span style={{"fontSize":"10.5px","fontWeight":"700","color":"var(--gray-500)","alignSelf":"center"}} data-i18n="voice_examples_label">💡 Examples:</span>
             <button type="button" className="voice-chip-btn" onClick={() => { window.applyVoiceSample && window.applyVoiceSample('सड़क पर गहरा गड्ढा है और आवागमन बाधित है', 'सड़क व पुलिया मरम्मत', 'Urban Infrastructure') }} style={{"fontSize":"10.5px","padding":"3px 8px","borderRadius":"6px","border":"1px solid #cbd5e1","background":"#f8fafc","cursor":"pointer"}} data-i18n="voice_sample_1">🛣️ Road Pothole</button>
             <button type="button" className="voice-chip-btn" onClick={() => { window.applyVoiceSample && window.applyVoiceSample('पीने के पानी का मुख्य पाइप टूट गया है और गंदा पानी आ रहा है', 'पेयजल पाइपलाइन लीकेज', 'Water Management') }} style={{"fontSize":"10.5px","padding":"3px 8px","borderRadius":"6px","border":"1px solid #cbd5e1","background":"#f8fafc","cursor":"pointer"}} data-i18n="voice_sample_2">🚰 Water Pipe Leakage</button>
             <button type="button" className="voice-chip-btn" onClick={() => { window.applyVoiceSample && window.applyVoiceSample('गांव में बिजली का ट्रांसफॉर्मर खराब है और 3 दिन से बिजली नहीं है', 'ट्रांसफॉर्मर खराब / बिजली आपूर्ति', 'Energy & Technology') }} style={{"fontSize":"10.5px","padding":"3px 8px","borderRadius":"6px","border":"1px solid #cbd5e1","background":"#f8fafc","cursor":"pointer"}} data-i18n="voice_sample_3">⚡ Power Transformer</button>
           </div>
 
-          <div className="form-group-field" style={{"marginTop":"12px"}}>
+          <div className="form-group-field" style={{"marginTop":"14px"}}>
             <label className="form-label-text" data-i18n="label_problem_desc">Problem Description *</label>
             <textarea className="form-input-control" id="reportDescription" rows="4"
-              placeholder="Describe the issue in detail..."></textarea>
+              placeholder="Describe the issue in detail (e.g. location, since when, how many people affected)..."
+              onInput={(e) => {
+                const el = document.getElementById('descCharCount');
+                if (el) el.textContent = `${e.target.value.length} chars`;
+              }}></textarea>
+            <div style={{"display":"flex","justifyContent":"space-between","alignItems":"center","fontSize":"11px","color":"#64748B","marginTop":"3px"}}>
+              <span>💡 Specific details jaise gali, chowk ya paas ka school/mandir likhein</span>
+              <span id="descCharCount" style={{"fontWeight":"700","color":"#0284c7"}}>0 chars</span>
+            </div>
           </div>
 
           <div className="form-group-field">
             <label className="form-label-text" data-i18n="label_problem_title">Problem Title</label>
             <input type="text" className="form-input-control" id="reportTitle"
-              placeholder="Auto-generated by AI or type title here" />
+              placeholder="Auto-generated by AI or type concise title here" />
           </div>
 
           <div className="form-group-field">
-            <label className="form-label-text" data-i18n="label_urgency">Urgency / Priority</label>
-            <div style={{"display":"flex","gap":"8px"}}>
-              <label
-                style={{"flex":"1","display":"flex","alignItems":"center","justifyContent":"center","gap":"6px","padding":"9px","border":"1.5px solid var(--gray-200)","borderRadius":"10px","cursor":"pointer","fontSize":"12px","fontWeight":"700"}}>
-                <input type="radio" name="priorityChoice" value="medium" checked /> <span
-                  data-i18n="prio_normal">Normal</span>
+            <label className="form-label-text" data-i18n="label_urgency">Urgency / Priority Level *</label>
+            <div className="priority-selector-grid">
+              <label className="priority-card-label prio-normal">
+                <input type="radio" name="priorityChoice" value="normal" defaultChecked />
+                <div className="prio-card-body">
+                  <span className="prio-icon">🛡️</span>
+                  <div>
+                    <div className="prio-title" data-i18n="prio_normal">Normal</div>
+                    <div className="prio-sub">Standard priority issue</div>
+                  </div>
+                </div>
               </label>
-              <label
-                style={{"flex":"1","display":"flex","alignItems":"center","justifyContent":"center","gap":"6px","padding":"9px","border":"1.5px solid var(--gray-200)","borderRadius":"10px","cursor":"pointer","fontSize":"12px","fontWeight":"700"}}>
-                <input type="radio" name="priorityChoice" value="high" /> <span data-i18n="prio_high">High</span>
+              <label className="priority-card-label prio-high">
+                <input type="radio" name="priorityChoice" value="high" />
+                <div className="prio-card-body">
+                  <span className="prio-icon">⚡</span>
+                  <div>
+                    <div className="prio-title" data-i18n="prio_high">High</div>
+                    <div className="prio-sub">Affecting neighborhood</div>
+                  </div>
+                </div>
               </label>
-              <label
-                style={{"flex":"1","display":"flex","alignItems":"center","justifyContent":"center","gap":"6px","padding":"9px","border":"1.5px solid var(--gray-200)","borderRadius":"10px","cursor":"pointer","fontSize":"12px","fontWeight":"700"}}>
-                <input type="radio" name="priorityChoice" value="urgent" /> <span data-i18n="prio_urgent">Urgent</span>
+              <label className="priority-card-label prio-urgent">
+                <input type="radio" name="priorityChoice" value="urgent" />
+                <div className="prio-card-body">
+                  <span className="prio-icon">🚨</span>
+                  <div>
+                    <div className="prio-title" data-i18n="prio_urgent">Urgent</div>
+                    <div className="prio-sub">Immediate hazard / danger</div>
+                  </div>
+                </div>
               </label>
             </div>
           </div>
 
-          <div className="modal-footer-nav">
+          <div className="modal-footer-nav" style={{"marginTop":"16px"}}>
             <button type="button" className="btn-modal-secondary" onClick={() => { goToStep(1) }} data-i18n="btn_back">← Back</button>
-            <button type="button" className="btn-modal-primary" onClick={() => { goToStep(3) }} data-i18n="btn_next_location">Next:
-              Location →</button>
+            <button type="button" className="btn-modal-primary" onClick={() => { goToStep(3) }} data-i18n="btn_next_location">Next: Location →</button>
           </div>
         </div>
 
         {/* STEP 3: RURAL LOCATION HIERARCHY */}
         <div id="stepSection3" style={{"display":"none"}}>
-          <button type="button" className="btn-gps-autodetect" onClick={() => { autoDetectGpsLocation() }}>
-            <span>📍</span>
-            <span data-i18n="btn_use_gps">Use Current Location</span>
-          </button>
+          <div style={{"display":"flex","justifyContent":"space-between","alignItems":"center","marginBottom":"10px","flexWrap":"wrap","gap":"8px"}}>
+            <button type="button" className="btn-gps-autodetect" onClick={() => { autoDetectGpsLocation() }}>
+              <span>📍</span>
+              <span data-i18n="btn_use_gps">Auto-Detect GPS Location</span>
+            </button>
+            <span style={{"fontSize":"11.5px","color":"#64748B","fontWeight":"600"}}>
+              📌 Accurate GPS speeds up inspection
+            </span>
+          </div>
 
           <div className="form-row-2col">
             <div className="form-group-field">
               <label className="form-label-text" data-i18n="label_state">State</label>
-              <input type="text" className="form-input-control" id="reportState" value="Jharkhand" readonly
-                style={{"background":"var(--gray-100)"}} />
+              <input type="text" className="form-input-control" id="reportState" defaultValue="Jharkhand"
+                style={{"background":"#F8FAFC","fontWeight":"700"}} />
             </div>
 
             <div className="form-group-field">
@@ -895,15 +950,15 @@ function App() {
             </div>
 
             <div className="form-group-field">
-              <label className="form-label-text" data-i18n="label_panchayat">Panchayat</label>
+              <label className="form-label-text" data-i18n="label_panchayat">Panchayat / Ward</label>
               <input type="text" className="form-input-control" id="reportPanchayat" defaultValue=""
-                placeholder="e.g. Tupudana Panchayat" />
+                placeholder="e.g. Tupudana Panchayat / Ward 12" />
             </div>
           </div>
 
           <div className="form-row-2col">
             <div className="form-group-field">
-              <label className="form-label-text" data-i18n="label_village">Village / Tola</label>
+              <label className="form-label-text" data-i18n="label_village">Village / Tola / Colony</label>
               <input type="text" className="form-input-control" id="reportVillage" defaultValue=""
                 placeholder="e.g. Rampur, Purana Tola" />
             </div>
@@ -917,65 +972,75 @@ function App() {
 
           {/* Interactive Mini-Map Pinning Card */}
           <div className="minimap-section-card"
-            style={{"margin":"12px 0","background":"#f8fafc","border":"1.5px solid var(--gray-200)","borderRadius":"12px","padding":"12px"}}>
+            style={{"margin":"12px 0","background":"#f8fafc","border":"1.5px solid var(--gray-200)","borderRadius":"14px","padding":"12px","boxShadow":"0 2px 8px rgba(0,0,0,0.04)"}}>
             <div style={{"display":"flex","justifyContent":"space-between","alignItems":"center","marginBottom":"8px"}}>
               <div
-                style={{"fontSize":"12.5px","fontWeight":"800","color":"var(--navy)","display":"flex","alignItems":"center","gap":"6px"}}>
+                style={{"fontSize":"13px","fontWeight":"800","color":"var(--navy)","display":"flex","alignItems":"center","gap":"6px"}}>
                 <span>🗺️</span> <span data-i18n="map_pin_spot">Pin Exact Spot on Map</span>
               </div>
               <span id="mapCoordsPill"
-                style={{"fontSize":"11px","fontWeight":"700","color":"#1e40af","background":"#dbeafe","padding":"2px 8px","borderRadius":"10px"}}>📍
-                23.3441° N, 85.3096° E</span>
+                style={{"fontSize":"11px","fontWeight":"800","color":"#1e40af","background":"#dbeafe","padding":"3px 10px","borderRadius":"12px","border":"1px solid #bfdbfe"}}>
+                📍 23.3441° N, 85.3096° E
+              </span>
             </div>
             <div id="reportMiniMap"
-              style={{"height":"190px","width":"100%","borderRadius":"8px","border":"1px solid #cbd5e1","zIndex":"1"}}></div>
-            <div style={{"display":"flex","justifyContent":"space-between","alignItems":"center","marginTop":"8px"}}>
-              <span style={{"fontSize":"10.5px","color":"var(--gray-500)"}}>💡 Tip: Click anywhere on map or drag marker to
-                pinpoint exact issue spot.</span>
+              style={{"height":"190px","width":"100%","borderRadius":"10px","border":"1px solid #cbd5e1","zIndex":"1","overflow":"hidden"}}></div>
+            <div style={{"display":"flex","justifyContent":"space-between","alignItems":"center","marginTop":"8px","flexWrap":"wrap","gap":"6px"}}>
+              <span style={{"fontSize":"11px","color":"var(--gray-500)","fontWeight":"600"}}>💡 Tip: Click anywhere on map or drag marker to pinpoint exact issue spot.</span>
               <button type="button" className="btn-gps-autodetect" id="btnGpsAutodetect" onClick={() => { autoDetectGpsLocation() }}
-                style={{"padding":"4px 10px","fontSize":"11px","background":"#EFF6FF","border":"1px solid #BFDBFE","color":"var(--navy)","borderRadius":"6px","fontWeight":"700","cursor":"pointer"}}>
+                style={{"padding":"4px 12px","fontSize":"11px","background":"#EFF6FF","border":"1px solid #BFDBFE","color":"var(--navy)","borderRadius":"8px","fontWeight":"800","cursor":"pointer"}}>
                 📍 Use Current GPS
               </button>
             </div>
           </div>
 
-          <div className="modal-footer-nav">
+          <div className="modal-footer-nav" style={{"marginTop":"16px"}}>
             <button type="button" className="btn-modal-secondary" onClick={() => { goToStep(2) }} data-i18n="btn_back">← Back</button>
-            <button type="button" className="btn-modal-primary" onClick={() => { goToStep(4) }} data-i18n="btn_next_proof">Next: Add
-              Proof →</button>
+            <button type="button" className="btn-modal-primary" onClick={() => { goToStep(4) }} data-i18n="btn_next_proof">Next: Add Proof →</button>
           </div>
         </div>
 
         {/* STEP 4: MULTIMEDIA PROOF */}
         <div id="stepSection4" style={{"display":"none"}}>
           <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"4px"}}>
-            <label className="form-label-text" data-i18n="label_step4" style={{"marginBottom":"0"}}>Step 4: Attach Proof — Photos or Video</label>
+            <label className="form-label-text" data-i18n="label_step4" style={{"marginBottom":"0","fontSize":"13px","fontWeight":"800","color":"#0f172a"}}>Step 4: Attach Proof — Photos or Video</label>
             <span style={{"fontSize":"11px","fontWeight":"800","color":"#DC2626","background":"#FEE2E2","border":"1px solid #FCA5A5","padding":"2px 8px","borderRadius":"6px"}}>
               * Mandatory / अनिवार्य
             </span>
           </div>
-          <div style={{"fontSize":"11.5px","color":"#64748B","marginBottom":"8px"}}>
-            Photo or Video proof is mandatory to verify and process the grievance.
+          <div style={{"fontSize":"11.5px","color":"#64748B","marginBottom":"10px"}}>
+            Photo or Video proof is mandatory to verify and process the grievance on ground.
           </div>
 
           <div className="multimedia-select-grid" style={{"marginTop":"8px"}}>
+            <label className="media-btn-tile media-camera-tile">
+              <span className="media-tile-icon">📸</span>
+              <span className="media-tile-label">Live Camera</span>
+              <span className="media-tile-sub">Take Photo Now</span>
+              <input type="file" id="mediaCameraInput" accept="image/*" capture="environment" style={{"display":"none"}}
+                onChange={(e) => { (window.handleMediaSelect || handleMediaSelect)(e.target, 'photo') }} />
+            </label>
+
             <label className="media-btn-tile">
-              <span style={{"fontSize":"24px"}}>📷</span>
-              <span data-i18n="btn_add_photo">Add Photos (Multiple)</span>
+              <span className="media-tile-icon">🖼️</span>
+              <span className="media-tile-label" data-i18n="btn_add_photo">Photos (Gallery)</span>
+              <span className="media-tile-sub">PNG, JPG, WEBP</span>
               <input type="file" id="mediaPhotoInput" multiple accept="image/png, image/jpeg, image/jpg, image/webp, image/gif"
                 style={{"display":"none"}} onChange={(e) => { (window.handleMediaSelect || handleMediaSelect)(e.target, 'photo') }} />
             </label>
 
             <label className="media-btn-tile">
-              <span style={{"fontSize":"24px"}}>🎥</span>
-              <span data-i18n="btn_add_video">Add Video</span>
+              <span className="media-tile-icon">🎥</span>
+              <span className="media-tile-label" data-i18n="btn_add_video">Add Video</span>
+              <span className="media-tile-sub">MP4, WebM (Max 30s)</span>
               <input type="file" id="mediaVideoInput" accept="video/mp4, video/webm, video/quicktime, video/ogg"
                 style={{"display":"none"}} onChange={(e) => { (window.handleMediaSelect || handleMediaSelect)(e.target, 'video') }} />
             </label>
 
             <label className="media-btn-tile">
-              <span style={{"fontSize":"24px"}}>📄</span>
-              <span data-i18n="btn_add_doc">Add Documents</span>
+              <span className="media-tile-icon">📄</span>
+              <span className="media-tile-label" data-i18n="btn_add_doc">Documents</span>
+              <span className="media-tile-sub">PDF, Application</span>
               <input type="file" id="mediaDocInput" multiple accept=".pdf,.doc,.docx" style={{"display":"none"}}
                 onChange={(e) => { (window.handleMediaSelect || handleMediaSelect)(e.target, 'document') }} />
             </label>
@@ -983,7 +1048,7 @@ function App() {
 
           <div className="media-preview-row" id="mediaPreviewContainer"></div>
 
-          <div className="modal-footer-nav" style={{"marginTop":"14px"}}>
+          <div className="modal-footer-nav" style={{"marginTop":"16px"}}>
             <button type="button" className="btn-modal-secondary" onClick={() => { goToStep(3) }} data-i18n="btn_back">← Back</button>
             <button type="button" className="btn-modal-primary" onClick={() => { runAICheckAndGoStep5() }}
               data-i18n="btn_next_ai">Next: JanSetu AI Check →</button>
@@ -1014,16 +1079,21 @@ function App() {
           </div>
 
           <div className="ai-check-card">
-            <div style={{"display":"flex","justifyContent":"space-between","alignItems":"center","marginBottom":"8px"}}>
+            <div style={{"display":"flex","justifyContent":"space-between","alignItems":"center","marginBottom":"12px"}}>
               <span
-                style={{"display":"inline-flex","alignItems":"center","gap":"6px","background":"var(--navy)","color":"#FFF","fontSize":"12px","fontWeight":"800","padding":"4px 12px","borderRadius":"20px"}}>
-                🤖 JanSetu AI Check
+                style={{"display":"inline-flex","alignItems":"center","gap":"6px","background":"linear-gradient(135deg, #002D62 0%, #1e3a8a 100%)","color":"#FFF","fontSize":"12px","fontWeight":"800","padding":"5px 14px","borderRadius":"20px","boxShadow":"0 2px 8px rgba(0,45,98,0.25)"}}>
+                🤖 JanSetu AI Verification
               </span>
-              <span
-                style={{"fontSize":"11.5px","fontWeight":"800","color":"var(--india-green)","background":"var(--india-green-light)","padding":"3px 10px","borderRadius":"12px"}}
-                id="aiConfScore">
-                96% Confidence
-              </span>
+              <div style={{"display":"flex","alignItems":"center","gap":"8px"}}>
+                <div className="ai-conf-meter-track">
+                  <div className="ai-conf-meter-fill" id="aiConfMeterFill" style={{"width":"96%"}}></div>
+                </div>
+                <span
+                  style={{"fontSize":"11.5px","fontWeight":"800","color":"var(--india-green)","background":"var(--india-green-light)","padding":"3px 10px","borderRadius":"12px"}}
+                  id="aiConfScore">
+                  96% Confidence
+                </span>
+              </div>
             </div>
 
             <div style={{"fontSize":"14px","fontWeight":"800","color":"var(--gray-900)","marginBottom":"12px"}}
@@ -1032,11 +1102,12 @@ function App() {
             </div>
 
             <div
-              style={{"background":"var(--white)","border":"1px solid var(--gray-200)","borderRadius":"12px","padding":"12px 16px","display":"flex","flexDirection":"column","gap":"8px","marginBottom":"16px"}}>
+              style={{"background":"var(--white)","border":"1.5px solid #E2E8F0","borderRadius":"14px","padding":"14px 16px","display":"flex","flexDirection":"column","gap":"10px","marginBottom":"16px","boxShadow":"0 2px 8px rgba(0,0,0,0.03)"}}>
               <div style={{"display":"flex","justifyContent":"space-between","fontSize":"13px"}}>
                 <span style={{"color":"var(--gray-500)","fontWeight":"600"}} data-i18n="label_category">Category:</span>
                 <strong id="aiCardCategory">Water Management</strong>
               </div>
+              <div id="aiCategorySuggestionBox" style={{"display":"none"}}></div>
               <div style={{"display":"flex","justifyContent":"space-between","fontSize":"13px"}}>
                 <span style={{"color":"var(--gray-500)","fontWeight":"600"}} data-i18n="label_priority">Priority:</span>
                 <strong style={{"color":"#ea580c"}} id="aiCardPriority">HIGH</strong>
@@ -1086,7 +1157,13 @@ function App() {
 
                 <button type="button" className="btn-modal-primary" id="finalSubmitBtn"
                   style={{"padding":"11px 22px","fontSize":"13px","fontWeight":"800","borderRadius":"10px"}}
-                  onClick={() => { submitRealProblem() }}
+                  onClick={() => {
+                    if (typeof window !== 'undefined' && typeof window.submitRealProblem === 'function') {
+                      window.submitRealProblem();
+                    } else if (typeof submitRealProblem === 'function') {
+                      submitRealProblem();
+                    }
+                  }}
                   data-i18n="btn_submit_confirm">
                   ✓ Submit Problem
                 </button>

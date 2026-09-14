@@ -439,7 +439,7 @@ function renderRecentChallenges() {
     const idx = parseInt(c._id?.slice(-4) || String(i), 16) || i;
     const img = INDIA_IMGS[idx % INDIA_IMGS.length];
     const badgeHtml = getJanSetuStatusBadge(c.status);
-    const idShort = '#' + (c._id?.slice(-8).toUpperCase() || 'N/A');
+    const idShort = c.challengeId ? (c.challengeId.startsWith('#') ? c.challengeId : '#' + c.challengeId) : ('#JH-2026-' + (c._id?.slice(-6).toUpperCase() || 'N/A'));
     const uniLabel = c.assignedUniversity ? `<span class="badge-uni">University Assigned</span>` : '';
     return `<div class="report-item" onclick="openChallengeDetail('${c._id}')">
       <img class="ri-thumb" src="${img}" alt="" onerror="this.style.background='#f3f4f6'">
@@ -481,7 +481,7 @@ function renderActiveReportCard() {
   const locStr = [loc.district, loc.state].filter(Boolean).join(', ') || 'India';
   const idx = parseInt(active._id?.slice(-4) || '0', 16) || 0;
   const img = DASH_INDIA_IMAGES[idx % DASH_INDIA_IMAGES.length];
-  const idShort = '#' + (active._id?.slice(-8).toUpperCase() || 'N/A');
+  const idShort = active.challengeId ? (active.challengeId.startsWith('#') ? active.challengeId : '#' + active.challengeId) : ('#JH-2026-' + (active._id?.slice(-6).toUpperCase() || 'N/A'));
   const timeAgo = Utils.timeAgo(active.updatedAt || active.createdAt);
 
   // Timeline steps matching the image exactly
@@ -737,7 +737,7 @@ async function openChallengeDetail(id) {
     if (res.success) {
       const c = res.data;
       document.getElementById('cDetailTitle').textContent = c.title;
-      document.getElementById('cDetailId').textContent = `#${c._id.slice(-8).toUpperCase()} · ${c.category}`;
+      document.getElementById('cDetailId').textContent = `${c.challengeId ? (c.challengeId.startsWith('#') ? c.challengeId : '#' + c.challengeId) : ('#JH-2026-' + c._id.slice(-6).toUpperCase())} · ${c.category}`;
 
       // Status timeline
       const statusOrder = ['submitted', 'under_review', 'validated', 'assigned', 'in_progress', 'testing', 'resolved'];

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const Problem = require('../others/models/Challenge');
-const { Project, Team, Mentor, Resource, Notification, UniversityProfile: User, Leaderboard } = require('./database');
+const { Project, Team, Mentor, Resource, Notification, UniversityProfile: User } = require('./database');
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/innovatesphere';
 
@@ -448,9 +448,9 @@ const notifications = [
     isHighPriority: false
   },
   {
-    title: 'Your university moved up to #3 on the leaderboard!',
+    title: 'New Student Innovation Milestone achieved!',
     subtitle: 'Great work! Keep contributing to create real impact.',
-    text: 'University moved up to #3 on the leaderboard!',
+    text: 'Student teams have submitted milestone review solutions.',
     time: 'Yesterday, 11:20 AM',
     timeGroup: 'Yesterday',
     category: 'system',
@@ -458,8 +458,8 @@ const notifications = [
     iconColor: '#D97706',
     iconBg: '#FEF3C7',
     dotColor: '#3B82F6',
-    actionText: 'View Leaderboard',
-    actionUrl: '/profile',
+    actionText: 'View Projects',
+    actionUrl: '/my-projects',
     unread: false,
     isMention: false,
     isHighPriority: false
@@ -801,17 +801,6 @@ const users = [
 ];
 
 /* ══════════════════════════════════════════
-   LEADERBOARD — From Home.jsx
-   ══════════════════════════════════════════ */
-const leaderboard = [
-  { rank: 1, name: 'IIT Delhi', pts: '4200 pts', initials: 'ID' },
-  { rank: 2, name: 'IISc Bengaluru', pts: '3880 pts', initials: 'IB' },
-  { rank: 3, name: 'IIT Bombay', pts: '3410 pts', initials: 'IB2' },
-  { rank: 4, name: 'NIT Trichy', pts: '2890 pts', initials: 'NT' },
-  { rank: 5, name: 'BITS Pilani', pts: '2500 pts', initials: 'BP' }
-];
-
-/* ══════════════════════════════════════════
    SEED RUNNER
    ══════════════════════════════════════════ */
 async function seed() {
@@ -827,8 +816,7 @@ async function seed() {
       Mentor.deleteMany({}),
       Resource.deleteMany({}),
       Notification.deleteMany({}),
-      User.deleteMany({}),
-      Leaderboard.deleteMany({})
+      User.deleteMany({})
     ]);
 
     console.log('📝 Inserting seed data...');
@@ -852,9 +840,6 @@ async function seed() {
     
     await User.insertMany(users);
     console.log(`  ✓ ${users.length} users`);
-    
-    await Leaderboard.insertMany(leaderboard);
-    console.log(`  ✓ ${leaderboard.length} leaderboard entries`);
 
     console.log('\n🎉 Seeding complete! Database is ready.');
     await mongoose.connection.close();

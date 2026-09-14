@@ -601,9 +601,8 @@ export default function Notifications() {
       </div>
 
       {/* ── Two Column Layout ── */}
-      <div style={{
+      <div className="notif-grid" style={{
         display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1fr) 340px',
         gap: 28,
         alignItems: 'start'
       }}>

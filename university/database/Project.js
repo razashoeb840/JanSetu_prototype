@@ -21,6 +21,28 @@ const projectSchema = new mongoose.Schema({
     org: { type: String, default: 'IIT Delhi' },
     initials: { type: String, default: 'RM' }
   },
+  proposalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Proposal' },
+  proposalStatus: { 
+    type: String, 
+    enum: ['not_submitted', 'submitted', 'under_review', 'approved', 'changes_requested', 'rejected'], 
+    default: 'not_submitted' 
+  },
+  assignedIndustry: { type: mongoose.Schema.Types.ObjectId, ref: 'IndustryPartner' },
+  assignedIndustryDetails: {
+    partnerId: { type: mongoose.Schema.Types.ObjectId, ref: 'IndustryPartner' },
+    name: String,
+    companyName: String,
+    sector: String,
+    logo: String,
+    location: String,
+    contactEmail: String,
+    contactPhone: String,
+    website: String,
+    fundingCommitted: { type: Number, default: 0 },
+    fundingStatus: { type: String, default: 'Committed' },
+    capabilitiesProvided: [String],
+    assignedAt: Date
+  },
   industryMentor: {
     name: String,
     org: String,
@@ -31,7 +53,8 @@ const projectSchema = new mongoose.Schema({
   fundingSummary: {
     committed: { type: Number, default: 0 },
     goal: { type: Number, default: 100000 },
-    sponsor: String
+    sponsor: String,
+    status: { type: String, default: 'Pending' }
   },
   milestones: [{
     name: { type: String, required: true },
@@ -68,6 +91,8 @@ const projectSchema = new mongoose.Schema({
   }],
   certificatesIssued: { type: Boolean, default: false },
   isBattleTested: { type: Boolean, default: false },
+  deployedAt: { type: String },
+  requirementsDocName: { type: String, default: 'Solution_Requirements_Specification.pdf' },
   battleTestedResourceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Resource' },
   forkableFrom: {
     projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },

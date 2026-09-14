@@ -1730,198 +1730,225 @@
   }
 }
 
-/* ── 8. FLOATING BOTTOM-RIGHT AI TRIGGER (EXACT TARGET THEME & RIPPLE AURA) ── */
-.voice-floating-trigger {
+/* ── 8. FLOATING BOTTOM-RIGHT AI TRIGGER (SPEECH BUBBLE CALLOUT & CONCENTRIC RIPPLE MIC) ── */
+.voice-floating-widget {
   position: fixed;
   bottom: 24px;
-  right: 24px;
+  right: 28px;
   z-index: 9999;
-  height: 58px;
-  width: 58px;
-  padding: 0;
-  border-radius: 9999px;
-  background: linear-gradient(135deg, #1847B8 0%, #1E5DE8 50%, #2563EB 100%);
-  color: #FFFFFF;
-  border: 1.8px solid rgba(255, 255, 255, 0.38);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   cursor: pointer;
-  animation: micRipplePulse 2.8s infinite ease-in-out;
-  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              padding 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+  user-select: none;
+  background: transparent;
+  padding: 0;
+  border: none;
+  outline: none;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.voice-floating-widget:hover {
+  transform: translateY(-2px);
+}
+
+/* Speech Bubble Callout directly above the mic — revealed ONLY when user hovers over the mic */
+.voice-floating-callout {
+  position: absolute;
+  bottom: calc(100% - 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(10px) scale(0.92);
+  background: linear-gradient(180deg, #152d68 0%, #0d1e48 100%);
+  color: #FFFFFF;
+  padding: 11px 22px 10px 22px;
+  border-radius: 18px;
+  text-align: center;
+  box-shadow: 
+    0 14px 28px -4px rgba(7, 18, 48, 0.65),
+    0 4px 10px rgba(0, 0, 0, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(147, 197, 253, 0.28);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
               transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-              background 0.3s ease;
-  overflow: hidden;
+              visibility 0.22s,
+              box-shadow 0.25s ease,
+              border-color 0.25s ease;
+}
+
+/* On hover of the mic widget: smoothly reveal the speech bubble */
+.voice-floating-widget:hover .voice-floating-callout,
+.voice-floating-widget:focus-within .voice-floating-callout {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0) scale(1);
+  border-color: rgba(147, 197, 253, 0.5);
+  box-shadow: 
+    0 18px 36px -4px rgba(7, 18, 48, 0.75),
+    0 6px 14px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+.voice-callout-title {
+  font-size: 15.5px;
+  font-weight: 750;
+  color: #FFFFFF;
+  letter-spacing: -0.25px;
+  line-height: 1.25;
   white-space: nowrap;
 }
 
-@keyframes micRipplePulse {
-  0% {
+.voice-callout-subtitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: #93C5FD;
+  letter-spacing: 0.1px;
+  margin-top: 3px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+/* Downward pointing speech bubble beak */
+.voice-callout-arrow {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 9px solid #0d1e48;
+}
+
+/* Mic Button Container with concentric ripple rings */
+.voice-floating-mic-wrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Soft translucent concentric ripple rings */
+.mic-ripple-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.mic-ripple-ring.ring-outer {
+  width: 120px;
+  height: 120px;
+  background: rgba(96, 165, 250, 0.12);
+  animation: micRingPulseOuter 2.6s infinite ease-in-out;
+}
+
+.mic-ripple-ring.ring-mid {
+  width: 96px;
+  height: 96px;
+  background: rgba(96, 165, 250, 0.22);
+  animation: micRingPulseMid 2.6s infinite ease-in-out 0.25s;
+}
+
+.mic-ripple-ring.ring-inner {
+  width: 76px;
+  height: 76px;
+  background: rgba(96, 165, 250, 0.38);
+  animation: micRingPulseInner 2.6s infinite ease-in-out 0.5s;
+}
+
+@keyframes micRingPulseOuter {
+  0%, 100% {
+    transform: scale(0.95);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+@keyframes micRingPulseMid {
+  0%, 100% {
+    transform: scale(0.96);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+
+@keyframes micRingPulseInner {
+  0%, 100% {
+    transform: scale(0.97);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+/* Central solid vibrant blue circular button */
+.voice-floating-mic-circle {
+  position: relative;
+  z-index: 2;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 10px 25px rgba(29, 78, 216, 0.55),
+    inset 0 1px 2px rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  animation: micOrbBreathingGlow 3s infinite ease-in-out;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+}
+
+@keyframes micOrbBreathingGlow {
+  0%, 100% {
     box-shadow: 
-      0 0 0 0 rgba(56, 189, 248, 0.55),
-      0 0 0 7px rgba(56, 189, 248, 0.25),
-      0 0 0 15px rgba(56, 189, 248, 0.1),
-      0 10px 25px rgba(29, 78, 216, 0.5);
+      0 10px 25px rgba(29, 78, 216, 0.55),
+      0 0 0 0 rgba(59, 130, 246, 0.4),
+      inset 0 1px 2px rgba(255, 255, 255, 0.35);
   }
   50% {
     box-shadow: 
-      0 0 0 5px rgba(56, 189, 248, 0.4),
-      0 0 0 14px rgba(56, 189, 248, 0.2),
-      0 0 0 24px rgba(56, 189, 248, 0.05),
-      0 14px 32px rgba(29, 78, 216, 0.65);
-  }
-  100% {
-    box-shadow: 
-      0 0 0 0 rgba(56, 189, 248, 0.55),
-      0 0 0 7px rgba(56, 189, 248, 0.25),
-      0 0 0 15px rgba(56, 189, 248, 0.1),
-      0 10px 25px rgba(29, 78, 216, 0.5);
+      0 14px 30px rgba(29, 78, 216, 0.75),
+      0 0 0 5px rgba(59, 130, 246, 0.2),
+      inset 0 1px 2px rgba(255, 255, 255, 0.5);
   }
 }
 
-.voice-floating-trigger:hover,
-.voice-floating-trigger:focus-visible {
-  width: 278px;
-  padding: 0 12px 0 5px;
-  transform: translateY(-3px);
-  background: linear-gradient(90deg, #163E99 0%, #1A56DB 28%, #1E6BF0 65%, #257BF8 100%);
-  border-color: rgba(255, 255, 255, 0.5);
-  animation: none;
+.voice-floating-widget:hover .voice-floating-mic-circle,
+.voice-floating-mic-circle:hover {
+  transform: scale(1.06);
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
   box-shadow: 
-    0 16px 36px rgba(24, 71, 184, 0.55),
-    0 0 28px rgba(56, 189, 248, 0.4),
+    0 14px 34px rgba(29, 78, 216, 0.8),
     inset 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 
-.floating-icon-orb {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  min-height: 48px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1.5px solid rgba(147, 197, 253, 0.65);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.25);
-  transition: transform 0.3s ease, background 0.3s ease;
-  flex-shrink: 0;
-  margin-left: 3px;
-}
-
-.voice-floating-trigger:hover .floating-icon-orb {
-  transform: scale(1.03);
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(186, 230, 253, 0.85);
-}
-
-.floating-mic-svg {
-  width: 26px;
-  height: 26px;
+.voice-floating-mic-circle .floating-mic-svg {
+  width: 28px;
+  height: 28px;
   color: #FFFFFF;
-  filter: drop-shadow(0 2px 5px rgba(0, 20, 70, 0.35));
-  transition: transform 0.25s ease;
-}
-
-.voice-floating-trigger:hover .floating-mic-svg {
-  transform: scale(1.05);
-}
-
-.pulse-badge-live {
-  width: 8px;
-  height: 8px;
-  background: #22C55E;
-  border-radius: 50%;
-  box-shadow: 0 0 8px #22C55E;
-  animation: pulseDot 1.4s infinite;
-}
-
-.pulse-badge-live.orb-dot {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 8.5px;
-  height: 8.5px;
-  background: #22C55E;
-  border: 1.8px solid #163E99;
-  box-shadow: 0 0 8px #22C55E;
-}
-
-@keyframes pulseDot {
-  0% { transform: scale(0.9); opacity: 0.8; }
-  50% { transform: scale(1.25); opacity: 1; }
-  100% { transform: scale(0.9); opacity: 0.8; }
-}
-
-/* Content revealed only on hover */
-.floating-label-box {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  margin-left: 10px;
-  opacity: 0;
-  transform: translateX(8px);
-  pointer-events: none;
-  transition: opacity 0.22s ease 0.05s, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) 0.05s;
-  flex-shrink: 0;
-}
-
-.voice-floating-trigger:hover .floating-label-box,
-.voice-floating-trigger:focus-visible .floating-label-box {
-  opacity: 1;
-  transform: translateX(0);
-  pointer-events: auto;
-}
-
-.floating-label-main {
-  font-size: 14.5px;
-  font-weight: 850;
-  color: #FFFFFF;
-  letter-spacing: -0.2px;
-  line-height: 1.2;
-}
-
-.floating-label-sub {
-  font-size: 11px;
-  color: #E0F2FE;
-  font-weight: 600;
-  letter-spacing: 0.1px;
-  margin-top: 2px;
-}
-
-/* Chevron arrow button on the right */
-.floating-arrow-btn {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: auto;
-  opacity: 0;
-  transform: scale(0.85);
-  pointer-events: none;
-  transition: opacity 0.22s ease 0.06s, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) 0.06s, background 0.2s ease;
-}
-
-.voice-floating-trigger:hover .floating-arrow-btn,
-.voice-floating-trigger:focus-visible .floating-arrow-btn {
-  opacity: 1;
-  transform: scale(1);
-  pointer-events: auto;
-}
-
-.floating-chevron-svg {
-  width: 15px;
-  height: 15px;
-  color: #FFFFFF;
+  filter: drop-shadow(0 1px 3px rgba(0, 20, 70, 0.35));
 }
 
 @media (max-width: 640px) {

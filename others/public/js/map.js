@@ -106,10 +106,14 @@
       maxZoom: 10
     });
 
-    // Clean Esri World Light Gray Base (Zero Watermarks, Crisp Cartography)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 16,
-      attribution: '© Esri, HERE, Garmin, OpenStreetMap'
+    // Photorealistic Satellite Hybrid (Real Earth Imagery + Labels)
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: '© Esri, Maxar, Earthstar Geographics'
+    }).addTo(map);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: '© Esri'
     }).addTo(map);
 
     markersLayer = L.layerGroup().addTo(map);

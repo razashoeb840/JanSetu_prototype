@@ -435,14 +435,37 @@
         maxZoom: 16
       });
 
-      // Clean CARTO Voyager tiles (crisp, high-speed, never blocked)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        subdomains: 'abcd',
-        maxZoom: 19,
-        attribution: '© OpenStreetMap contributors © CARTO'
-      }).addTo(this.map);
+      this.baseLayers = {
+        satellite: L.layerGroup([
+          L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            attribution: '&copy; Esri, Maxar, Earthstar Geographics'
+          }),
+          L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            attribution: '&copy; Esri'
+          })
+        ]),
+        voyager: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          subdomains: 'abcd',
+          maxZoom: 19,
+          attribution: '&copy; CartoDB, OpenStreetMap'
+        }),
+        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          subdomains: 'abcd',
+          maxZoom: 19,
+          attribution: '&copy; CartoDB, OpenStreetMap'
+        })
+      };
+
+      // Default to Realistic Satellite Hybrid
+      this.currentBasemapMode = 'satellite';
+      this.baseLayers.satellite.addTo(this.map);
 
       this.activeLayerGroup = L.layerGroup().addTo(this.map);
+
+      // Inject modern Glass Telemetry HUD & Controls
+      this.injectMapHUD(container);
 
       this.map.on('click', (e) => {
         const nearest = this.findNearestDistrict(e.latlng.lat, e.latlng.lng);
@@ -467,6 +490,82 @@
       setTimeout(() => {
         if (this.map) this.map.invalidateSize();
       }, 250);
+    }
+
+    switchBasemap(mode) {
+      if (!this.baseLayers || !this.baseLayers[mode] || this.currentBasemapMode === mode) return;
+      if (this.baseLayers[this.currentBasemapMode]) {
+        this.map.removeLayer(this.baseLayers[this.currentBasemapMode]);
+      }
+      this.currentBasemapMode = mode;
+      this.baseLayers[mode].addTo(this.map);
+      if (this.activeLayerGroup) {
+        this.activeLayerGroup.bringToFront();
+      }
+      const container = document.getElementById(this.containerId);
+      if (container) {
+        container.querySelectorAll('.map-mode-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.mode === mode);
+        });
+      }
+    }
+
+    injectMapHUD(container) {
+      if (!container) return;
+      const hud = document.createElement('div');
+      hud.className = 'map-hud-overlay';
+      hud.innerHTML = `
+        <div class="map-hud-left">
+          <div class="map-hud-live-tag">
+            <span class="live-dot-pulse"></span>
+            <span>LIVE SATELLITE RADAR</span>
+          </div>
+          <span class="map-hud-subtext">28 States &amp; UTs Real-Time GIS</span>
+        </div>
+        <div class="map-hud-right">
+          <div class="map-hud-switcher">
+            <button class="map-mode-btn active" data-mode="satellite" title="Photorealistic Satellite Hybrid">🛰️ Satellite</button>
+            <button class="map-mode-btn" data-mode="voyager" title="Modern Clean Vector Map">🗺️ Vector</button>
+            <button class="map-mode-btn" data-mode="dark" title="Dark Command Center">🌙 Dark</button>
+          </div>
+          <button class="map-hud-btn" id="${this.containerId}_radar_btn" title="Toggle Radar Scanning Beam">📡 Radar</button>
+          <button class="map-hud-btn" id="${this.containerId}_reset_btn" title="Reset View to All-India">🎯 Pan-India</button>
+        </div>
+      `;
+
+      const radar = document.createElement('div');
+      radar.className = 'map-radar-sweep';
+      radar.id = `${this.containerId}_radar_sweep`;
+
+      container.appendChild(hud);
+      container.appendChild(radar);
+
+      hud.querySelectorAll('.map-mode-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const mode = btn.dataset.mode;
+          this.switchBasemap(mode);
+        });
+      });
+
+      const radarBtn = document.getElementById(`${this.containerId}_radar_btn`);
+      if (radarBtn) {
+        radarBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          radar.classList.toggle('active');
+          radarBtn.classList.toggle('active');
+        });
+      }
+
+      const resetBtn = document.getElementById(`${this.containerId}_reset_btn`);
+      if (resetBtn) {
+        resetBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.onStateChange('ALL');
+          const sel = document.getElementById(this.selectId);
+          if (sel) sel.value = 'ALL';
+        });
+      }
     }
 
     populateStateDropdown() {
@@ -609,57 +708,74 @@
           count = s.categories[this.currentCategory];
         }
 
-        const radius = Math.min(Math.max(count * 60, 22000), 85000);
-        const color = count > 1000 ? '#DC2626' : count > 500 ? '#D97706' : '#2563EB';
+        const isHigh = count > 1000;
+        const isMed = count > 500;
+        const tierClass = isHigh ? 'beacon-critical' : (isMed ? 'beacon-warning' : 'beacon-info');
+        const badgeGradient = isHigh
+          ? 'linear-gradient(135deg, #FF453A 0%, #B91C1C 100%)'
+          : (isMed ? 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)' : 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)');
+        const glowColor = isHigh
+          ? 'rgba(239, 68, 68, 0.65)'
+          : (isMed ? 'rgba(245, 158, 11, 0.6)' : 'rgba(2, 132, 199, 0.6)');
+        const pulseColor = isHigh
+          ? 'rgba(239, 68, 68, 0.35)'
+          : (isMed ? 'rgba(245, 158, 11, 0.3)' : 'rgba(2, 132, 199, 0.3)');
+        const color = isHigh ? '#DC2626' : (isMed ? '#D97706' : '#2563EB');
 
-        // Outer glow
+        // Translucent ambient radial aura on map (feathered, non-intrusive)
+        const radius = Math.min(Math.max(count * 50, 18000), 75000);
         const glow = L.circle([s.lat, s.lng], {
-          radius: radius * 1.35,
-          color: color,
-          fillColor: color,
-          fillOpacity: 0.12,
-          weight: 0
-        }).addTo(this.activeLayerGroup);
-
-        // Core cluster circle
-        const circle = L.circle([s.lat, s.lng], {
           radius: radius,
           color: color,
           fillColor: color,
-          fillOpacity: 0.45,
-          weight: 2
+          fillOpacity: 0.14,
+          weight: 1,
+          opacity: 0.35
         }).addTo(this.activeLayerGroup);
 
-        // State Marker Icon with Challenge Count Number
+        // State Marker Icon with Realistic 3D Glass Beacon and State Label Chip
+        const countText = count > 999 ? (count / 1000).toFixed(1) + 'k' : count;
         const iconHtml = `
-          <div style="background:${color};color:white;font-weight:900;font-size:12px;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,0.35);border:2px solid white;transform:translate(-50%,-50%)">
-            ${count > 999 ? (count/1000).toFixed(1)+'k' : count}
+          <div class="realistic-map-beacon ${tierClass}" id="beacon_${s.state.replace(/\s+/g, '_')}">
+            <div class="beacon-pulse-ring" style="border-color:${pulseColor}; background:radial-gradient(circle, ${pulseColor} 0%, transparent 70%);"></div>
+            <div class="beacon-orb" style="background:${badgeGradient}; box-shadow: 0 4px 14px ${glowColor}, 0 0 0 2px rgba(255,255,255,0.9), inset 0 1px 2px rgba(255,255,255,0.7)">
+              <span class="beacon-count">${countText}</span>
+            </div>
+            <div class="beacon-label-chip">
+              <span>${s.state}</span>
+            </div>
           </div>
         `;
+
         const countMarker = L.marker([s.lat, s.lng], {
           icon: L.divIcon({ html: iconHtml, className: 'heat-count-icon', iconSize: [0, 0] })
         }).addTo(this.activeLayerGroup);
 
         const popupContent = `
-          <div style="font-family:'Inter',sans-serif;padding:6px 4px;min-width:170px">
-            <div style="font-weight:850;font-size:14px;color:#0F172A">${s.state}</div>
-            <div style="font-size:12px;color:#64748B;margin-top:2px">Civic Pipeline: <b>${s.total.toLocaleString()}</b> challenges</div>
-            <div style="font-size:11.5px;color:#059669;font-weight:700;margin-top:2px">Active Resolutions: ${s.active}</div>
-            <div style="margin-top:8px">
-              <button onclick="window.panIndiaMapInstance.onStateChange('${s.state}'); document.getElementById('${this.selectId}').value='${s.state}';" style="background:#002D62;color:white;border:none;padding:5px 10px;border-radius:6px;font-size:11.5px;font-weight:750;cursor:pointer;width:100%">
+          <div style="font-family:'Inter',sans-serif;padding:8px 6px;min-width:190px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
+              <div style="font-weight:900;font-size:15px;color:#F8FAFC">${s.state}</div>
+              <span class="badge ${isHigh?'badge-danger':isMed?'badge-warning':'badge-blue'}" style="font-size:10.5px">${countText} Issues</span>
+            </div>
+            <div style="font-size:12px;color:#94A3B8;margin-top:2px">Civic Pipeline: <b style="color:#F1F5F9">${s.total.toLocaleString()}</b> challenges</div>
+            <div style="font-size:11.5px;color:#34D399;font-weight:700;margin-top:2px">Active Resolutions: ${s.active}</div>
+            <div style="margin-top:10px">
+              <button onclick="window.panIndiaMapInstance?.onStateChange('${s.state}'); const el=document.getElementById('${this.selectId}'); if(el) el.value='${s.state}';" style="background:linear-gradient(135deg, #002D62 0%, #1E40AF 100%);color:white;border:1px solid rgba(255,255,255,0.25);padding:7px 12px;border-radius:8px;font-size:11.5px;font-weight:800;cursor:pointer;width:100%;box-shadow:0 4px 12px rgba(0,45,98,0.4)">
                 🔍 Zoom to State Districts
               </button>
             </div>
           </div>
         `;
 
-        circle.bindTooltip(`<b>${s.state}</b>: ${count} challenges`, { direction: 'top' });
-        circle.bindPopup(popupContent);
+        glow.bindTooltip(`<b>${s.state}</b>: ${count} challenges`, { direction: 'top' });
+        glow.bindPopup(popupContent);
         countMarker.bindPopup(popupContent);
 
-        circle.on('click', () => {
+        const onStateClick = () => {
           this.showStateSummaryDetail(s);
-        });
+        };
+        glow.on('click', onStateClick);
+        countMarker.on('click', onStateClick);
       });
     }
 
@@ -675,32 +791,48 @@
           count = d.categories[this.currentCategory];
         }
 
-        const radius = Math.max(count * 850, 4500);
-        const color = d.priority === 'high' ? '#DC2626' : (d.priority === 'medium' ? '#D97706' : '#059669');
+        const isHigh = d.priority === 'high';
+        const isMed = d.priority === 'medium';
+        const color = isHigh ? '#DC2626' : (isMed ? '#D97706' : '#059669');
+        const badgeGradient = isHigh
+          ? 'linear-gradient(135deg, #FF453A 0%, #B91C1C 100%)'
+          : (isMed ? 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)' : 'linear-gradient(135deg, #10B981 0%, #047857 100%)');
+        const glowColor = isHigh ? 'rgba(239, 68, 68, 0.6)' : (isMed ? 'rgba(245, 158, 11, 0.6)' : 'rgba(16, 185, 129, 0.6)');
 
-        // Outer glow
-        L.circle([d.lat, d.lng], {
-          radius: radius * 1.35,
-          color: color,
-          fillColor: color,
-          fillOpacity: 0.14,
-          weight: 0
-        }).addTo(this.activeLayerGroup);
-
-        // Core district circle
-        const circle = L.circle([d.lat, d.lng], {
+        // Ambient district circle
+        const radius = Math.max(count * 750, 3800);
+        const glow = L.circle([d.lat, d.lng], {
           radius: radius,
           color: color,
           fillColor: color,
-          fillOpacity: 0.45,
-          weight: 2
+          fillOpacity: 0.15,
+          weight: 1.5,
+          opacity: 0.4
         }).addTo(this.activeLayerGroup);
 
-        circle.bindTooltip(`<b>${d.name}</b> (${stateObj.state})<br>${count} challenges<br>Priority: <b style="text-transform:uppercase">${d.priority}</b>`, { direction: 'top' });
+        // District Pin Beacon Icon
+        const iconHtml = `
+          <div class="district-map-beacon">
+            <div class="district-orb" style="background:${badgeGradient}; box-shadow:0 3px 10px ${glowColor}">
+              ${count}
+            </div>
+            <div class="district-label-chip">
+              ${d.name}
+            </div>
+          </div>
+        `;
 
-        circle.on('click', () => {
+        const distMarker = L.marker([d.lat, d.lng], {
+          icon: L.divIcon({ html: iconHtml, className: 'heat-count-icon', iconSize: [0, 0] })
+        }).addTo(this.activeLayerGroup);
+
+        glow.bindTooltip(`<b>${d.name}</b> (${stateObj.state})<br>${count} challenges<br>Priority: <b style="text-transform:uppercase">${d.priority}</b>`, { direction: 'top' });
+
+        const onDistrictSelect = () => {
           this.showDistrictDetail(d, stateObj.state);
-        });
+        };
+        glow.on('click', onDistrictSelect);
+        distMarker.on('click', onDistrictSelect);
       });
 
       // Default show first or highest district in panel
@@ -914,7 +1046,7 @@
       <div style="background:#FFFFFF;border-radius:20px;max-width:860px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,0.4);border:1.5px solid rgba(0,45,98,0.15);position:relative">
         <div style="position:sticky;top:0;background:white;z-index:10;padding:18px 24px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between">
           <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:11px;font-weight:800;color:#002D62;background:#EFF6FF;border:1px solid #DBEAFE;padding:3px 8px;border-radius:6px">#${(p._id||'').slice(-8).toUpperCase()}</span>
+            <span style="font-size:11px;font-weight:800;color:#002D62;background:#EFF6FF;border:1px solid #DBEAFE;padding:3px 8px;border-radius:6px">${p.challengeId ? (p.challengeId.startsWith('#') ? p.challengeId : '#' + p.challengeId) : ('#JH-2026-' + (p._id || '').slice(-6).toUpperCase())}</span>
             <span style="font-size:11px;font-weight:800;color:#EA580C;background:#FFF7ED;border:1px solid #FED7AA;padding:3px 8px;border-radius:6px">${p.category||'Civic'}</span>
             <span style="font-size:11px;font-weight:800;color:${pColor};text-transform:uppercase">● ${p.priority||'medium'} priority</span>
           </div>

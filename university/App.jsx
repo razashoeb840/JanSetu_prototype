@@ -14,14 +14,15 @@ import TeamMentorship from './pages/TeamMentorship';
 import Resources from './pages/Resources';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
+import sidebarMonumentImg from './assets/sidebar-monument.jpg';
 
 
 /* ── Sidebar nav items ── */
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/browse-problems', icon: Compass, label: 'Browse Problems' },
-  { path: '/my-projects', icon: FolderKanban, label: 'My Projects' },
   { path: '/team-mentorship', icon: Users, label: 'Team' },
+  { path: '/my-projects', icon: FolderKanban, label: 'My Projects' },
   { path: '/resources', icon: Layers, label: 'Resources' },
 ];
 
@@ -40,20 +41,31 @@ function useClickOutside(ref, handler) {
 /* ══════════════════════════════════════════
    SIDEBAR COMPONENT
    ══════════════════════════════════════════ */
-function Sidebar({ unreadCount = 0 }) {
+function Sidebar({ unreadCount = 0, isOpen = false, onClose = () => {} }) {
   const location = useLocation();
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
       {/* Logo */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">
-          <img
-            src="/jansetu-logo.png"
-            alt="JanSetu Logo"
-            className="sidebar-brand-img"
-            onError={(e) => { e.target.src = '/university/jansetu-logo.png'; }}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <div className="sidebar-logo-icon">
+            <img
+              src="/jansetu-logo.png"
+              alt="JanSetu Logo"
+              className="sidebar-brand-img"
+              onError={(e) => { e.target.src = '/university/jansetu-logo.png'; }}
+            />
+          </div>
+          {/* Mobile close button inside drawer */}
+          <button
+            type="button"
+            className="sidebar-mobile-close-btn"
+            onClick={onClose}
+            aria-label="Close menu"
+          >
+            <X style={{ width: 18, height: 18 }} />
+          </button>
         </div>
         <div className="sidebar-brand-name">
           <span className="sidebar-brand-text-jan">Jan</span><span className="sidebar-brand-text-setu">Setu</span>
@@ -75,6 +87,7 @@ function Sidebar({ unreadCount = 0 }) {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={onClose}
               className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
             >
               <item.icon />
@@ -84,14 +97,14 @@ function Sidebar({ unreadCount = 0 }) {
         })}
 
         {/* Notifications with dynamic badge */}
-        <NavLink to="/notifications" className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}>
+        <NavLink to="/notifications" onClick={onClose} className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}>
           <Bell style={{ width: 16, height: 16, color: 'rgba(255,255,255,0.35)' }} />
           <span>Notifications</span>
           {unreadCount > 0 && <span className="sidebar-badge">{unreadCount}</span>}
         </NavLink>
 
         {/* Profile */}
-        <NavLink to="/profile" className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}>
+        <NavLink to="/profile" onClick={onClose} className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}>
           <UserCircle style={{ width: 16, height: 16, color: 'rgba(255,255,255,0.35)' }} />
           <span>Profile</span>
         </NavLink>
@@ -103,21 +116,34 @@ function Sidebar({ unreadCount = 0 }) {
         <p>Ideas.<br />Innovation.<br />Impact.<br />Building a <span>"Better India Together."</span></p>
       </div>
 
-      {/* Bottom: Indian monument silhouette + flag strip */}
-      <div className="sidebar-bottom">
-        <svg viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg"
-          style={{ width: '100%', height: '100%', opacity: 0.3 }}>
-          {/* Simple minaret / monument silhouette */}
-          <rect x="72" y="10" width="16" height="60" rx="2" fill="white"/>
-          <ellipse cx="80" cy="10" rx="10" ry="8" fill="white"/>
-          <rect x="60" y="40" width="60" height="4" rx="2" fill="white"/>
-          <rect x="20" y="30" width="8" height="40" rx="2" fill="white"/>
-          <ellipse cx="24" cy="30" rx="5" ry="6" fill="white"/>
-          <rect x="132" y="30" width="8" height="40" rx="2" fill="white"/>
-          <ellipse cx="136" cy="30" rx="5" ry="6" fill="white"/>
-          <rect x="0" y="70" width="160" height="10" fill="white" opacity="0.5"/>
-        </svg>
-        <div className="sidebar-india-strip" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, display: 'flex' }}>
+      {/* Bottom: Indian innovation monument artwork + flag strip */}
+      <div className="sidebar-bottom" style={{ height: 105, position: 'relative', overflow: 'hidden' }}>
+        <img
+          src={sidebarMonumentImg}
+          alt="Viksit Bharat Innovation"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center 38%',
+            opacity: 0.92,
+            filter: 'brightness(1.05) contrast(1.08)',
+            display: 'block'
+          }}
+          onError={(e) => {
+            e.target.src = '/university/sidebar-monument.jpg';
+          }}
+        />
+        {/* Soft atmospheric gradient overlay */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(180deg, rgba(13, 21, 39, 0.7) 0%, rgba(11, 17, 32, 0.1) 45%, rgba(11, 17, 32, 0.8) 100%)',
+            pointerEvents: 'none'
+          }}
+        />
+        <div className="sidebar-india-strip" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, display: 'flex', zIndex: 2 }}>
           <div className="s" style={{ flex: 1, background: '#FF9933' }} />
           <div className="w" style={{ flex: 1, background: '#FFFFFF' }} />
           <div className="g" style={{ flex: 1, background: '#138808' }} />
@@ -328,7 +354,7 @@ function LogoutModal({ isOpen, onClose, onConfirm, user }) {
 /* ══════════════════════════════════════════
    TOP HEADER COMPONENT
    ══════════════════════════════════════════ */
-function TopHeader({ notifications = [], unreadCount = 0 }) {
+function TopHeader({ notifications = [], unreadCount = 0, onToggleMobileNav, isMobileNavOpen = false }) {
   const [lang, setLang] = useState(localStorage.getItem('lang') || 'en');
   const [showNotifs, setShowNotifs] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -447,6 +473,26 @@ function TopHeader({ notifications = [], unreadCount = 0 }) {
 
   return (
     <header className="top-header">
+      {/* Mobile 2-line menu button matching ChatGPT mobile app */}
+      <button
+        type="button"
+        className={`mobile-menu-toggle-btn ${isMobileNavOpen ? 'is-active' : ''}`}
+        onClick={onToggleMobileNav}
+        aria-label="Toggle navigation menu"
+        title="Toggle Menu"
+      >
+        <div className="menu-icon-2lines">
+          <span className="line line-top" />
+          <span className="line line-bottom" />
+        </div>
+      </button>
+
+      {/* Brand logo/badge visible only on small screens */}
+      <div className="mobile-header-brand">
+        <span className="m-brand-jan">Jan</span><span className="m-brand-setu">Setu</span>
+        <span className="m-brand-badge">Univ</span>
+      </div>
+
       {/* Search */}
       <div className="header-search">
         <Search />
@@ -707,8 +753,36 @@ class ErrorBoundary extends Component {
    MAIN APP
    ══════════════════════════════════════════ */
 export default function App() {
+  const location = useLocation();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // Auto-close mobile drawer on route navigation
+  useEffect(() => {
+    setIsMobileNavOpen(false);
+  }, [location.pathname]);
+
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (isMobileNavOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileNavOpen]);
+
+  // Close on ESC key
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setIsMobileNavOpen(false);
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
 
   const fetchUniversityNotifications = () => {
     fetch('/api/university-notifications')
@@ -746,9 +820,26 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div className="app-layout">
-        <Sidebar unreadCount={unreadCount} />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <TopHeader notifications={notifications} unreadCount={unreadCount} />
+        {/* Backdrop for mobile drawer */}
+        <div
+          className={`sidebar-backdrop ${isMobileNavOpen ? 'visible' : ''}`}
+          onClick={() => setIsMobileNavOpen(false)}
+          aria-hidden="true"
+        />
+
+        <Sidebar
+          unreadCount={unreadCount}
+          isOpen={isMobileNavOpen}
+          onClose={() => setIsMobileNavOpen(false)}
+        />
+
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: '100%' }}>
+          <TopHeader
+            notifications={notifications}
+            unreadCount={unreadCount}
+            onToggleMobileNav={() => setIsMobileNavOpen(prev => !prev)}
+            isMobileNavOpen={isMobileNavOpen}
+          />
           <main className="main-content">
             <ErrorBoundary>
               <Routes>

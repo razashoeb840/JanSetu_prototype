@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Users, UserPlus, Crown, Code, Palette, Database,
   Video, CheckCircle, ArrowRight, Star, ExternalLink,
@@ -195,6 +195,7 @@ const avatarColors = [
 
 export default function TeamMentorship() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Multi-project & team states
   const [teams, setTeams] = useState([]);
@@ -384,28 +385,6 @@ export default function TeamMentorship() {
   const [showTeamChat, setShowTeamChat] = useState(false);
   const [teamChatMessages, setTeamChatMessages] = useState({});
   const [chatInputText, setChatInputText] = useState('');
-
-  // 1. Loading state (Circular civic animation with clean spinner - rendered before any computations)
-  if (loading) {
-    return (
-      <div className="tm-container animate-in" style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '70px 20px' }}>
-        <div style={{ position: 'relative', width: 92, height: 92, marginBottom: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%', border: '2px dashed rgba(0, 45, 98, 0.25)', animation: 'civicChakraSpin 12s linear infinite' }} />
-          <div style={{ position: 'absolute', width: 84, height: 84, borderRadius: '50%', border: '4px solid transparent', borderTopColor: '#FF9933', borderRightColor: '#002D62', borderBottomColor: '#138808', animation: 'civicCircleSpin 1s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite', filter: 'drop-shadow(0 0 10px rgba(255, 153, 51, 0.35))' }} />
-          <div style={{ width: 50, height: 50, borderRadius: '50%', background: '#002D62', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(0,45,98,0.45)' }}>
-            <Users style={{ width: 26, height: 26, color: '#FFF' }} />
-          </div>
-        </div>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#EFF6FF', border: '1.5px solid #BFDBFE', padding: '6px 18px', borderRadius: 20, marginBottom: 12 }}>
-          <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid #BFDBFE', borderTopColor: '#2563EB', animation: 'civicCircleSpin 0.75s linear infinite' }} />
-          <span style={{ fontSize: 13, fontWeight: 800, color: '#1E40AF' }}>Loading Teams & Mentors...</span>
-        </div>
-        <p style={{ fontSize: 13, color: '#64748B', margin: 0, fontWeight: 500 }}>
-          Loading live teams, civic challenges, and domain mentors from database...
-        </p>
-      </div>
-    );
-  }
 
   // Helper to get chat for a team
   const getTeamChatList = (team) => {
@@ -696,6 +675,44 @@ export default function TeamMentorship() {
     setShowCreateTeamModal(true);
   };
 
+  // Check for redirected navigation state (from Browse Problems or My Projects)
+  useEffect(() => {
+    // 1. Problem redirected from Browse Problems -> Open create team modal pre-filled
+    const redirectedProblem = location.state?.startProjectProblem;
+    let pendingProblem = redirectedProblem;
+    if (!pendingProblem) {
+      try {
+        const stored = sessionStorage.getItem('pendingProjectProblem');
+        if (stored) pendingProblem = JSON.parse(stored);
+      } catch (e) {}
+    }
+
+    if (pendingProblem) {
+      applySelectedProblem(pendingProblem, {
+        ...initialCreateTeamForm,
+        selectedProblemId: pendingProblem._id || pendingProblem.id
+      });
+      setShowCreateTeamModal(true);
+    }
+
+    // 2. Focused Team from MyProjects "View Team"
+    const targetTeamId = location.state?.targetTeamId;
+    const targetProjectTitle = location.state?.targetProjectTitle;
+    if (targetTeamId && teams.length > 0) {
+      const match = teams.find(t => (t._id || t.id) === targetTeamId || t.projectId === targetTeamId);
+      if (match) {
+        setSelectedTeamId(match._id || match.id);
+        setViewMode('single');
+      }
+    } else if (targetProjectTitle && teams.length > 0) {
+      const match = teams.find(t => (t.project || '').toLowerCase().trim() === targetProjectTitle.toLowerCase().trim());
+      if (match) {
+        setSelectedTeamId(match._id || match.id);
+        setViewMode('single');
+      }
+    }
+  }, [location.state, teams]);
+
   const handleAddExtraMember = () => {
     setCreateTeamForm(prev => ({
       ...prev,
@@ -736,7 +753,7 @@ export default function TeamMentorship() {
       return;
     }
     if (!createTeamForm.leadName.trim()) {
-      toast('Please enter the Team Lead name', 'error');
+      toast('Please enter at least 1 team member (Team Lead)', 'error');
       return;
     }
 
@@ -873,12 +890,16 @@ export default function TeamMentorship() {
       });
 
       const createdTeam = await res.json();
+      try {
+        sessionStorage.removeItem('pendingProjectProblem');
+      } catch (e) {}
+
       if (createdTeam && (createdTeam._id || createdTeam.id)) {
         setTeams(prev => [createdTeam, ...prev]);
         setSelectedTeamId(createdTeam._id || createdTeam.id);
         setViewMode('single');
         setShowCreateTeamModal(false);
-        toast(`🎉 Team "${createdTeam.name}" created for "${targetProject}"!`, 'success');
+        toast(`🎉 Team "${createdTeam.name}" created! Project initialized in My Projects.`, 'success');
 
         // Refresh problems list
         fetchProblemsAndProjects();
@@ -886,7 +907,7 @@ export default function TeamMentorship() {
         fetchTeams();
         fetchProblemsAndProjects();
         setShowCreateTeamModal(false);
-        toast('Team created successfully', 'success');
+        toast('Team created! Project added to My Projects.', 'success');
       }
     } catch (err) {
       toast('Failed to create team: ' + err.message, 'error');
@@ -906,6 +927,28 @@ export default function TeamMentorship() {
     .sort((a, b) => getTeamTimestamp(b) - getTeamTimestamp(a));
 
 
+
+  // 1. Loading state (Rendered after ALL hooks execute to obey React Rules of Hooks)
+  if (loading) {
+    return (
+      <div className="tm-container animate-in" style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '70px 20px' }}>
+        <div style={{ position: 'relative', width: 92, height: 92, marginBottom: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%', border: '2px dashed rgba(0, 45, 98, 0.25)', animation: 'civicChakraSpin 12s linear infinite' }} />
+          <div style={{ position: 'absolute', width: 84, height: 84, borderRadius: '50%', border: '4px solid transparent', borderTopColor: '#FF9933', borderRightColor: '#002D62', borderBottomColor: '#138808', animation: 'civicCircleSpin 1s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite', filter: 'drop-shadow(0 0 10px rgba(255, 153, 51, 0.35))' }} />
+          <div style={{ width: 50, height: 50, borderRadius: '50%', background: '#002D62', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(0,45,98,0.45)' }}>
+            <Users style={{ width: 26, height: 26, color: '#FFF' }} />
+          </div>
+        </div>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#EFF6FF', border: '1.5px solid #BFDBFE', padding: '6px 18px', borderRadius: 20, marginBottom: 12 }}>
+          <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid #BFDBFE', borderTopColor: '#2563EB', animation: 'civicCircleSpin 0.75s linear infinite' }} />
+          <span style={{ fontSize: 13, fontWeight: 800, color: '#1E40AF' }}>Loading Teams & Mentors...</span>
+        </div>
+        <p style={{ fontSize: 13, color: '#64748B', margin: 0, fontWeight: 500 }}>
+          Loading live teams, civic challenges, and domain mentors from database...
+        </p>
+      </div>
+    );
+  }
 
   // 2. Empty state if genuinely no teams in database
   if (!loading && (!currentTeam || teams.length === 0)) {
@@ -988,20 +1031,20 @@ export default function TeamMentorship() {
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 8, padding: '4px 10px' }}>
+          <div className="tm-bar-actions" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 8, padding: '4px 10px', flex: '1 1 120px' }}>
               <Search size={13} color="#94A3B8" />
               <input
                 type="text"
                 placeholder="Find project / team..."
                 value={projectQuery}
                 onChange={e => setProjectQuery(e.target.value)}
-                style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 11.5, color: '#334155', width: 140 }}
+                style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 11.5, color: '#334155', width: '100%', minWidth: 70 }}
               />
             </div>
 
             {/* View Mode Toggle: Single Team vs All Teams */}
-            <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: 8, padding: 2 }}>
+            <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: 8, padding: 2, flexShrink: 0 }}>
               <button
                 onClick={() => setViewMode('single')}
                 style={{
@@ -1050,7 +1093,9 @@ export default function TeamMentorship() {
                 gap: 5,
                 height: 30,
                 background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
-                boxShadow: '0 2px 6px rgba(37,99,235,0.25)'
+                boxShadow: '0 2px 6px rgba(37,99,235,0.25)',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
               }}
             >
               <Plus size={13} /> Create Team
@@ -1146,7 +1191,7 @@ export default function TeamMentorship() {
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
             {teams.map((t, idx) => (
               <div
                 key={t._id || t.id || idx}

@@ -109,22 +109,70 @@ const DOMAIN_KEYWORDS = {
 };
 
 /**
- * Classify text into one of the 10 domains with confidence scoring
+ * Robust word boundary matcher for keywords (handles English words, Hindi transliteration, and Devanagari)
+ */
+const matchesKeyword = (keyword, targetText) => {
+  if (!keyword || !targetText) return false;
+  const kw = keyword.toLowerCase().trim();
+  const text = targetText.toLowerCase();
+
+  // If keyword contains space or non-ASCII (Devanagari)
+  if (kw.includes(' ') || /[\u0900-\u097F]/.test(kw)) {
+    return text.includes(kw);
+  }
+
+  // Exact word boundary matching for ASCII keywords to avoid substring false positives (e.g. 'dam' in 'madam')
+  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`(?:^|[^a-zA-Z0-9])${escaped}(?:$|[^a-zA-Z0-9])`, 'i');
+  return re.test(text);
+};
+
+/**
+ * Classify text into one of the 10 domains with confidence scoring & compound sentence disambiguation
  */
 const classifyChallenge = (title = '', description = '') => {
-  const text = (title + ' ' + description).toLowerCase();
+  const fullText = (title + ' ' + description).toLowerCase();
   const scores = {};
 
   for (const [domain, config] of Object.entries(DOMAIN_KEYWORDS)) {
     let score = 0;
     for (const keyword of config.keywords) {
-      const lowerKw = keyword.toLowerCase();
-      if (text.includes(lowerKw)) {
-        const inTitle = title.toLowerCase().includes(lowerKw);
-        score += inTitle ? 2.5 : 1.0;
+      if (matchesKeyword(keyword, fullText)) {
+        const inTitle = matchesKeyword(keyword, title.toLowerCase());
+        score += inTitle ? 2.5 : 1.2;
       }
     }
     scores[domain] = score * config.weight;
+  }
+
+  // ─── COMPOUND CONTEXT DISAMBIGUATION ───
+  // 1. Water on road / waterlogged streets -> Urban Infrastructure / Sanitation (NOT Water Management)
+  if ((fullText.includes('sadak') || fullText.includes('road') || fullText.includes('gaddha') || fullText.includes('street')) &&
+      (fullText.includes('paani') || fullText.includes('pani') || fullText.includes('water') || fullText.includes('naala') || fullText.includes('drain') || fullText.includes('waterlogging'))) {
+    scores['Urban Infrastructure'] = (scores['Urban Infrastructure'] || 0) + 5.0;
+    scores['Water Management'] = Math.max(0, (scores['Water Management'] || 0) - 4.0);
+  }
+
+  // 2. Water for crops / irrigation / drought -> Agriculture (NOT Drinking Water)
+  if ((fullText.includes('khet') || fullText.includes('kheti') || fullText.includes('kisan') || fullText.includes('fasal') || fullText.includes('crop')) &&
+      (fullText.includes('paani') || fullText.includes('pani') || fullText.includes('sinchai') || fullText.includes('irrigation') || fullText.includes('sukha'))) {
+    scores['Agriculture'] = (scores['Agriculture'] || 0) + 5.0;
+    scores['Water Management'] = Math.max(0, (scores['Water Management'] || 0) - 3.5);
+  }
+
+  // 3. Hospital / Clinic / Doctor / Medicine -> Healthcare
+  if (fullText.includes('hospital') || fullText.includes('aspatal') || fullText.includes('doctor') || fullText.includes('dawa') || fullText.includes('ilaaj') || fullText.includes('swasthya')) {
+    scores['Healthcare'] = (scores['Healthcare'] || 0) + 4.5;
+  }
+
+  // 4. Garbage / Trash / Drainage overflow -> Sanitation & Environment
+  if (fullText.includes('kachra') || fullText.includes('kooda') || fullText.includes('garbage') || fullText.includes('safai') || fullText.includes('gandagi') || fullText.includes('durgandh') || fullText.includes('naali')) {
+    scores['Sanitation & Environment'] = (scores['Sanitation & Environment'] || 0) + 4.0;
+  }
+
+  // 5. Electricity / Transformer / Wire / Power -> Energy & Technology
+  if (fullText.includes('bijli') || fullText.includes('light') || fullText.includes('current') || fullText.includes('transformer') || fullText.includes('power cut') || fullText.includes('blackout') || fullText.includes('khamba')) {
+    scores['Energy & Technology'] = (scores['Energy & Technology'] || 0) + 4.5;
   }
 
   let maxDomain = 'Urban Infrastructure';
@@ -154,7 +202,7 @@ const generateTags = (text = '') => {
   const tags = [];
   for (const config of Object.values(DOMAIN_KEYWORDS)) {
     for (const kw of config.keywords) {
-      if (lowerText.includes(kw.toLowerCase()) && !tags.includes(kw) && kw.length > 3) {
+      if (matchesKeyword(kw, lowerText) && !tags.includes(kw) && kw.length > 3) {
         tags.push(kw);
       }
     }
@@ -163,56 +211,60 @@ const generateTags = (text = '') => {
 };
 
 /**
- * Suggest priority (low, medium, high, urgent) based on urgency triggers
+ * Suggest priority (normal, high, urgent) based on urgency triggers
  */
 const suggestPriority = (text = '') => {
   const lowerText = text.toLowerCase();
   const urgentWords = [
     'urgent', 'emergency', 'critical', 'life threatening', 'dying', 'death', 'crisis',
-    'khatarnak', 'turant', 'jaan', 'hazard', 'bleeding', 'accident'
+    'khatarnak', 'turant', 'jaan', 'hazard', 'bleeding', 'accident', 'spark', 'current lag'
   ];
   const highWords = [
-    'serious', 'severe', 'major', 'significant', 'hazardous', 'no water', '3 din se',
-    'chapakal band', 'paani nahi', 'broken', 'kharab', 'problem', 'pareshan', 'band hai'
+    'serious', 'severe', 'major', 'significant', 'hazardous', 'no water', 'broken',
+    'kharab', 'problem', 'pareshan', 'band hai', 'chapakal band', 'paani nahi', 'andhera'
   ];
-  const lowWords = ['minor', 'small', 'slight', 'trivial', 'dheere', 'chota'];
+  const lowWords = ['minor', 'small', 'slight', 'trivial', 'chota', 'normal'];
 
-  if (urgentWords.some(w => lowerText.includes(w))) return 'urgent';
-  if (highWords.some(w => lowerText.includes(w))) return 'high';
-  if (lowWords.some(w => lowerText.includes(w))) return 'low';
+  if (urgentWords.some(w => matchesKeyword(w, lowerText))) return 'urgent';
+  if (highWords.some(w => matchesKeyword(w, lowerText))) return 'high';
+  if (lowWords.some(w => matchesKeyword(w, lowerText))) return 'normal';
   return 'medium';
 };
 
 /**
- * Voice Parser for rural speech: "Hamare gaon mein teen din se paani nahi aa raha"
+ * Voice Parser for rural speech: Generates natural, clean, context-accurate titles & descriptions
  */
 const parseVoiceTranscript = (transcript = '') => {
   const clean = transcript.trim();
   if (!clean) {
     return {
-      title: 'Gramin Samasya Report',
+      title: 'नागरिक समस्या रिपोर्ट',
       description: '',
-      category: 'Water Management',
-      priority: 'high',
-      tags: ['water']
+      category: 'Urban Infrastructure',
+      priority: 'medium',
+      tags: ['civic']
     };
   }
 
   const classification = classifyChallenge(clean, clean);
   const priority = suggestPriority(clean);
 
-  let title = clean;
-  if (clean.length > 80) {
-    title = clean.substring(0, 75).trim() + '...';
+  // Clean conversational filler words from title
+  const cleanedTitle = clean
+    .replace(/^(namaste|hello|hi|suno|suniye|arre|dekho|ek problem hai|mera naam|madad chahiye|likho|report karo)\s*,?\s*/i, '')
+    .trim();
+
+  // Natural Title Generation without hardcoded false overrides
+  let title = cleanedTitle || clean;
+  if (title.length > 60) {
+    // Truncate at sensible word boundary
+    const words = title.split(/\s+/);
+    title = words.slice(0, 8).join(' ') + '...';
   }
 
-  const lower = clean.toLowerCase();
-  if (lower.includes('paani') || lower.includes('pani') || lower.includes('water')) {
-    title = 'पेयजल संकट: ' + (clean.length > 50 ? clean.substring(0, 45) + '...' : clean);
-  } else if (lower.includes('sadak') || lower.includes('road') || lower.includes('gaddha')) {
-    title = 'सड़क व पुलिया समस्या: ' + (clean.length > 50 ? clean.substring(0, 45) + '...' : clean);
-  } else if (lower.includes('bijli') || lower.includes('light') || lower.includes('current')) {
-    title = 'बिजली आपूर्ति बाधित: ' + (clean.length > 50 ? clean.substring(0, 45) + '...' : clean);
+  // Capitalize first character
+  if (title.length > 0) {
+    title = title.charAt(0).toUpperCase() + title.slice(1);
   }
 
   return {
@@ -220,7 +272,7 @@ const parseVoiceTranscript = (transcript = '') => {
     description: clean,
     category: classification.category,
     confidence: classification.confidence,
-    priority: priority || 'high',
+    priority: priority === 'normal' ? 'medium' : (priority || 'medium'),
     tags: generateTags(clean)
   };
 };

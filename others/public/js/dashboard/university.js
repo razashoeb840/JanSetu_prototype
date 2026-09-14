@@ -158,7 +158,7 @@ window.loadAssigned = async () => {
       <div class="task-priority-bar ${c.priority}"></div>
       <div class="task-card-header">
         <div>
-          <div class="task-card-id">#${c._id.slice(-8).toUpperCase()}</div>
+          <div class="task-card-id">${c.challengeId ? (c.challengeId.startsWith('#') ? c.challengeId : '#' + c.challengeId) : ('#JH-2026-' + c._id.slice(-6).toUpperCase())}</div>
           <div class="task-card-title">${c.title}</div>
           <div class="task-card-category">${c.category} · ${c.location?.district || 'Jharkhand'}</div>
         </div>

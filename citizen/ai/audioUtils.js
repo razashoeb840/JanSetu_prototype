@@ -432,10 +432,6 @@ function stopSpeaking() {
     }, 55);
     currentSarvamAudio = null;
   }
-
-  if ('speechSynthesis' in window) {
-    try { window.speechSynthesis.cancel(); } catch (e) {}
-  }
 }
 
 // ══════════════════════════════════════════════════════════════

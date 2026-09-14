@@ -61,7 +61,6 @@ function showSection(section) {
   if (section === 'users') loadUsers();
   if (section === 'universities') loadUniversities();
   if (section === 'industry') loadIndustry();
-  if (section === 'analytics') loadAnalytics();
   if (section === 'activity') loadActivity();
 }
 
@@ -279,7 +278,7 @@ function renderChallengesTable(challenges) {
   tbody.innerHTML = challenges.map(c => `
     <tr>
       <td>
-        <div style="font-size:10px;color:var(--gray-400);font-weight:700;letter-spacing:0.5px">#${c._id.slice(-8).toUpperCase()}</div>
+        <div style="font-size:10px;color:var(--gray-400);font-weight:700;letter-spacing:0.5px">${c.challengeId ? (c.challengeId.startsWith('#') ? c.challengeId : '#' + c.challengeId) : ('#JH-2026-' + c._id.slice(-6).toUpperCase())}</div>
         <div style="font-size:13px;font-weight:600;color:var(--gray-900);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.title}</div>
       </td>
       <td><span style="font-size:12px;color:var(--gray-600)">${c.category}</span></td>
@@ -317,7 +316,7 @@ async function openChallengeAction(id) {
     const res = await API.get(`/challenges/${id}`);
     const c = res.data;
     document.getElementById('caTitle').textContent = c.title;
-    document.getElementById('caSubtitle').textContent = `#${c._id.slice(-8).toUpperCase()} · ${c.category} · ${c.location?.district || 'Jharkhand'}`;
+    document.getElementById('caSubtitle').textContent = `${c.challengeId ? (c.challengeId.startsWith('#') ? c.challengeId : '#' + c.challengeId) : ('#JH-2026-' + c._id.slice(-6).toUpperCase())} · ${c.category} · ${c.location?.district || 'Jharkhand'}`;
     body.innerHTML = `
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:28px">
         <div>
@@ -528,85 +527,6 @@ async function loadIndustry() {
             <div class="worker-stat"><div class="worker-stat-num">₹${p.stats?.totalFunding?Math.round(p.stats.totalFunding/100000)+'L':0}</div><div class="worker-stat-lbl">Funding</div></div>
           </div>
         </div>`).join('');
-    }
-  } catch(e) {}
-}
-
-// ── Analytics ──
-async function loadAnalytics() {
-  try {
-    const res = await API.get('/admin/analytics');
-    if (!res.success) return;
-    const data = res.data;
-
-    const grid = document.getElementById('analyticsMetrics');
-    const metrics = [
-      { label: 'Total Challenges', value: data.totalChallenges || 0, bg: 'var(--primary-50)', color: 'var(--primary)' },
-      { label: 'Resolution Rate', value: `${data.resolutionRate || 0}%`, bg: 'var(--accent-50)', color: 'var(--accent)' },
-      { label: 'Avg Resolution Days', value: data.avgResolutionDays || 0, bg: '#fef3c7', color: 'var(--warning)' },
-      { label: 'Active Universities', value: data.activeUniversities || 0, bg: '#f3e8ff', color: '#7c3aed' }
-    ];
-
-    grid.innerHTML = metrics.map(m => `
-      <div class="metric-card">
-        <div class="metric-icon" style="background:${m.bg};margin-bottom:12px"></div>
-        <div class="metric-value" style="color:${m.color}">${m.value}</div>
-        <div class="metric-label">${m.label}</div>
-      </div>`).join('');
-
-    // Line Chart
-    const lineCtx = document.getElementById('analyticsLineChart')?.getContext('2d');
-    if (lineCtx && data.monthlyTrend?.length) {
-      new Chart(lineCtx, {
-        type: 'line',
-        data: {
-          labels: data.monthlyTrend.map(m => `${m._id.month}/${m._id.year}`),
-          datasets: [{
-            label: 'Submissions',
-            data: data.monthlyTrend.map(m => m.count),
-            borderColor: '#1a56db',
-            backgroundColor: 'rgba(26,86,219,0.08)',
-            fill: true,
-            tension: 0.4,
-            pointRadius: 4
-          }]
-        },
-        options: { responsive: true, plugins: { legend: { display: true } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
-      });
-    }
-
-    // Doughnut Chart
-    const donutCtx = document.getElementById('analyticsDoughnutChart')?.getContext('2d');
-    if (donutCtx && data.byCategory?.length) {
-      const colors = ['#1a56db','#d97706','#059669','#7c3aed','#ef4444','#06b6d4','#f59e0b','#8b5cf6','#10b981','#3b82f6'];
-      new Chart(donutCtx, {
-        type: 'doughnut',
-        data: {
-          labels: data.byCategory.map(c => c._id),
-          datasets: [{ data: data.byCategory.map(c => c.count), backgroundColor: colors, borderWidth: 2, borderColor: 'white' }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10, boxWidth: 10 } } }, cutout: '55%' }
-      });
-    }
-
-    // University Performance Bar
-    const univCtx = document.getElementById('univPerfChart')?.getContext('2d');
-    if (univCtx && universities.length) {
-      new Chart(univCtx, {
-        type: 'bar',
-        data: {
-          labels: universities.map(u => u.shortName || u.name.substring(0,15)),
-          datasets: [
-            { label: 'Assigned', data: universities.map(u => u.stats?.totalAssigned||0), backgroundColor: 'rgba(26,86,219,0.7)', borderRadius: 4 },
-            { label: 'Resolved', data: universities.map(u => u.stats?.totalResolved||0), backgroundColor: 'rgba(5,150,105,0.7)', borderRadius: 4 }
-          ]
-        },
-        options: {
-          responsive: true,
-          scales: { x: { grid: { display: false } }, y: { beginAtZero: true } },
-          plugins: { legend: { position: 'top' } }
-        }
-      });
     }
   } catch(e) {}
 }
