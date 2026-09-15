@@ -1209,23 +1209,65 @@ export default function MyProjects() {
                     <span><MapPin style={{ width: 12, height: 12, color: '#94A3B8' }} /> {formatProjectLocation(p.loc)}</span>
                   </div>
 
-                  {/* Proposal Status Tag */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-                    {p.proposalStatus === 'submitted' && (
-                      <span style={{ fontSize: 10, fontWeight: 800, background: '#FEF3C7', color: '#B45309', padding: '2px 8px', borderRadius: 999, border: '1px solid #FDE68A' }}>
-                        ⏳ Proposal Under Review
-                      </span>
-                    )}
-                    {p.proposalStatus === 'approved' && (
-                      <span style={{ fontSize: 10, fontWeight: 800, background: '#DCFCE7', color: '#15803D', padding: '2px 8px', borderRadius: 999, border: '1px solid #86EFAC' }}>
-                        ✓ Proposal Approved
-                      </span>
-                    )}
-                    {(!p.proposalStatus || p.proposalStatus === 'not_submitted') && (
-                      <span style={{ fontSize: 10, fontWeight: 800, background: '#EFF6FF', color: '#1D4ED8', padding: '2px 8px', borderRadius: 999, border: '1px solid #BFDBFE' }}>
-                        📝 Proposal Required
-                      </span>
-                    )}
+                  {/* Proposal Status Tag & (i) Info Button */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, marginTop: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      {p.proposalStatus === 'submitted' && (
+                        <span style={{ fontSize: 10, fontWeight: 800, background: '#FEF3C7', color: '#B45309', padding: '2px 8px', borderRadius: 999, border: '1px solid #FDE68A' }}>
+                          ⏳ Proposal Under Review
+                        </span>
+                      )}
+                      {p.proposalStatus === 'approved' && (
+                        <span style={{ fontSize: 10, fontWeight: 800, background: '#DCFCE7', color: '#15803D', padding: '2px 8px', borderRadius: 999, border: '1px solid #86EFAC' }}>
+                          ✓ Proposal Approved
+                        </span>
+                      )}
+                      {(!p.proposalStatus || p.proposalStatus === 'not_submitted') && (
+                        <span style={{ fontSize: 10, fontWeight: 800, background: '#EFF6FF', color: '#1D4ED8', padding: '2px 8px', borderRadius: 999, border: '1px solid #BFDBFE' }}>
+                          📝 Proposal Required
+                        </span>
+                      )}
+                    </div>
+
+                    {/* (i) Industry Partner Info Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setProjects(prev => prev.map(proj => ({ ...proj, selected: (proj._id || proj.id) === (p._id || p.id) })));
+                        setShowIndustryInfoModal(true);
+                      }}
+                      style={{
+                        background: '#EFF6FF',
+                        border: '1.5px solid #93C5FD',
+                        color: '#1D4ED8',
+                        borderRadius: '50%',
+                        width: 22,
+                        height: 22,
+                        minWidth: 22,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontWeight: 900,
+                        fontSize: 11.5,
+                        boxShadow: '0 1px 4px rgba(37,99,235,0.2)',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = '#2563EB';
+                        e.currentTarget.style.color = '#FFFFFF';
+                        e.currentTarget.style.transform = 'scale(1.1)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = '#EFF6FF';
+                        e.currentTarget.style.color = '#1D4ED8';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                      title="Click (i) to view assigned/accepted Industry Partner details & funding"
+                    >
+                      i
+                    </button>
                   </div>
                 </div>
               );

@@ -312,6 +312,7 @@ router.post('/proposals/:id/assign-industry', async (req, res, next) => {
     if (!partner) return res.status(404).json({ success: false, error: 'Industry partner not found' });
 
     proposal.assignedIndustry = partner._id;
+    proposal.acceptanceStatus = 'pending';
     await proposal.save();
 
     // Update linked Project with assigned industry details
@@ -330,7 +331,8 @@ router.post('/proposals/:id/assign-industry', async (req, res, next) => {
           contactPhone: partner.contact?.phone || '+91 651 220 0000',
           website: partner.contact?.website || '',
           fundingCommitted: proposal.fundingRequested,
-          fundingStatus: 'Approved & Committed',
+          fundingStatus: 'Pending Industry Acceptance',
+          acceptanceStatus: 'pending',
           capabilitiesProvided: partner.capabilities || proposal.industrySupportRequired,
           assignedAt: new Date()
         };
@@ -338,13 +340,13 @@ router.post('/proposals/:id/assign-industry', async (req, res, next) => {
           committed: proposal.fundingRequested,
           goal: proposal.fundingRequested,
           sponsor: partner.companyName || partner.name,
-          status: 'Provided & Committed'
+          status: 'Pending Industry Acceptance'
         };
         project.industryMentor = {
           name: partner.name + ' Collaboration Team',
           org: partner.companyName || partner.name,
           initials: (partner.name || 'IP').slice(0, 2).toUpperCase(),
-          status: 'Accepted',
+          status: 'Pending Acceptance',
           requestedAt: new Date()
         };
         await project.save();
@@ -357,8 +359,27 @@ router.post('/proposals/:id/assign-industry', async (req, res, next) => {
         await new CentralNotification({
           recipient: proposal.submittedBy,
           type: 'new_collaboration',
-          title: 'Industry Partner Assigned!',
-          message: `Congratulations! ${partner.companyName || partner.name} has been assigned to support your project "${proposal.problemTitle}" with ₹${proposal.fundingRequested.toLocaleString('en-IN')}.`,
+          title: 'Industry Partner Assigned for Review!',
+          message: `${partner.companyName || partner.name} has been assigned to review your proposal "${proposal.problemTitle}" with ₹${Number(proposal.fundingRequested).toLocaleString('en-IN')}. Awaiting partner acceptance.`,
+          data: { proposalId: proposal._id, projectId: proposal.projectId?.toString() },
+          priority: 'high'
+        }).save();
+      }
+
+      // Notify Industry Representatives of this partner
+      const indUsers = await User.find({
+        $or: [
+          { organization: partner.companyName },
+          { organization: partner.name },
+          { uniqueId: partner.uniqueId }
+        ]
+      });
+      for (const indUser of indUsers) {
+        await new CentralNotification({
+          recipient: indUser._id,
+          type: 'new_collaboration',
+          title: 'New Solution Proposal Assigned for Review',
+          message: `State Admin has routed the solution proposal "${proposal.problemTitle}" from ${proposal.universityName} to your organization for CSR partnership review.`,
           data: { proposalId: proposal._id, projectId: proposal.projectId?.toString() },
           priority: 'high'
         }).save();

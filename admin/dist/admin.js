@@ -2752,12 +2752,17 @@ window.loadAdminProposals = async function() {
       _currentAdminProposals = res.data;
       renderProposalsTable(_currentAdminProposals);
 
-      // Update badge in sidebar
-      const pendingCount = _currentAdminProposals.filter(p => p.status === 'submitted').length;
+      // Update badge in sidebar and red notification dot
+      const pendingCount = _currentAdminProposals.filter(p => p.status === 'submitted' || p.acceptanceStatus === 'pending').length;
+      const acceptedProposals = _currentAdminProposals.filter(p => p.acceptanceStatus === 'accepted');
       const badge = document.getElementById('proposalsNavBadge');
       if (badge) {
-        badge.textContent = pendingCount;
-        badge.style.display = pendingCount > 0 ? 'inline-flex' : 'none';
+        badge.textContent = pendingCount || acceptedProposals.length;
+        badge.style.display = (pendingCount > 0 || acceptedProposals.length > 0) ? 'inline-flex' : 'none';
+      }
+      const notifDot = document.getElementById('proposalsNotifDot');
+      if (notifDot) {
+        notifDot.style.display = acceptedProposals.length > 0 ? 'inline-block' : 'none';
       }
     } else {
       if (listContainer) {
@@ -2806,7 +2811,17 @@ window.renderProposalsTable = function(proposals) {
         </td>
         <td style="font-weight:800;color:#059669">₹${Number(p.fundingRequested || 0).toLocaleString('en-IN')}</td>
         <td><div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">${supports} ${moreSupports}</div></td>
-        <td><span class="proposal-status-pill ${statusPillClass}">${statusLabel}</span></td>
+        <td>
+          <span class="proposal-status-pill ${statusPillClass}">${statusLabel}</span>
+          ${p.assignedIndustry ? `
+            <div style="font-size:10.5px;font-weight:750;margin-top:4px">
+              ${p.acceptanceStatus === 'accepted'
+                ? `<span style="color:#15803d">✓ ${p.assignedIndustry.companyName || p.assignedIndustry.name}</span>`
+                : `<span style="color:#b45309">⏳ ${p.assignedIndustry.companyName || p.assignedIndustry.name} (Pending)</span>`
+              }
+            </div>
+          ` : ''}
+        </td>
         <td style="font-size:12px;color:#64748b">${new Date(p.createdAt || Date.now()).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</td>
         <td>
           <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openProposalDetail('${p._id}')">
@@ -2817,6 +2832,37 @@ window.renderProposalsTable = function(proposals) {
     `;
   }).join('');
 };
+
+// Periodic checker for proposal acceptance alerts & red dot
+let _lastAlertedProposalId = null;
+window.checkProposalAcceptanceAlerts = async function() {
+  try {
+    const res = await API.get('/admin/proposals');
+    if (res && res.success && Array.isArray(res.data)) {
+      const accepted = res.data.filter(p => p.acceptanceStatus === 'accepted');
+      if (accepted.length > 0) {
+        const notifDot = document.getElementById('proposalsNotifDot');
+        if (notifDot) notifDot.style.display = 'inline-block';
+        const badge = document.getElementById('proposalsNavBadge');
+        if (badge) badge.style.display = 'inline-flex';
+
+        // Check if there is a newly accepted proposal
+        const newestAccepted = accepted[0];
+        if (newestAccepted && _lastAlertedProposalId !== String(newestAccepted._id)) {
+          const industryName = newestAccepted.acceptedIndustryName || newestAccepted.assignedIndustry?.companyName || newestAccepted.assignedIndustry?.name || 'Industry Partner';
+          if (_lastAlertedProposalId !== null) {
+            showAdminToast(`🎉 Industry ${industryName} has accepted the proposal for "${newestAccepted.problemTitle}"!`, 'success');
+          }
+          _lastAlertedProposalId = String(newestAccepted._id);
+        }
+      }
+    }
+  } catch (e) {}
+};
+
+if (!window._propAcceptanceInterval) {
+  window._propAcceptanceInterval = setInterval(window.checkProposalAcceptanceAlerts, 15000);
+}
 
 window.filterProposalsList = function() {
   const search = (document.getElementById('proposalSearchInput')?.value || '').toLowerCase().trim();
@@ -3035,20 +3081,25 @@ function renderProposalDetailCard(p) {
         <!-- Final Assigned Industry Card (When Approved) -->
         <div id="proposalSelectedPartnerBlock" class="proposal-selected-partner-wrap" style="padding:8px 32px 18px">
           ${p.assignedIndustry ? `
-            <div class="proposal-partner-card-inner" style="background:#ffffff;border:2px solid #86efac;border-radius:16px;padding:20px 24px;box-shadow:0 4px 16px rgba(22,163,74,0.08);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+            <div class="proposal-partner-card-inner" style="background:#ffffff;border:2px solid ${p.acceptanceStatus === 'accepted' ? '#86efac' : '#fde68a'};border-radius:16px;padding:20px 24px;box-shadow:0 4px 16px ${p.acceptanceStatus === 'accepted' ? 'rgba(22,163,74,0.08)' : 'rgba(217,119,6,0.08)'};display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
               <div style="display:flex;align-items:center;gap:16px">
-                <div style="width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg, #15803d 0%, #166534 100%);color:#ffffff;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;box-shadow:0 3px 8px rgba(21,128,61,0.25)">
-                  🏭
+                <div style="width:50px;height:50px;border-radius:14px;background:${p.acceptanceStatus === 'accepted' ? 'linear-gradient(135deg, #15803d 0%, #166534 100%)' : 'linear-gradient(135deg, #d97706 0%, #b45309 100%)'};color:#ffffff;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;box-shadow:0 3px 8px rgba(0,0,0,0.15)">
+                  ${p.acceptanceStatus === 'accepted' ? '✓' : '🏭'}
                 </div>
                 <div>
                   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                     <span style="font-size:16.5px;font-weight:900;color:#0f172a">${p.assignedIndustry.companyName || p.assignedIndustry.name}</span>
-                    <span style="background:#dcfce7;color:#15803d;font-size:11.5px;font-weight:850;padding:3px 10px;border-radius:999px;border:1px solid #86efac">✓ Final Assigned Industry Partner</span>
+                    ${p.acceptanceStatus === 'accepted' ? `
+                      <span style="background:#dcfce7;color:#15803d;font-size:11.5px;font-weight:850;padding:3px 10px;border-radius:999px;border:1px solid #86efac">✓ Accepted & Active Partner</span>
+                    ` : `
+                      <span style="background:#fef3c7;color:#b45309;font-size:11.5px;font-weight:850;padding:3px 10px;border-radius:999px;border:1px solid #fde68a;display:inline-flex;align-items:center;gap:4px">⏳ Pending Industry Acceptance</span>
+                    `}
                   </div>
                   <div style="font-size:12.5px;color:#475569;margin-top:4px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
                     <span>📍 ${p.assignedIndustry.location?.city || 'Jamshedpur'}, ${p.assignedIndustry.location?.state || 'Jharkhand'}</span>
                     <span>💼 ${p.assignedIndustry.sector || 'CSR & Industry Partner'}</span>
                     ${p.assignedIndustry.fundingCapacity ? `<span style="color:#059669;font-weight:800">💰 Capacity: ₹${Number(p.assignedIndustry.fundingCapacity).toLocaleString('en-IN')}</span>` : ''}
+                    ${p.acceptanceStatus === 'accepted' && p.acceptedAt ? `<span style="color:#15803d;font-weight:750">Accepted on: ${new Date(p.acceptedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>` : ''}
                   </div>
                 </div>
               </div>

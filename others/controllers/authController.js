@@ -28,8 +28,8 @@ const DEMO_PRESETS = {
     name: 'Rajesh Mahto',
     email: 'rajesh@gmail.com',
     role: 'citizen',
-    uniqueId: 'C4819',
-    citizenId: 'C4819',
+    uniqueId: 'CID-4819',
+    citizenId: 'CID-4819',
     passwords: ['citizen123'],
     phone: '9431100003',
     aadhaar: '8492-3840-4819'
@@ -39,8 +39,8 @@ const DEMO_PRESETS = {
     name: 'Kavya Sharma',
     email: 'kavya@gmail.com',
     role: 'citizen',
-    uniqueId: 'C1002',
-    citizenId: 'C1002',
+    uniqueId: 'CID-1002',
+    citizenId: 'CID-1002',
     passwords: ['citizen123'],
     phone: '9431100002'
   },
@@ -49,8 +49,8 @@ const DEMO_PRESETS = {
     name: 'Dr. Rajesh Sharma',
     email: 'rajesh@iitjharkhand.ac.in',
     role: 'university_rep',
-    uniqueId: 'U4819',
-    universityIdString: 'U4819',
+    uniqueId: 'UID-1001',
+    universityIdString: 'UID-1001',
     passwords: ['univ123'],
     institution: 'IIT Delhi',
     department: 'Department of Computer Science & Engineering'
@@ -60,8 +60,8 @@ const DEMO_PRESETS = {
     name: 'Tata Steel CSR',
     email: 'tata@steel.com',
     role: 'industry_rep',
-    uniqueId: 'I1001',
-    industryIdString: 'I1001',
+    uniqueId: 'IID-1001',
+    industryIdString: 'IID-1001',
     passwords: ['industry123'],
     organization: 'Tata Steel'
   }
@@ -311,26 +311,129 @@ exports.register = async (req, res, next) => {
   }
 };
 
-// @desc    Login user (supports Email, Phone, Citizen ID e.g. C9604, University ID e.g. U1024, or Aadhaar)
+function generateIdVariants(identifier) {
+  if (!identifier) return { variants: [], regexes: [] };
+  const raw = String(identifier).trim();
+  const lower = raw.toLowerCase();
+  const upper = raw.toUpperCase().replace(/\s+/g, '');
+  const alphanumeric = upper.replace(/[^A-Z0-9]/g, '');
+
+  const variants = new Set([raw, lower, upper, alphanumeric]);
+  const regexes = [];
+
+  const numMatch = upper.match(/(\d+)/);
+  if (numMatch) {
+    const num = numMatch[1];
+    const unpadded = String(parseInt(num, 10));
+    const padded4 = num.padStart(4, '0');
+    const padded3 = num.padStart(3, '0');
+
+    variants.add(num);
+    variants.add(unpadded);
+
+    if (upper.startsWith('U')) {
+      // University: U1010, UID-1010, UID1010, U-1010, etc.
+      [num, unpadded, padded4].forEach(n => {
+        variants.add(`U${n}`);
+        variants.add(`U-${n}`);
+        variants.add(`UID${n}`);
+        variants.add(`UID-${n}`);
+      });
+      regexes.push(new RegExp(`^(UID|U)[-_]?0*${unpadded}$`, 'i'));
+    } else if (upper.startsWith('C')) {
+      // Citizen: C4819, CID-4819, CID4819, C-4819, etc.
+      [num, unpadded, padded4].forEach(n => {
+        variants.add(`C${n}`);
+        variants.add(`C-${n}`);
+        variants.add(`CID${n}`);
+        variants.add(`CID-${n}`);
+      });
+      regexes.push(new RegExp(`^(CID|C)[-_]?0*${unpadded}$`, 'i'));
+    } else if (upper.startsWith('I')) {
+      // Industry: I1001, IID-1001, IID1001, I-1001, etc.
+      [num, unpadded, padded4].forEach(n => {
+        variants.add(`I${n}`);
+        variants.add(`I-${n}`);
+        variants.add(`IID${n}`);
+        variants.add(`IID-${n}`);
+      });
+      regexes.push(new RegExp(`^(IID|I)[-_]?0*${unpadded}$`, 'i'));
+    } else if (upper.startsWith('ADM') || upper.startsWith('A')) {
+      // Admin: ADM-001, ADM001, ADM1, ADM-1, etc.
+      [num, unpadded, padded3].forEach(n => {
+        variants.add(`ADM${n}`);
+        variants.add(`ADM-${n}`);
+      });
+      variants.add('ADM-001');
+      variants.add('ADM001');
+      regexes.push(new RegExp(`^ADM[-_]?0*${unpadded}$`, 'i'));
+    } else if (/^\d+$/.test(alphanumeric)) {
+      // Pure numbers typed, like 1010, 4819, 1001
+      [num, unpadded, padded4].forEach(n => {
+        variants.add(`UID-${n}`);
+        variants.add(`U${n}`);
+        variants.add(`CID-${n}`);
+        variants.add(`C${n}`);
+        variants.add(`IID-${n}`);
+        variants.add(`I${n}`);
+      });
+      if (unpadded === '1') {
+        variants.add('ADM-001');
+        variants.add('ADM001');
+      }
+    }
+  } else if (upper === 'ADMIN' || upper === 'ADM') {
+    variants.add('ADM-001');
+    variants.add('ADM001');
+    regexes.push(/^ADM[-_]?0*1$/i);
+  }
+
+  return { variants: Array.from(variants), regexes };
+}
+
+// @desc    Login user (supports Email, Phone, Citizen ID e.g. C4819/CID-4819, University ID e.g. U1010/UID-1010, Industry ID e.g. I1001/IID-1001, Admin ID e.g. ADM-001, or Aadhaar)
 // @route   POST /api/auth/login
 // @access  Public
 exports.login = async (req, res, next) => {
   try {
-    const identifier = req.body.email || req.body.identifier || req.body.citizenId || req.body.universityIdString;
+    const identifier = req.body.email || req.body.identifier || req.body.citizenId || req.body.universityIdString || req.body.uniqueId;
     const { password } = req.body;
 
     if (!identifier || !password) {
-      return res.status(400).json({ success: false, message: 'Please provide email/mobile/citizen ID/university ID and password' });
+      return res.status(400).json({ success: false, message: 'Please provide Email, ID (UID, CID, IID, ADM) or Phone, and password' });
     }
 
-    const cleanId = identifier.trim();
+    const cleanId = String(identifier).trim();
     const cleanLower = cleanId.toLowerCase();
+    const { variants, regexes } = generateIdVariants(cleanId);
 
-    // Check demo presets for instant 1-click demo login
-    const demoPreset = DEMO_PRESETS[cleanLower]
-      || (cleanId === '9431100003' ? DEMO_PRESETS['rajesh@gmail.com'] : null)
-      || (cleanId.toUpperCase() === 'C4819' ? DEMO_PRESETS['rajesh@gmail.com'] : null)
-      || (cleanId.toUpperCase() === 'U4819' ? DEMO_PRESETS['rajesh@iitjharkhand.ac.in'] : null);
+    // Check demo presets for instant 1-click or alias ID demo login
+    let demoPreset = DEMO_PRESETS[cleanLower];
+    if (!demoPreset) {
+      for (const v of variants) {
+        const vu = v.toUpperCase();
+        if (['C4819', 'CID-4819', 'CID4819', 'C-4819', '9431100003', '4819'].includes(vu)) {
+          demoPreset = DEMO_PRESETS['rajesh@gmail.com'];
+          break;
+        }
+        if (['C1002', 'CID-1002', 'CID1002', 'C-1002', '9431100002', '1002'].includes(vu)) {
+          demoPreset = DEMO_PRESETS['kavya@gmail.com'];
+          break;
+        }
+        if (['UID-1001', 'U1001', 'UID1001', 'U-1001', 'U4819', 'UID-4819', 'UID4819', '1001'].includes(vu)) {
+          demoPreset = DEMO_PRESETS['rajesh@iitjharkhand.ac.in'];
+          break;
+        }
+        if (['IID-1001', 'I1001', 'IID1001', 'I-1001'].includes(vu)) {
+          demoPreset = DEMO_PRESETS['tata@steel.com'];
+          break;
+        }
+        if (['ADM-001', 'ADM001', 'ADMIN', 'ADM', 'ADM-1', 'ADM1'].includes(vu)) {
+          demoPreset = DEMO_PRESETS['admin@innovatesphere.in'];
+          break;
+        }
+      }
+    }
 
     if (demoPreset && demoPreset.passwords.includes(password.trim())) {
       if (mongoose.connection.readyState === 1) {
@@ -351,34 +454,52 @@ exports.login = async (req, res, next) => {
     const queryConditions = [
       { email: cleanLower },
       { phone: cleanId },
-      { uniqueId: cleanId.toUpperCase() },
-      { citizenId: cleanId.toUpperCase() },
-      { universityIdString: cleanId.toUpperCase() },
-      { industryIdString: cleanId.toUpperCase() },
-      { aadhaar: cleanId },
-      { aadhaar: cleanId.replace(/[^0-9]/g, '') }
+      { uniqueId: { $in: variants } },
+      { citizenId: { $in: variants } },
+      { universityIdString: { $in: variants } },
+      { industryIdString: { $in: variants } }
     ];
-    if (cleanLower === 'admin@jansetu.in') {
+
+    const cleanDigits = cleanId.replace(/[^0-9]/g, '');
+    if (cleanDigits.length >= 10) {
+      queryConditions.push({ phone: cleanDigits });
+      queryConditions.push({ aadhaar: cleanId });
+      queryConditions.push({ aadhaar: cleanDigits });
+    }
+
+    if (regexes.length > 0) {
+      regexes.forEach(rx => {
+        queryConditions.push(
+          { uniqueId: rx },
+          { citizenId: rx },
+          { universityIdString: rx },
+          { industryIdString: rx }
+        );
+      });
+    }
+
+    if (cleanLower === 'admin@jansetu.in' || cleanLower === 'admin') {
       queryConditions.push({ email: 'admin@innovatesphere.in' });
     }
     if (cleanLower === 'admin@innovatesphere.in') {
       queryConditions.push({ email: 'admin@jansetu.in' });
     }
+
     const user = await User.findOne({
       $or: queryConditions
     }).select('+password');
 
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+      return res.status(401).json({ success: false, message: 'Invalid credentials. Please check your ID/Email and password.' });
     }
 
-    if (!user.isActive) {
+    if (user.isActive === false) {
       return res.status(401).json({ success: false, message: 'Your account has been deactivated. Contact support.' });
     }
 
     const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    if (!isMatch && user.password !== password) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials. Please check your ID/Email and password.' });
     }
 
     // Ensure universityIdString exists if university_rep

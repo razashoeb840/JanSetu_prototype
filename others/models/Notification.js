@@ -25,6 +25,8 @@ const notificationSchema = new mongoose.Schema({
       'new_collaboration',
       'proposal_submitted',
       'proposal_approved',
+      'proposal_accepted',
+      'collaboration_accepted',
       'milestone_completed',
       'milestone_delayed',
       'message',

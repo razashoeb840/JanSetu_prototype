@@ -94,6 +94,7 @@ app.use('/admin', express.static(path.join(__dirname, 'admin/dist'), staticOptio
 app.use('/industries', express.static(path.join(__dirname, 'industries/dist'), staticOptions));
 app.use('/industry', express.static(path.join(__dirname, 'industries/dist'), staticOptions));
 app.use('/others', express.static(path.join(__dirname, 'others/public'), staticOptions));
+app.use('/images', express.static(path.join(__dirname, 'others/public/images'), staticOptions));
 app.use(express.static(path.join(__dirname, 'others/public'), staticOptions));
 
 // No-cache helper for dashboard views to prevent back-button history leaks
@@ -129,6 +130,7 @@ app.use('/api/auth', require('./others/routes/auth'));
 app.use('/api/challenges', require('./others/routes/challenges'));
 app.use('/api/notifications', require('./others/routes/notifications'));
 app.use('/api/admin', require('./others/routes/admin'));
+app.use('/api/industry', require('./others/routes/industry'));
 app.use('/api', require('./university/api'));
 
 // Comments standalone route (for delete, like, flag)

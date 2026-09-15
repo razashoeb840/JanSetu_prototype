@@ -129,6 +129,7 @@ function App() {
         <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         <span>Solution Proposals</span>
         <span className="nav-badge" id="proposalsNavBadge" style={{"display":"none"}}>0</span>
+        <span className="notif-dot-pulse" id="proposalsNotifDot" style={{"display":"none","width":"8px","height":"8px","borderRadius":"50%","background":"#ef4444","boxShadow":"0 0 8px #ef4444","marginLeft":"auto","flexShrink":0}}></span>
       </button>
       <button className="nav-item" id="nav-aimatching" onClick={() => { showSection('aimatching') }}>
         <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>

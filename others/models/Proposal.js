@@ -114,6 +114,22 @@ const proposalSchema = new mongoose.Schema({
   reviewComment: {
     type: String,
     maxlength: 500
+  },
+  acceptanceStatus: {
+    type: String,
+    enum: ['pending', 'accepted', 'rejected'],
+    default: 'pending',
+    index: true
+  },
+  acceptedAt: {
+    type: Date
+  },
+  acceptedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  acceptedIndustryName: {
+    type: String
   }
 }, {
   timestamps: true

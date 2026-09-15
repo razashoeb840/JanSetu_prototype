@@ -73,28 +73,34 @@ router.use((req, res, next) => {
    ══════════════════════════════════════════ */
 
 function computeAcademicBrief(title, description, priority, category) {
-  const text = `${title} ${description} ${category}`.toLowerCase();
+  const cat = (category || '').toLowerCase();
+  const t = (title || '').toLowerCase();
+  const d = (description || '').toLowerCase();
+  const combined = `${cat} ${t} ${d}`;
   
-  // Discipline heuristic
-  let discipline = 'Computer Science';
-  if (text.match(/iot|sensor|embedded|circuit|hardware|solar|microgrid|energy|meter/)) {
-    discipline = 'Electronics & IoT';
-  } else if (text.match(/waste|road|bridge|pothole|water|flood|drainage|civil|building/)) {
-    discipline = 'Civil Engineering';
-  } else if (text.match(/health|patient|hospital|clinic|doctor|telemedicine|medical/)) {
-    discipline = 'Healthcare Technology';
-  } else if (text.match(/data|analytics|predict|ai|ml|vision|model|forecast/)) {
-    discipline = 'Data Science';
-  } else if (text.match(/crop|farm|soil|agriculture|irrigation/)) {
-    discipline = 'Agricultural Technology';
+  // Discipline heuristic supporting English, Hindi, and civic problem domains
+  let discipline = 'Interdisciplinary Engineering';
+  if (cat.includes('urban') || cat.includes('infra') || combined.match(/सड़क|पुल|मरम्मत|road|bridge|pothole|building|traffic|concrete|civil/)) {
+    discipline = 'Civil & Infrastructure Engineering';
+  } else if (cat.includes('water') || combined.match(/पानी|जल|water|drainage|flood|sewage|drinking|pipeline|leak/)) {
+    discipline = 'Water Resources & Environmental Engineering';
+  } else if (cat.includes('sanitat') || combined.match(/कचरा|waste|garbage|solid waste|recycling|sanitation/)) {
+    discipline = 'Environmental & Waste Management Engineering';
+  } else if (cat.includes('energy') || combined.match(/बिजली|solar|microgrid|energy|power|meter|electricity|lighting/)) {
+    discipline = 'Electrical & Renewable Energy Systems';
+  } else if (cat.includes('health') || combined.match(/अस्पताल|स्वास्थ्य|दवा|health|hospital|medical|patient|clinic/)) {
+    discipline = 'Biomedical & Healthcare Technology';
+  } else if (cat.includes('agri') || combined.match(/कृषि|किसान|crop|soil|irrigation|farm|agriculture/)) {
+    discipline = 'Agricultural & Rural Technology';
+  } else if (cat.includes('educat') || combined.match(/digital|learning|school|portal|ai|data|iot|cloud|app|smart/)) {
+    discipline = 'Computer Science & Information Technology';
   }
 
   // Project Type & Duration heuristic
   const isHighPriority = priority === 'urgent' || priority === 'high';
-  const isLengthy = (description || '').length > 100;
-  const projectType = (isHighPriority || isLengthy) ? 'Capstone Project' : 'Mini Project';
-  const duration = projectType === 'Capstone Project' ? '6-8 Months' : '3-5 Months';
-  const semesterFit = projectType === 'Capstone Project' ? 'Semester 7-8' : 'Semester 5-6';
+  const projectType = isHighPriority ? 'Capstone Project' : 'Applied Mini Project';
+  const duration = isHighPriority ? '6-8 Months' : '3-5 Months';
+  const semesterFit = isHighPriority ? 'Semester 7-8' : 'Semester 5-6';
 
   return { projectType, discipline, duration, semesterFit };
 }
@@ -391,51 +397,67 @@ function enrichProblemDoc(p) {
   obj.photoCount = photoAttachments.length || (before ? 1 : 0);
   obj.challengeId = obj.challengeId || obj.reportId || ('JH-2026-' + (Math.abs(((obj._id || '').toString()).charCodeAt(0) * 85 % 9000 + 1000)));
   obj.reportId = obj.challengeId;
-  obj.supportCount = obj.supportCount || 24;
-  obj.reportedAgo = obj.reportedAgo || 'Reported 1 days ago';
+  obj.supportCount = (Array.isArray(obj.upvotes) && obj.upvotes.length > 0) ? obj.upvotes.length : (obj.supportCount ?? 0);
+  obj.reportedAgo = obj.reportedAgo || 'Reported recently';
   obj.adminVerified = true;
   obj.submitterRole = obj.submitterRole || 'Primary Submitter';
-  obj.officialSlipId = obj.officialSlipId || `SLIP-${obj.challengeId}`;
-
-  // Handle both object and string location safely
+  // Ensure location is always a clean readable string
   if (obj.location && typeof obj.location === 'object') {
-    const locObj = obj.location;
-    if (!obj.fullLocation || !obj.fullLocation.district) {
-      obj.fullLocation = {
-        village: locObj.city || locObj.district || 'Chaibasa Village',
-        block: 'Chaibasa Block',
-        district: locObj.district || 'West Singhbhum',
-        state: locObj.state || 'Jharkhand',
-        pincode: locObj.pincode || '833201',
-        address: locObj.address || `${locObj.district || ''}, ${locObj.state || ''}`.replace(/^, |, $/g, ''),
-        coordinates: locObj.coordinates || { lat: 22.5544, lng: 85.8096 }
-      };
-    }
-    obj.location = `${locObj.district || locObj.city || ''}, ${locObj.state || ''}`.replace(/^, |, $/g, '') || locObj.address || 'West Singhbhum, Jharkhand';
-  } else {
-    const locParts = (typeof obj.location === 'string' ? obj.location : 'West Singhbhum, Jharkhand').split(',');
-    if (!obj.fullLocation || !obj.fullLocation.district) {
-      obj.fullLocation = {
-        village: 'Chaibasa Village',
-        block: 'Chaibasa Block',
-        district: locParts[0]?.trim() || 'West Singhbhum',
-        state: locParts[1]?.trim() || 'Jharkhand',
-        pincode: '833201',
-        address: `${locParts[0]?.trim() || 'West Singhbhum'}, ${locParts[1]?.trim() || 'Jharkhand'}`,
-        coordinates: { lat: 22.5544, lng: 85.8096 }
-      };
+    const locParts = [
+      obj.location.address,
+      obj.location.village,
+      obj.location.block,
+      obj.location.district,
+      obj.location.state
+    ].filter(Boolean);
+    obj.location = locParts.join(', ') || 'Jharkhand';
+  } else if (!obj.location) {
+    obj.location = 'Jharkhand';
+  }
+
+  // Ensure status maps smoothly for University Portal
+  if (obj.universityAssigned || obj.status === 'assigned' || obj.status === 'Assigned') {
+    obj.status = 'Assigned';
+  } else if (obj.status === 'in_progress' || obj.status === 'In Progress') {
+    obj.status = 'In Progress';
+  } else if (obj.status === 'resolved' || obj.status === 'Deployed') {
+    obj.status = 'Deployed';
+  } else if (!obj.status || ['submitted', 'under_review', 'validated', 'open', 'Open'].includes(obj.status)) {
+    obj.status = 'Open';
+  }
+
+  // Ensure impact is formatted
+  if (obj.priority && (!obj.impact || obj.impact === 'Medium')) {
+    const pLow = obj.priority.toLowerCase();
+    if (pLow === 'urgent' || pLow === 'high') obj.impact = 'High';
+    else if (pLow === 'low') obj.impact = 'Low';
+    else obj.impact = 'Medium';
+  }
+
+  // Real dynamic department based on problem category & title
+  if (!obj.department || obj.department === 'Department of Municipal Affairs' || obj.department === 'Department of Municipal Affairs & Infrastructure' || (obj.department.includes('Jal Shakti') && !cat.includes('water'))) {
+    if (cat.includes('water') || t.includes('पानी') || t.includes('जल') || t.includes('water') || t.includes('pipe') || t.includes('drain')) {
+      obj.department = 'Drinking Water & Sanitation Department (Jal Shakti)';
+    } else if (cat.includes('urban') || cat.includes('infra') || t.includes('सड़क') || t.includes('पुल') || t.includes('road') || t.includes('bridge') || t.includes('pothole')) {
+      obj.department = 'Road Construction & Urban Development Department';
+    } else if (cat.includes('sanitat') || cat.includes('environ') || t.includes('कचरा') || t.includes('waste') || t.includes('garbage')) {
+      obj.department = 'Urban Civic Body & Swachhata Mission';
+    } else if (cat.includes('energy') || cat.includes('technol') || t.includes('बिजली') || t.includes('solar') || t.includes('power')) {
+      obj.department = 'Energy Department & JREDA';
+    } else if (cat.includes('health') || t.includes('अस्पताल') || t.includes('स्वास्थ्य') || t.includes('hospital')) {
+      obj.department = 'Department of Health, Medical Education & Family Welfare';
+    } else if (cat.includes('agri') || t.includes('कृषि') || t.includes('किसान') || t.includes('crop')) {
+      obj.department = 'Department of Agriculture & Sugarcane Development';
+    } else if (cat.includes('educat') || t.includes('स्कूल') || t.includes('शिक्षा') || t.includes('school') || t.includes('digital')) {
+      obj.department = 'School Education & Literacy Department';
+    } else {
+      obj.department = 'Department of Urban Development & Governance';
     }
   }
 
-  if (!obj.authority) {
-    obj.authority = 'Assigned Taskforce: National Institute of Technology Jamshedpur';
-  }
-
-  if (!obj.department) {
-    obj.department = cat.includes('health') ? 'Department of Health & Family Welfare' :
-      cat.includes('water') ? 'Jal Shakti & Rural Drinking Water Mission' :
-      cat.includes('rural') ? 'Department of Rural Development & Tribal Welfare' :
-      'Department of Municipal Affairs & Infrastructure';
+  // Real academic brief
+  if (!obj.academicBrief || !obj.academicBrief.discipline || (obj.academicBrief.discipline === 'Computer Science' && !cat.includes('educat') && !cat.includes('technol'))) {
+    obj.academicBrief = computeAcademicBrief(obj.title, obj.description, obj.priority, obj.category);
   }
 
   // Populate evidenceMedia from real citizen photo attachments
@@ -493,28 +515,42 @@ router.get('/problems', async (req, res) => {
     }
 
     // Strict University Assignment rule:
-    // If a problem has universityAssigned, it is ONLY visible to that particular university!
+    // If a problem has universityAssigned, it is ONLY visible to members of that particular university!
     if (callerUniv || callerUid) {
-      const allowedConditions = [
-        { universityAssigned: null },
-        { universityAssigned: '' },
-        { universityAssigned: { $exists: false } }
-      ];
+      const myUnivConditions = [];
       if (callerUniv) {
-        allowedConditions.push({ universityAssigned: callerUniv });
+        myUnivConditions.push({ universityAssigned: callerUniv });
         const shortKeyword = callerUniv.split(' ')[0];
         if (shortKeyword && shortKeyword.length > 2) {
-          allowedConditions.push({ universityAssigned: new RegExp(shortKeyword, 'i') });
+          myUnivConditions.push({ universityAssigned: new RegExp(shortKeyword, 'i') });
         }
       }
       if (callerUid) {
-        allowedConditions.push({ assignedUniversityUid: callerUid });
+        myUnivConditions.push({ assignedUniversityUid: callerUid });
       }
 
-      if (query.$or) {
-        query = { $and: [ { $or: query.$or }, { $or: allowedConditions } ] };
+      if (req.query.assignedOnly === 'true' || req.query.myProjects === 'true') {
+        // Exclusively show challenges assigned to THIS university
+        if (query.$or) {
+          query = { $and: [{ $or: query.$or }, { $or: myUnivConditions }] };
+        } else {
+          query.$or = myUnivConditions;
+        }
       } else {
-        query.$or = allowedConditions;
+        // Show challenges assigned to THIS university + unassigned open challenges.
+        // STRICTLY EXCLUDE challenges assigned to any other university!
+        const allowedConditions = [
+          { universityAssigned: null },
+          { universityAssigned: '' },
+          { universityAssigned: { $exists: false } },
+          ...myUnivConditions
+        ];
+
+        if (query.$or) {
+          query = { $and: [ { $or: query.$or }, { $or: allowedConditions } ] };
+        } else {
+          query.$or = allowedConditions;
+        }
       }
     }
 

@@ -7737,3 +7737,184 @@ html, body {
   background: #cbd5e1 !important;
   border-radius: 4px !important;
 }
+
+/* ============================================================
+   RESPONSIVE COLLABORATIONS & WORKSPACE STYLES
+   ============================================================ */
+
+.workspace-tabs {
+  display: flex !important;
+  gap: 6px !important;
+  background: #f1f5f9 !important;
+  padding: 6px !important;
+  border-radius: 12px !important;
+  overflow-x: auto !important;
+  white-space: nowrap !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #cbd5e1 transparent !important;
+}
+
+.workspace-tabs::-webkit-scrollbar {
+  height: 5px !important;
+}
+
+.workspace-tabs::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 99px !important;
+}
+
+.ws-tab-btn {
+  padding: 8px 16px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.ws-tab-btn:hover {
+  color: #0f172a !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+}
+
+.ws-tab-btn.active {
+  color: #002D62 !important;
+  background: #ffffff !important;
+  font-weight: 850 !important;
+  box-shadow: 0 2px 6px rgba(0, 45, 98, 0.1) !important;
+}
+
+/* Collab Cards Selector */
+.collab-select-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 6px rgba(0, 45, 98, 0.03);
+}
+
+.collab-select-card:hover {
+  transform: translateY(-2px);
+  border-color: #93c5fd;
+  box-shadow: 0 8px 24px rgba(0, 45, 98, 0.08);
+}
+
+.collab-select-card.active-collab {
+  border-color: #002D62 !important;
+  background: linear-gradient(to bottom, #ffffff, #f0f7ff) !important;
+  box-shadow: 0 6px 20px rgba(0, 45, 98, 0.12) !important;
+  outline: 2px solid #002D62 !important;
+}
+
+/* Hero Card (Image 4 replica with full responsive design) */
+.collab-hero-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0, 45, 98, 0.05);
+  display: grid;
+  grid-template-columns: 130px 1.6fr 1.2fr 1fr;
+  gap: 22px;
+  align-items: center;
+}
+
+.collab-hero-card .hero-col-border {
+  border-left: 1.5px solid #f1f5f9;
+  padding-left: 20px;
+}
+
+@media (max-width: 1080px) {
+  .collab-hero-card {
+    grid-template-columns: 120px 1.4fr 1fr;
+    gap: 16px;
+  }
+  .collab-hero-card .hero-progress-col {
+    grid-column: 1 / -1;
+    border-left: none !important;
+    border-top: 1.5px solid #f1f5f9;
+    padding-left: 0 !important;
+    padding-top: 14px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .collab-hero-card {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+  .collab-hero-card .hero-col-border {
+    border-left: none !important;
+    border-top: 1.5px solid #f1f5f9;
+    padding-left: 0 !important;
+    padding-top: 14px;
+  }
+  .collab-hero-card .hero-progress-col {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .collab-hero-thumb {
+    width: 100% !important;
+    height: 160px !important;
+  }
+}
+
+/* Two Column Layout (Pilot Testing Content) */
+.collab-two-col-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .collab-two-col-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+}
+
+/* 2x2 Subgrid inside Left Column */
+.collab-subgrid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 680px) {
+  .collab-subgrid-2col {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+}
+
+/* Stepper horizontal scroll on mobile */
+.proto-pipeline-container {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin !important;
+}
+.proto-pipeline-container::-webkit-scrollbar {
+  height: 4px !important;
+}
+.proto-pipeline-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 99px !important;
+}
+

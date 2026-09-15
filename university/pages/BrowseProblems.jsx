@@ -1615,14 +1615,36 @@ function ProblemCard({ problem, onTwinClick, onDetailClick, onFork, onStartProje
       )}
 
       {/* Citizen Submitter & Supporters Strip */}
+      {/* Citizen Submitter & Supporters Strip */}
       <div className="bp-card-submitter-row">
         <span className="bp-card-submitter-name">
           <CheckCircle2 size={12} color="#16A34A" /> {problem.submitterContact?.name || 'Citizen Report'}
         </span>
         <span className="bp-card-backers-count">
-          <Users size={12} /> {problem.supportCount || 24} Verified Backers
+          <Users size={12} /> {(() => {
+            const count = (problem.upvotes && Array.isArray(problem.upvotes)) 
+              ? problem.upvotes.length 
+              : (problem.supportCount !== undefined && problem.supportCount !== null ? problem.supportCount : 0);
+            return `${count} ${count === 1 ? 'Verified Backer' : 'Verified Backers'}`;
+          })()}
         </span>
       </div>
+
+      {/* Assignment Badges if Assigned by Admin */}
+      {(problem.universityAssigned || problem.industryAssigned) && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '4px 0 2px' }}>
+          {problem.universityAssigned && (
+            <span style={{ fontSize: 10, fontWeight: 800, color: '#1E40AF', background: '#EFF6FF', border: '1px solid #BFDBFE', padding: '2px 7px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              🎓 Assigned: {problem.universityAssigned} {problem.assignedUniversityUid ? `[${problem.assignedUniversityUid}]` : ''}
+            </span>
+          )}
+          {problem.industryAssigned && (
+            <span style={{ fontSize: 10, fontWeight: 800, color: '#047857', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '2px 7px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              🏭 Industry: {problem.industryAssigned} {problem.assignedIndustryIid ? `[${problem.assignedIndustryIid}]` : ''}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Title */}
       <h3 className="bp-title">{problem.title}</h3>
@@ -1630,7 +1652,7 @@ function ProblemCard({ problem, onTwinClick, onDetailClick, onFork, onStartProje
       {/* Civic Department & Ground Video Pill */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap', margin: '6px 0 8px' }}>
         <div className="bp-card-dept-tag" style={{ margin: 0 }}>
-          🏛️ {problem.department || 'Department of Municipal Affairs'}
+          🏛️ {problem.department || 'Department of Urban Development & Infrastructure'}
         </div>
         {problem.videoUrl ? (
           <span
@@ -1664,22 +1686,30 @@ function ProblemCard({ problem, onTwinClick, onDetailClick, onFork, onStartProje
         <GraduationCap style={{ width: 12, height: 12, color: '#3B82F6', flexShrink: 0 }} />
         <span className="bp-brief-type">{problem.academicBrief?.projectType || 'Capstone Project'}</span>
         <span style={{ color: '#CBD5E1' }}>·</span>
-        <span className="bp-brief-disc">{problem.academicBrief?.discipline || 'Engineering'}</span>
+        <span className="bp-brief-disc">{problem.academicBrief?.discipline || 'Civil & Infrastructure Engineering'}</span>
         <span style={{ color: '#CBD5E1' }}>·</span>
         <span className="bp-brief-dur">{problem.academicBrief?.duration || '6-8 Months'}</span>
       </div>
 
-      {/* Footer: Avatars + Interested + Actions */}
+      {/* Footer: Real Interested Status + Actions */}
       <div className="bp-footer" style={{ marginTop: 'auto' }}>
         <div className="bp-footer-left">
-          <div className="bp-footer-avatars">
-            {[0, 1, 2, 3].map(i => (
-              <div key={i} className="bp-footer-avatar" style={{ background: avatarColors[i] }}>
-                {String.fromCharCode(65 + i)}
+          {problem.interested > 0 ? (
+            <>
+              <div className="bp-footer-avatars">
+                {Array.from({ length: Math.min(problem.interested, 3) }).map((_, i) => (
+                  <div key={i} className="bp-footer-avatar" style={{ background: avatarColors[i % avatarColors.length] }}>
+                    {String.fromCharCode(65 + i)}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <span className="bp-interested">{problem.interested || 18} interested</span>
+              <span className="bp-interested">{problem.interested} {problem.interested === 1 ? 'interested team' : 'interested teams'}</span>
+            </>
+          ) : (
+            <span style={{ fontSize: 10.5, fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '3px 8px', borderRadius: 6, border: '1px solid #A7F3D0' }}>
+              ✨ Open for Solutions
+            </span>
+          )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
@@ -1727,6 +1757,7 @@ export default function BrowseProblems() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [collabOnly, setCollabOnly] = useState(false);
   const [forkOnly, setForkOnly] = useState(false);
+  const [assignedOnly, setAssignedOnly] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('Latest');
   const [twinModal, setTwinModal] = useState(null);
@@ -1735,14 +1766,28 @@ export default function BrowseProblems() {
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Fetch problems from API, keeping circular loader active until backend completes
+  // Fetch problems from API with authenticated identity scoping
   useEffect(() => {
     if (typeof window !== 'undefined' && typeof window.showJanSetuCivicLoader === 'function') {
       window.showJanSetuCivicLoader('University Innovation Cell: Loading Civic Challenges & Analytics Data...', { autoDismiss: false });
     }
     setLoading(true);
 
-    fetch('/api/problems')
+    let user = null;
+    try { user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('is_user')); } catch(e) {}
+    const token = localStorage.getItem('token') || localStorage.getItem('is_token') || '';
+    const univ = user?.institution || user?.organization || '';
+    const uid = user?.uniqueId || user?.universityIdString || '';
+
+    let url = '/api/problems';
+    const params = [];
+    if (univ) params.push(`institution=${encodeURIComponent(univ)}`);
+    if (uid) params.push(`uid=${encodeURIComponent(uid)}`);
+    if (params.length > 0) url += '?' + params.join('&');
+
+    fetch(url, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    })
       .then(res => res.json())
       .then(data => {
         const list = Array.isArray(data) ? data : (data && Array.isArray(data.data) ? data.data : []);
@@ -1825,12 +1870,36 @@ export default function BrowseProblems() {
     setActiveCategory('All');
     setCollabOnly(false);
     setForkOnly(false);
+    setAssignedOnly(false);
   };
 
   const filtered = useMemo(() => {
+    let user = null;
+    try { user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('is_user')); } catch(e) {}
+    const userUniv = (user?.institution || user?.organization || '').toLowerCase().trim();
+    const userUid = (user?.uniqueId || user?.universityIdString || '').toLowerCase().trim();
+
     return problems.filter((p) => {
+      const pUniv = (p.universityAssigned || '').toLowerCase().trim();
+      const pUid = (p.assignedUniversityUid || '').toLowerCase().trim();
+      const isAssignedToMe = Boolean(
+        (userUniv && pUniv && (pUniv.includes(userUniv.split(' ')[0]) || userUniv.includes(pUniv.split(' ')[0]))) ||
+        (userUid && pUid && pUid === userUid)
+      );
+      const isAssignedToOther = Boolean(pUniv && !isAssignedToMe);
+
+      // Strict university assignment: NEVER show challenges assigned to another university!
+      if (isAssignedToOther) return false;
+
+      // Filter: Show only challenges assigned to my university
+      if (assignedOnly && !isAssignedToMe) return false;
+
       const st = (p.status || '').toLowerCase();
-      if (st === 'assigned' || st === 'in_progress' || st === 'resolved') return false;
+      if (st === 'resolved' || st === 'rejected') return false;
+
+      // In general feed, don't show other assigned problems; if assigned to me, always allow
+      if (st === 'assigned' && !isAssignedToMe && !assignedOnly) return false;
+
       if (activeCategory !== 'All' && p.category !== activeCategory) return false;
       if (discipline !== 'All Disciplines' && p.academicBrief?.discipline !== discipline) return false;
       if (difficulty === 'High Impact' && p.impact !== 'High') return false;
@@ -1840,7 +1909,7 @@ export default function BrowseProblems() {
       if (forkOnly && !p.forkable) return false;
       return true;
     });
-  }, [problems, activeCategory, discipline, difficulty, collabOnly, forkOnly]);
+  }, [problems, activeCategory, discipline, difficulty, collabOnly, forkOnly, assignedOnly]);
 
   const hasFilters = discipline !== 'All Disciplines' || difficulty !== 'All Levels' || duration !== 'All Durations' || location !== 'All India' || activeCategory !== 'All' || collabOnly || forkOnly;
 
@@ -1970,15 +2039,32 @@ export default function BrowseProblems() {
           </div>
         </div>
 
-        {/* Row 2: Collab toggle + Sort */}
-        <div className="bp-filter-row2">
+        {/* Row 2: Assigned Only + Collab toggle + Sort */}
+        <div className="bp-filter-row2" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <label
+            className="bp-collab-toggle"
+            onClick={() => setAssignedOnly(!assignedOnly)}
+            style={{
+              background: assignedOnly ? '#EFF6FF' : '#FFFFFF',
+              border: assignedOnly ? '1.5px solid #2563EB' : '1px solid #CBD5E1',
+              padding: '6px 14px', borderRadius: 8, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8
+            }}
+          >
+            <div className="bp-toggle-track" data-active={assignedOnly}>
+              <div className="bp-toggle-thumb" />
+            </div>
+            <span style={{ fontWeight: assignedOnly ? 800 : 600, color: assignedOnly ? '#1D4ED8' : '#334155' }}>
+              🎓 Assigned Exclusively to My University
+            </span>
+          </label>
+
           <label className="bp-collab-toggle" onClick={() => setCollabOnly(!collabOnly)}>
             <div className="bp-toggle-track" data-active={collabOnly}>
               <div className="bp-toggle-thumb" />
             </div>
             <span>Show only collaboration-ready problems</span>
           </label>
-          <div className="bp-sort-area">
+          <div className="bp-sort-area" style={{ marginLeft: 'auto' }}>
             <span className="bp-sort-label">Sort by: {sortBy}</span>
             <ChevronDown style={{ width: 12, height: 12, color: '#94A3B8' }} />
           </div>

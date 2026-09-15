@@ -285,12 +285,20 @@ const challengeSchema = new mongoose.Schema({
     size: String,
     timestamp: String
   }],
+  // Unique problem fields merged for complete university & admin portal compatibility
+  reportId: { type: String, default: '' },
+  reportedAgo: { type: String, default: 'Reported recently' },
+  adminVerified: { type: Boolean, default: true },
+  submitterRole: { type: String, default: 'Primary Citizen Submitter' },
+  fullLocation: { type: mongoose.Schema.Types.Mixed },
+  beforeImage: { type: String, default: '' },
+  afterImage: { type: String, default: '' },
+  sourceCitizenProblemId: { type: mongoose.Schema.Types.ObjectId, ref: 'Challenge' },
   // Meta
   viewCount: { type: Number, default: 0 },
   isPublic: { type: Boolean, default: true },
   isFeatured: { type: Boolean, default: false }
 }, {
-  collection: 'problems',
   timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
@@ -317,5 +325,10 @@ challengeSchema.virtual('isOverdue').get(function() {
   return Date.now() > this.deadline && this.status !== 'resolved' && this.status !== 'closed';
 });
 
-module.exports = mongoose.models.Challenge || mongoose.model('Challenge', challengeSchema);
+const ChallengeModel = mongoose.models.Challenge || mongoose.model('Challenge', challengeSchema);
+if (!mongoose.models.Problem) {
+  try { mongoose.model('Problem', challengeSchema); } catch (e) {}
+}
+
+module.exports = ChallengeModel;
 

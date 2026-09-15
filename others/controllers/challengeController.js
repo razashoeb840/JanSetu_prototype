@@ -22,6 +22,21 @@ exports.getChallenges = async (req, res, next) => {
     let query = {};
 
     // Role-based filtering
+    let callerOrg = (req.query.organization || req.query.company || req.query.industry || '').trim();
+    let callerIid = (req.query.iid || '').trim();
+    let callerUniv = (req.query.institution || req.query.university || req.query.univ || '').trim();
+    let callerUid = (req.query.uid || '').trim();
+
+    if (!req.user && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(req.headers.authorization.split(' ')[1], process.env.JWT_SECRET || 'your_strong_jwt_secret_key_here');
+        if (decoded && decoded.id) {
+          req.user = await User.findById(decoded.id).lean();
+        }
+      } catch(e) {}
+    }
+
     if (req.user) {
       if (req.user.role === 'citizen') {
         if (myOnly === 'true') {
@@ -32,35 +47,71 @@ exports.getChallenges = async (req, res, next) => {
         }
       } else if (req.user.role === 'university_rep' || (req.user.uniqueId && req.user.uniqueId.startsWith('U'))) {
         // Only visible to members of the particular university assigned
-        const uName = req.user.institution || req.user.organization;
-        const uUid = req.user.uniqueId || req.user.universityIdString;
-        const uId = req.user.universityId;
-        const univConditions = [];
-        if (uName) univConditions.push({ universityAssigned: uName }, { universityAssigned: new RegExp(uName.split(' ')[0], 'i') });
-        if (uUid) univConditions.push({ assignedUniversityUid: uUid });
-        if (uId) univConditions.push({ assignedUniversity: uId });
-        if (univConditions.length > 0) {
-          query.$or = univConditions;
-        } else {
-          query.universityAssigned = { $ne: null };
-        }
+        callerUniv = callerUniv || req.user.institution || req.user.organization || '';
+        callerUid = callerUid || req.user.uniqueId || req.user.universityIdString || '';
       } else if (req.user.role === 'industry_rep' || (req.user.uniqueId && req.user.uniqueId.startsWith('I'))) {
         // Only visible to members of the particular industry assigned
-        const iName = req.user.organization || req.user.name;
-        const iIid = req.user.uniqueId || req.user.industryIdString;
-        const iId = req.user.industryPartnerId;
-        const indConditions = [];
-        if (iName) indConditions.push({ industryAssigned: iName }, { industryAssigned: new RegExp(iName.split(' ')[0], 'i') });
-        if (iIid) indConditions.push({ assignedIndustryIid: iIid });
-        if (iId) indConditions.push({ assignedIndustry: iId }, { 'industryCollaborators.partner': iId });
-        if (indConditions.length > 0) {
-          query.$or = indConditions;
-        } else {
-          query.industryAssigned = { $ne: null };
+        callerOrg = callerOrg || req.user.organization || req.user.name || '';
+        callerIid = callerIid || req.user.uniqueId || req.user.industryIdString || '';
+      }
+    }
+
+    // Apply strict Industry scoping
+    if (callerOrg || callerIid) {
+      const indConditions = [];
+      if (callerOrg) {
+        indConditions.push({ industryAssigned: callerOrg });
+        const orgKeyword = callerOrg.split(' ')[0];
+        if (orgKeyword && orgKeyword.length > 2) {
+          indConditions.push({ industryAssigned: new RegExp(orgKeyword, 'i') });
         }
       }
-    } else {
-      // Public: show all active public challenges
+      if (callerIid) indConditions.push({ assignedIndustryIid: callerIid });
+
+      if (req.query.assignedOnly === 'true' || req.query.myCommitments === 'true' || myOnly === 'true') {
+        query.$or = indConditions;
+      } else {
+        const allowedForInd = [
+          { industryAssigned: null },
+          { industryAssigned: '' },
+          { industryAssigned: { $exists: false } },
+          ...indConditions
+        ];
+        if (query.$or) {
+          query = { $and: [{ $or: query.$or }, { $or: allowedForInd }] };
+        } else {
+          query.$or = allowedForInd;
+        }
+      }
+    } else if (callerUniv || callerUid) {
+      // Apply strict University scoping
+      const univConditions = [];
+      if (callerUniv) {
+        univConditions.push({ universityAssigned: callerUniv });
+        const univKeyword = callerUniv.split(' ')[0];
+        if (univKeyword && univKeyword.length > 2) {
+          univConditions.push({ universityAssigned: new RegExp(univKeyword, 'i') });
+        }
+      }
+      if (callerUid) univConditions.push({ assignedUniversityUid: callerUid });
+
+      if (req.query.assignedOnly === 'true' || req.query.myProjects === 'true' || myOnly === 'true') {
+        query.$or = univConditions;
+      } else {
+        const allowedForUniv = [
+          { universityAssigned: null },
+          { universityAssigned: '' },
+          { universityAssigned: { $exists: false } },
+          ...univConditions
+        ];
+        if (query.$or) {
+          query = { $and: [{ $or: query.$or }, { $or: allowedForUniv }] };
+        } else {
+          query.$or = allowedForUniv;
+        }
+      }
+    } else if (!req.user || req.user.role === 'citizen') {
+      // Public / Citizen
       query.isPublic = true;
       query.status = { $nin: ['draft', 'rejected'] };
     }
@@ -88,6 +139,10 @@ exports.getChallenges = async (req, res, next) => {
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
+    const sortFinal = (callerOrg || callerIid) 
+      ? { industryAssigned: -1, createdAt: -1 } 
+      : ((callerUniv || callerUid) ? { universityAssigned: -1, createdAt: -1 } : sort);
+
     const [challenges, total] = await Promise.all([
       Challenge.find(query)
         .select('-resolutionProof.beforeImage -resolutionProof.afterImage -needMoreInfo.responses.mediaUrls -chatMessages')
@@ -95,7 +150,7 @@ exports.getChallenges = async (req, res, next) => {
         .populate('assignedUniversity', 'name shortName logo')
         .populate('assignedBy', 'name')
         .populate('statusHistory.changedBy', 'name email role')
-        .sort(sort)
+        .sort(sortFinal)
         .skip(skip)
         .limit(limitNum)
         .lean(),
@@ -682,12 +737,25 @@ exports.assignChallenge = async (req, res, next) => {
     const { universityId, deadline, note, notes } = req.body;
     const assignmentNote = note || notes || '';
 
-    const [challenge, university] = await Promise.all([
-      Challenge.findById(req.params.id).populate('submittedBy'),
-      University.findById(universityId).populate('representatives', 'name email')
-    ]);
-
+    const challenge = await Challenge.findById(req.params.id).populate('submittedBy');
     if (!challenge) return res.status(404).json({ success: false, message: 'Challenge not found' });
+
+    let university = null;
+    const targetUnivId = universityId || req.body.assignedUniversity || req.body.univId;
+    if (targetUnivId && mongoose.Types.ObjectId.isValid(targetUnivId)) {
+      university = await University.findById(targetUnivId).populate('representatives', 'name email');
+    }
+    if (!university) {
+      const queryOr = [];
+      const uidVal = (req.body.assignedUniversityUid || req.body.uid || '').trim();
+      const nameVal = (req.body.universityAssigned || req.body.university || '').trim();
+      if (uidVal) queryOr.push({ uid: uidVal });
+      if (nameVal) queryOr.push({ name: new RegExp(nameVal.split(',')[0].trim(), 'i') });
+      if (queryOr.length > 0) {
+        university = await University.findOne({ $or: queryOr }).populate('representatives', 'name email');
+      }
+    }
+
     if (!university) return res.status(404).json({ success: false, message: 'University not found' });
 
     const oldStatus = challenge.status;
@@ -1580,12 +1648,25 @@ exports.assignIndustryPartner = async (req, res, next) => {
   try {
     const { partnerId, role, note } = req.body;
 
-    const [challenge, partner] = await Promise.all([
-      Challenge.findById(req.params.id),
-      IndustryPartner.findById(partnerId)
-    ]);
-
+    const challenge = await Challenge.findById(req.params.id);
     if (!challenge) return res.status(404).json({ success: false, message: 'Challenge not found' });
+
+    let partner = null;
+    const targetPartnerId = partnerId || req.body.industryPartnerId || req.body.industryId;
+    if (targetPartnerId && mongoose.Types.ObjectId.isValid(targetPartnerId)) {
+      partner = await IndustryPartner.findById(targetPartnerId);
+    }
+    if (!partner) {
+      const queryOr = [];
+      const iidVal = (req.body.assignedIndustryIid || req.body.iid || '').trim();
+      const nameVal = (req.body.industryAssigned || req.body.organization || req.body.name || '').trim();
+      if (iidVal) queryOr.push({ iid: iidVal });
+      if (nameVal) queryOr.push({ name: new RegExp(nameVal.split(' ')[0].trim(), 'i') });
+      if (queryOr.length > 0) {
+        partner = await IndustryPartner.findOne({ $or: queryOr });
+      }
+    }
+
     if (!partner) return res.status(404).json({ success: false, message: 'Industry Partner not found' });
 
     // Prevent duplicate assignment

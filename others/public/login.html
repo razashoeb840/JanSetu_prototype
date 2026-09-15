@@ -1745,14 +1745,14 @@
             <!-- Field 1: Email / Mobile / Citizen ID -->
             <div class="form-group">
               <label class="form-label" for="loginIdentifier">
-                Email / Mobile / Citizen ID (e.g. C4819) / University ID <span class="req-star">*</span>
+                Email / Unique ID (UID / CID / IID / ADM) / Mobile <span class="req-star">*</span>
               </label>
               <div class="input-wrap">
                 <input 
                   type="text" 
                   class="input-field" 
                   id="loginIdentifier" 
-                  placeholder="Enter email, citizen ID or phone" 
+                  placeholder="e.g. U1010, UID-1010, C4819, CID-4819, I1001, ADM-001, or Email" 
                   required 
                   autocomplete="username"
                 />
@@ -2131,32 +2131,20 @@
                 </div>
               </div>
 
-              <!-- Faculty/Student ID & Innovation Domain -->
-              <div class="form-row-2col">
-                <div class="form-group">
-                  <label class="form-label" for="regUnivFacultyId">Faculty / Student ID <span class="req-star">*</span></label>
-                  <div class="input-wrap">
-                    <input type="text" class="input-field" id="regUnivFacultyId" placeholder="e.g. FAC-4819 or U4819" value="FAC-4819" required />
-                    <span class="input-icon-left">
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="13" y2="12"/></svg>
-                    </span>
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label" for="regUnivDomain">R&amp;D Expertise Domain <span class="req-star">*</span></label>
-                  <div class="input-wrap">
-                    <select class="input-field" id="regUnivDomain">
-                      <option value="Urban Infrastructure & Roads" selected>Urban Infrastructure &amp; Roads</option>
-                      <option value="Water Quality & Drainage">Water Quality &amp; Drainage</option>
-                      <option value="Clean Energy & Solar">Clean Energy &amp; Solar</option>
-                      <option value="Public Healthcare & Sanitation">Public Healthcare &amp; Sanitation</option>
-                      <option value="AI & Smart Governance">AI &amp; Smart Governance</option>
-                    </select>
-                    <span class="input-icon-left">
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="18" x2="15" y2="18"/><circle cx="12" cy="12" r="3"/></svg>
-                    </span>
-                  </div>
+              <!-- R&D Expertise Domain -->
+              <div class="form-group">
+                <label class="form-label" for="regUnivDomain">R&amp;D Expertise Domain <span class="req-star">*</span></label>
+                <div class="input-wrap">
+                  <select class="input-field" id="regUnivDomain">
+                    <option value="Urban Infrastructure & Roads" selected>Urban Infrastructure &amp; Roads</option>
+                    <option value="Water Quality & Drainage">Water Quality &amp; Drainage</option>
+                    <option value="Clean Energy & Solar">Clean Energy &amp; Solar</option>
+                    <option value="Public Healthcare & Sanitation">Public Healthcare &amp; Sanitation</option>
+                    <option value="AI & Smart Governance">AI &amp; Smart Governance</option>
+                  </select>
+                  <span class="input-icon-left">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="18" x2="15" y2="18"/><circle cx="12" cy="12" r="3"/></svg>
+                  </span>
                 </div>
               </div>
             </div>
@@ -2838,15 +2826,12 @@
 
         const department = document.getElementById('regUnivDepartment').value;
         const designation = document.getElementById('regUnivDesignation').value;
-        const facultyId = document.getElementById('regUnivFacultyId') ? document.getElementById('regUnivFacultyId').value.trim() : '';
         const expertiseDomain = document.getElementById('regUnivDomain') ? document.getElementById('regUnivDomain').value : '';
         roleSpecificBody = {
           institution,
           organization: institution,
           department,
           designation,
-          universityIdString: facultyId,
-          facultyId,
           expertiseDomain,
           city: customCity,
           isNewUniversity,
@@ -2954,7 +2939,8 @@
           name: 'Rajesh Mahto',
           token: 'demo_citizen_jwt_' + Date.now(),
           id: '67cb56000000000000000002',
-          citizenId: 'C4819',
+          uniqueId: 'CID-4819',
+          citizenId: 'CID-4819',
           email: 'rajesh@gmail.com',
           phone: '9431100003',
           address: { district: 'Ranchi', state: 'Jharkhand' }
@@ -2964,7 +2950,8 @@
           name: 'Kavya Sharma',
           token: 'demo_citizen_jwt_' + Date.now(),
           id: '67cb56000000000000000003',
-          citizenId: 'C1002',
+          uniqueId: 'CID-1002',
+          citizenId: 'CID-1002',
           email: 'kavya@gmail.com',
           phone: '9431100002',
           address: { district: 'Dhanbad', state: 'Jharkhand' }
@@ -2974,7 +2961,8 @@
           name: 'Dr. Rajesh Sharma',
           token: 'demo_univ_jwt_' + Date.now(),
           id: '67cb56000000000000000004',
-          universityIdString: 'U4819',
+          uniqueId: 'UID-1001',
+          universityIdString: 'UID-1001',
           institution: 'IIT Delhi / BIT Mesra',
           department: 'Computer Science & Engineering',
           designation: 'Professor & Research Guide',
@@ -2985,12 +2973,21 @@
           name: 'Tata Steel CSR',
           token: 'demo_industry_jwt_' + Date.now(),
           id: '67cb56000000000000000005',
+          uniqueId: 'IID-1001',
+          industryIdString: 'IID-1001',
           organization: 'Tata Steel Foundation',
           department: 'Steel & Heavy Manufacturing',
           designation: 'Head of CSR & Sustainability',
           email: 'tata@steel.com'
         }
       };
+
+      // Add alias lookups for Unique IDs (all case/format variants)
+      ['cid-4819', 'c4819', 'cid4819', 'c-4819', '4819', '9431100003'].forEach(k => { DEMO_DB[k] = DEMO_DB['rajesh@gmail.com']; });
+      ['cid-1002', 'c1002', 'cid1002', 'c-1002', '1002', '9431100002'].forEach(k => { DEMO_DB[k] = DEMO_DB['kavya@gmail.com']; });
+      ['uid-1001', 'u1001', 'uid1001', 'u-1001', 'u4819', 'uid-4819', 'uid4819', '1001'].forEach(k => { DEMO_DB[k] = DEMO_DB['rajesh@iitjharkhand.ac.in']; });
+      ['iid-1001', 'i1001', 'iid1001', 'i-1001'].forEach(k => { DEMO_DB[k] = DEMO_DB['tata@steel.com']; });
+      ['adm-001', 'adm001', 'admin', 'adm', 'adm-1', 'adm1', '001'].forEach(k => { DEMO_DB[k] = DEMO_DB['admin@innovatesphere.in']; });
 
       const matched = DEMO_DB[lowerId];
       if (matched) {

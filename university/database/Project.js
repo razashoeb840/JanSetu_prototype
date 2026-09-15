@@ -40,8 +40,10 @@ const projectSchema = new mongoose.Schema({
     website: String,
     fundingCommitted: { type: Number, default: 0 },
     fundingStatus: { type: String, default: 'Committed' },
+    acceptanceStatus: { type: String, default: 'pending' },
     capabilitiesProvided: [String],
-    assignedAt: Date
+    assignedAt: Date,
+    acceptedAt: Date
   },
   industryMentor: {
     name: String,
