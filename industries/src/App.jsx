@@ -5100,15 +5100,19 @@ console.log('JanSetu Comprehensive Handlers & Real-Time Engine Loaded Successful
               </div>
             </div>
 
-            {/* 4. Verified Documents & MoU Blueprint */}
-            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a' }}>📄 Verified Tripartite Proposal &amp; Engineering Blueprint</div>
-                <div id="wsModalDocSub" style={{ fontSize: '11.5px', color: '#64748b' }}>Signed off with University Faculty &amp; State Innovation Authority</div>
+            {/* 4. Verified Documents & Proposal Blueprint */}
+            <div id="wsModalDocContainer" style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#eff6ff', border: '1px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>📄</div>
+                <div>
+                  <div id="wsModalDocName" style={{ fontSize: '13.5px', fontWeight: '800', color: '#0f172a' }}>1789321028462_129213_JanSetu_____Citizen_Dashboard.pdf</div>
+                  <div id="wsModalDocSub" style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px' }}>835.8 KB · Uploaded by IIT Delhi on 14 Sep 2026</div>
+                </div>
               </div>
-              <button id="wsModalDocLink" type="button" onClick={() => window.downloadProposalBlueprint && window.downloadProposalBlueprint()} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#002D62', border: 'none', padding: '9px 18px', borderRadius: '8px', fontSize: '12.5px', fontWeight: '800', color: '#ffffff', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,45,98,0.25)' }}>
-                <span>📥</span> Download Approved Proposal (.pdf)
-              </button>
+              <a id="wsModalDocLink" href="#" target="_blank" rel="noopener noreferrer" download style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#002D62', border: 'none', padding: '9px 20px', borderRadius: '8px', fontSize: '12.5px', fontWeight: '800', color: '#ffffff', textDecoration: 'none', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,45,98,0.25)' }}>
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Download Document</span>
+              </a>
             </div>
 
             {/* 5. Stakeholder Communication Stream */}

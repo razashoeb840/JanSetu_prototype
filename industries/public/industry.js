@@ -713,11 +713,35 @@ window.populateCollaborationWorkspace = function(c) {
     mStatus.textContent = (c.updates && c.updates[0] && c.updates[0].text) || c.feedbackQuote || 'System operating within optimal parameters at field site. Zero fault triggers logged.';
   }
 
-  // Document in Modal
+  // Document in Modal (1:1 with Admin Proposal Document card)
+  const mDocName = document.getElementById('wsModalDocName');
+  const mDocSub = document.getElementById('wsModalDocSub');
   const mDocLink = document.getElementById('wsModalDocLink');
+
+  const reqDoc = c.requirementsDocument || (c.documents && c.documents[0]);
+  const docFilename = reqDoc?.filename || reqDoc?.originalName || `${c.title.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 24)}_Proposal.pdf`;
+  const docUrl = reqDoc?.url && reqDoc.url !== '#' ? reqDoc.url : null;
+  const docSize = reqDoc?.size ? (reqDoc.size / (1024 * 1024)).toFixed(1) + ' MB' : '835.8 KB';
+  const docDate = reqDoc?.uploadedAt ? new Date(reqDoc.uploadedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '14 Sep 2026';
+
+  if (mDocName) mDocName.textContent = docFilename;
+  if (mDocSub) mDocSub.textContent = `${docSize} · Uploaded by ${univ} on ${docDate}`;
+
   if (mDocLink) {
-    const docName = c.documents?.[0]?.name || `${c.title.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 24)}_Blueprint.pdf`;
-    mDocLink.textContent = `📥 Download ${docName.slice(0, 32)}`;
+    if (docUrl) {
+      mDocLink.href = docUrl;
+      mDocLink.removeAttribute('onclick');
+      mDocLink.setAttribute('target', '_blank');
+      mDocLink.setAttribute('download', docFilename);
+      mDocLink.innerHTML = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download Document</span>`;
+    } else {
+      mDocLink.href = '#';
+      mDocLink.onclick = function(e) {
+        e.preventDefault();
+        window.downloadProposalBlueprint && window.downloadProposalBlueprint(c);
+      };
+      mDocLink.innerHTML = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download Proposal Blueprint</span>`;
+    }
   }
 
   // Chat in Modal

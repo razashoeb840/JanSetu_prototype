@@ -353,7 +353,6 @@ router.get('/collaborations', optionalAuth, async (req, res, next) => {
       };
     }
     const dbProjects = await Project.find(projectFilter)
-      .populate({ path: 'problemId', strictPopulate: false })
       .sort({ updatedAt: -1 })
       .lean();
 
@@ -366,7 +365,6 @@ router.get('/collaborations', optionalAuth, async (req, res, next) => {
       ];
     }
     const dbProposals = await Proposal.find(proposalFilter)
-      .populate({ path: 'problemId', strictPopulate: false })
       .populate({ path: 'projectId', strictPopulate: false })
       .populate({ path: 'submittedBy', select: 'name email role organization', strictPopulate: false })
       .sort({ updatedAt: -1 })
@@ -412,7 +410,7 @@ router.get('/collaborations', optionalAuth, async (req, res, next) => {
       if (text.includes('fasal') || text.includes('crop') || text.includes('kisan') || text.includes('farm') || text.includes('agri') || text.includes('bimari') || text.includes('pest') || text.includes('seed')) {
         return {
           category: 'Agriculture & Crop Health',
-          coverImage: '/images/agri-monitoring.jpg',
+          coverImage: validImg || '/images/agri-monitoring.jpg',
           tags: ['Agri-Tech', 'Early Disease Detection', 'AI Pathology', 'Farmer Advisory'],
           role: 'CSR Funding + Drone Sensor Rig + Field Testing',
           objectives: [
@@ -430,7 +428,7 @@ router.get('/collaborations', optionalAuth, async (req, res, next) => {
       if (text.includes('सड़क') || text.includes('गड्ढा') || text.includes('road') || text.includes('pothole') || text.includes('highway') || text.includes('traffic') || text.includes('bridge')) {
         return {
           category: 'Civil Infrastructure & Road Safety',
-          coverImage: '/images/pothole-road.jpg',
+          coverImage: validImg || '/images/pothole-road.jpg',
           tags: ['AI Pothole Scanner', 'Road Safety', 'Civic Engineering', 'PWD Inspection'],
           role: 'CSR Equipment Grant + Mobile Testing Unit',
           objectives: [
@@ -447,7 +445,7 @@ router.get('/collaborations', optionalAuth, async (req, res, next) => {
       if (text.includes('water') || text.includes('purif') || text.includes('drinking') || text.includes('जल') || text.includes('पानी') || text.includes('tank') || text.includes('pipe')) {
         return {
           category: 'Water Quality & Public Health',
-          coverImage: '/images/water-monitoring.jpg',
+          coverImage: validImg || '/images/water-monitoring.jpg',
           tags: ['Clean Drinking Water', 'IoT Quality Sensors', 'Arsenic/Fluoride Filtration', 'Rural Utility'],
           role: 'CSR Filtration Grant + Testing Lab Access',
           objectives: [
@@ -464,7 +462,7 @@ router.get('/collaborations', optionalAuth, async (req, res, next) => {
       if (text.includes('forest') || text.includes('tribal') || text.includes('wildlife') || text.includes('livelihood') || text.includes('deplet')) {
         return {
           category: 'Forestry & Livelihood Ecology',
-          coverImage: '/images/campus-iit.jpg',
+          coverImage: validImg || '/images/campus-iit.jpg',
           tags: ['Forest Livelihoods', 'Satellite Biomass Tracking', 'NTFP Value Chain', 'Ecology'],
           role: 'CSR Livelihood Grant + Supply Chain Support',
           objectives: [
@@ -481,7 +479,7 @@ router.get('/collaborations', optionalAuth, async (req, res, next) => {
       if (text.includes('waste') || text.includes('garbage') || text.includes('kachra') || text.includes('कचरा') || text.includes('sanitat')) {
         return {
           category: 'Solid Waste & Urban Sanitation',
-          coverImage: '/images/waste-mgmt.jpg',
+          coverImage: validImg || '/images/waste-mgmt.jpg',
           tags: ['Solid Waste Sorting', 'Smart Bins', 'Clean Jharkhand', 'Circular Economy'],
           role: 'CSR Waste Segregation Infrastructure',
           objectives: [
@@ -497,7 +495,7 @@ router.get('/collaborations', optionalAuth, async (req, res, next) => {
       if (text.includes('solar') || text.includes('hospital') || text.includes('clinic') || text.includes('health') || text.includes('phc') || text.includes('power') || text.includes('energy')) {
         return {
           category: 'Rural Healthcare & Clean Energy',
-          coverImage: '/images/solar-hospital.jpg',
+          coverImage: validImg || '/images/solar-hospital.jpg',
           tags: ['Solar Microgrid', 'LiFePO4 Storage', 'Rural Healthcare', 'Zero Downtime'],
           role: 'CSR Grant + Battery Banks + Electrical Mentorship',
           objectives: [
@@ -526,17 +524,54 @@ router.get('/collaborations', optionalAuth, async (req, res, next) => {
       };
     }
 
+    // Pre-fetch all linked Challenges and Proposals for Projects
+    const projectProblemIds = dbProjects.map(p => p.problemId).filter(Boolean);
+    const projectProposalIds = dbProjects.map(p => p.proposalId).filter(Boolean);
+    const projectTitles = dbProjects.map(p => p.title).filter(Boolean);
+    const [linkedChallenges, linkedProposals] = await Promise.all([
+      Challenge.find({ $or: [{ _id: { $in: projectProblemIds } }, { title: { $in: projectTitles } }] }).lean(),
+      Proposal.find({ _id: { $in: projectProposalIds } }).lean()
+    ]);
+
+    const challengeMap = new Map();
+    linkedChallenges.forEach(c => {
+      challengeMap.set(c._id.toString(), c);
+      if (c.title) challengeMap.set(c.title.trim().toLowerCase(), c);
+    });
+
+    const proposalMap = new Map();
+    linkedProposals.forEach(pr => proposalMap.set(pr._id.toString(), pr));
+
     // A. Map DB Projects
     for (const p of dbProjects) {
       const idStr = p._id.toString();
       if (seenIds.has(idStr)) continue;
       seenIds.add(idStr);
 
-      const univ = p.university || p.submittedBy?.organization || 'IIT (ISM) Dhanbad';
-      const faculty = p.facultyLead?.name || p.submittedBy?.name || 'Dr. Faculty Lead';
-      const facultyEmail = p.facultyLead?.email || p.submittedBy?.email || 'faculty@univ.ac.in';
-      const dist = p.district || p.problemId?.district || 'Dhanbad';
-      const committedFunding = p.assignedIndustryDetails?.fundingCommitted || p.fundingSummary?.committed || 1200000;
+      const linkedChal = challengeMap.get(p.problemId?.toString()) || challengeMap.get((p.title || '').trim().toLowerCase());
+      const linkedProp = proposalMap.get(p.proposalId?.toString());
+
+      // Real Challenge Image from database (Supabase / uploads)
+      const realCover = linkedChal?.coverImage || linkedChal?.image || (linkedChal?.attachments && linkedChal?.attachments[0]?.url) || p.coverImage || p.image;
+      
+      // Real Challenge Description from citizen / admin submission
+      const realDescription = linkedChal?.description || p.description || 'Collaborative engineering deployment addressing verified state civic challenges.';
+      
+      // Real University and Submitter from Proposal
+      const univ = linkedProp?.universityName || p.university || p.mentor?.org || 'IIT Delhi';
+      const faculty = linkedProp?.submitterName || p.mentor?.name || 'Dr. Rohan Mehta';
+      const facultyEmail = linkedProp?.submitterEmail || p.facultyLead?.email || 'rohan.mehta@iitranchi.ac.in';
+      
+      // Real Proposal Document uploaded by university
+      const realRequirementsDoc = linkedProp?.requirementsDocument || {
+        filename: 'Solution_Requirements_Specification.pdf',
+        url: '#',
+        size: 855853,
+        uploadedAt: linkedProp?.createdAt || p.createdAt
+      };
+
+      const dist = linkedChal?.location?.district || p.district || p.problemId?.district || 'East Singhbhum';
+      const committedFunding = p.assignedIndustryDetails?.fundingCommitted || p.fundingSummary?.committed || linkedProp?.fundingRequested || 100001;
       
       // Calculate progress from milestones or default
       let progress = 65;
@@ -567,16 +602,16 @@ router.get('/collaborations', optionalAuth, async (req, res, next) => {
 
       // Domain-specific resolution
       const domainInfo = resolveProjectDomainAndImage(
-        p.title || p.problemId?.title,
-        p.description || p.problemId?.description,
-        p.category || p.problemId?.category,
-        p.coverImage || p.image || p.problemId?.coverImage
+        p.title || linkedChal?.title,
+        realDescription,
+        p.category || linkedChal?.category,
+        realCover
       );
 
       collaborationsList.push({
         _id: idStr,
         sourceType: 'project',
-        title: p.title || 'Civic Infrastructure Engineering Solution',
+        title: p.title || linkedChal?.title || 'Civic Infrastructure Engineering Solution',
         shortTitle: p.title.length > 32 ? p.title.slice(0, 30) + '...' : p.title,
         category: domainInfo.category,
         district: dist,
@@ -594,10 +629,13 @@ router.get('/collaborations', optionalAuth, async (req, res, next) => {
         stage: stageLabel,
         stageIndex: stageIdx,
         statusBadge: progress >= 90 ? 'Deployed & Active' : (stageIdx === 4 ? 'Pilot in Progress' : 'Prototype Testing'),
-        coverImage: domainInfo.coverImage,
-        description: p.description || p.problemId?.description || 'Collaborative engineering deployment addressing verified state civic challenges.',
-        tags: domainInfo.tags,
-        abstract: p.description || 'Comprehensive technical design and deployment blueprint with tripartite governance.',
+        coverImage: realCover || domainInfo.coverImage,
+        description: realDescription,
+        challengeDescription: realDescription,
+        requirementsDocument: realRequirementsDoc,
+        documents: [realRequirementsDoc],
+        tags: (linkedChal?.tags && linkedChal.tags.length > 0) ? linkedChal.tags : domainInfo.tags,
+        abstract: realDescription,
         requirements: [
           'Industrial grade components with BIS / ISO compliance certification',
           'Automated IoT telemetry monitoring and secure data transmission',
@@ -661,30 +699,48 @@ router.get('/collaborations', optionalAuth, async (req, res, next) => {
       });
     }
 
+    // Pre-fetch challenges for dbProposals
+    const propProblemIds = dbProposals.map(pr => pr.problemId?._id || pr.problemId).filter(Boolean);
+    const propChallenges = await Challenge.find({ _id: { $in: propProblemIds } }).lean();
+    const propChallengeMap = new Map();
+    propChallenges.forEach(c => propChallengeMap.set(c._id.toString(), c));
+
     // B. Map Accepted Proposals (if not already mapped through Project)
     for (const prop of dbProposals) {
       const propId = prop._id.toString();
       if (seenIds.has(propId)) continue;
       seenIds.add(propId);
 
-      const univ = prop.universityName || 'IIT (ISM) Dhanbad';
-      const faculty = prop.submitterName || 'Dr. Faculty Lead';
+      const linkedChal = propChallengeMap.get(prop.problemId?._id?.toString() || prop.problemId?.toString()) || (typeof prop.problemId === 'object' ? prop.problemId : null);
+
+      const univ = prop.universityName || 'IIT Delhi';
+      const faculty = prop.submitterName || 'Dr. Rohan Mehta';
       const facultyEmail = prop.submitterEmail || 'pi@univ.ac.in';
-      const dist = prop.problemId?.district || 'Ranchi';
+      const dist = linkedChal?.location?.district || prop.problemId?.district || 'Ranchi';
       const funding = prop.fundingRequested || 1000000;
 
+      const realCover = linkedChal?.coverImage || linkedChal?.image || (linkedChal?.attachments && linkedChal?.attachments[0]?.url) || prop.coverImage;
+      const realDescription = linkedChal?.description || prop.solutionSummary || 'University research proposal accepted by industry partner for real-world pilot execution.';
+
+      const realRequirementsDoc = prop.requirementsDocument || {
+        filename: 'Technical_Proposal_Document.pdf',
+        url: '#',
+        size: 855853,
+        uploadedAt: prop.createdAt
+      };
+
       const domainInfo = resolveProjectDomainAndImage(
-        prop.problemTitle || prop.title,
-        prop.solutionSummary || prop.problemId?.description,
-        prop.problemCategory,
-        prop.requirementsDocument?.url
+        prop.problemTitle || prop.title || linkedChal?.title,
+        realDescription,
+        prop.problemCategory || linkedChal?.category,
+        realCover
       );
 
       collaborationsList.push({
         _id: propId,
         sourceType: 'proposal',
-        title: prop.problemTitle || prop.title || 'Civic Problem Engineering Proposal',
-        shortTitle: (prop.problemTitle || prop.title || 'Civic Solution').slice(0, 30),
+        title: prop.problemTitle || prop.title || linkedChal?.title || 'Civic Problem Engineering Proposal',
+        shortTitle: (prop.problemTitle || prop.title || linkedChal?.title || 'Civic Solution').slice(0, 30),
         category: domainInfo.category,
         district: dist,
         state: 'Jharkhand',
@@ -701,8 +757,11 @@ router.get('/collaborations', optionalAuth, async (req, res, next) => {
         stage: 'Pilot Testing',
         stageIndex: 4,
         statusBadge: 'Collaboration Active',
-        coverImage: domainInfo.coverImage,
-        description: prop.solutionSummary || 'University research proposal accepted by industry partner for real-world pilot execution.',
+        coverImage: realCover || domainInfo.coverImage,
+        description: realDescription,
+        challengeDescription: realDescription,
+        requirementsDocument: realRequirementsDoc,
+        documents: [realRequirementsDoc],
         tags: domainInfo.tags,
         abstract: prop.solutionSummary || 'Approved solution blueprint undergoing field validation testing.',
         requirements: prop.industrySupportRequired || ['Funding Grant', 'Testing Lab Facilities', 'Technical Mentorship'],
